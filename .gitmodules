@@ -1,0 +1,3 @@
+[submodule "vendor/demo-kit"]
+	path = vendor/demo-kit
+	url = https://github.com/sampatel3/demo-kit.git

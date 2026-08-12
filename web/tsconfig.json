@@ -1,0 +1,17 @@
+{
+  "extends": "../vendor/demo-kit/tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "allowJs": true,
+    "incremental": true,
+    // `scripts/narrate.ts` is run by Node, which needs the real extension on the specifier.
+    // Legal because nothing here is emitted — Next compiles the app and Node strips the
+    // script.
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}

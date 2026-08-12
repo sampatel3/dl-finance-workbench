@@ -1,0 +1,119 @@
+name: Deploy
+
+# Installed into a generated demo at .github/workflows/deploy.yml by `create-demo`.
+#
+# The ordering is the whole file, and it is a lesson rather than a preference:
+#
+#   migrate → build → deploy → verify
+#
+#  - Migrate FIRST, and only on the postgres tier. The serverless app opens its pool lazily,
+#    so the first request after a deploy meets whatever schema exists. Ship code ahead of its
+#    migration and that request fails closed.
+#  - Migrate against the DIRECT connection, never the pooled one. DDL and the migration
+#    journal want a real session; a transaction pooler is not one.
+#  - Build HERE, deploy `--prebuilt`. A failed build then never touches production, and
+#    Vercel never needs to clone the private submodule — which is the only reason the
+#    submodule distribution works at all.
+#  - Verify by polling for the EXACT commit. Not "the deploy command exited 0", and not "the
+#    response body was non-empty" — the previous deployment answers both of those perfectly
+#    well.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  # Deliberately NOT cancel-in-progress. A cancelled deploy can leave a migration applied
+  # with no code shipped against it, which is the one state worse than a slow queue.
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only on green. `workflow_run` fires on failure too.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      # The Vercel CLI reads these from the environment, so the token never appears in argv
+      # where any process on the runner could read it out of the process list.
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Lifted to `env` because the `secrets` context is not available in a step's `if`.
+      # Empty on a memory-tier demo, which is how the migrate step below skips itself.
+      DATABASE_URL_DIRECT: ${{ secrets.DATABASE_URL_DIRECT }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The commit CI passed, not whatever main points at now. Between CI finishing and
+          # this job starting, main can move — and deploying an untested commit while
+          # reporting the tested one is the failure this line exists to prevent.
+          ref: ${{ github.event.workflow_run.head_sha }}
+          submodules: recursive
+          token: ${{ secrets.DEMOKIT_READ_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Once, not per step: three `dlx` invocations would fetch the CLI three times and
+      # could, in principle, fetch three different versions into one deploy.
+      - run: npm install -g vercel@latest
+
+      # --- postgres tier only. The step skips itself on a memory demo, which has no
+      #     DATABASE_URL_DIRECT secret and no drizzle.config.ts.
+      - name: Migrate
+        if: ${{ env.DATABASE_URL_DIRECT != '' }}
+        working-directory: web
+        env:
+          # Named DATABASE_URL because that is what drizzle.config.ts reads. The VALUE is the
+          # direct connection.
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+        run: pnpm exec drizzle-kit migrate
+
+      - name: Pull production settings
+        working-directory: web
+        run: vercel pull --yes --environment=production
+
+      - name: Build
+        working-directory: web
+        env:
+          # Baked in so /api/health can name the commit it is serving. Without this the
+          # verify step below has nothing to check against.
+          DEMO_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: vercel build --prod --yes
+
+      - name: Deploy
+        id: deploy
+        working-directory: web
+        run: |
+          # The deployment's own URL, not the project alias: it is valid the moment this
+          # command returns, so the verify step below is not racing an alias promotion.
+          URL=$(vercel deploy --prebuilt --prod | tail -n 1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
+
+      - name: Verify the live site is running this commit
+        env:
+          EXPECTED: ${{ github.event.workflow_run.head_sha }}
+          HEALTH: ${{ steps.deploy.outputs.url }}/api/health
+        run: |
+          # 30 attempts, 10 seconds apart: five minutes, which is longer than a Vercel
+          # promotion takes and short enough that a stuck deploy is noticed.
+          for attempt in $(seq 1 30); do
+            COMMIT=$(curl -fsS "$HEALTH" | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p' || true)
+            if [ "$COMMIT" = "$EXPECTED" ]; then
+              echo "Verified: $HEALTH reports $COMMIT"
+              exit 0
+            fi
+            echo "attempt $attempt/30 — health reports '${COMMIT:-nothing}', expected $EXPECTED"
+            sleep 10
+          done
+          echo "::error::$HEALTH never reported $EXPECTED — the deploy is not verified"
+          exit 1

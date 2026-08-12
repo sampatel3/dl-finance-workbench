@@ -1,0 +1,82 @@
+name: CI
+
+# Installed into a generated demo at .github/workflows/ci.yml by `create-demo`.
+#
+# Deliberately small: typecheck, test, three greps. The heavy checks live in demo-kit's own
+# CI, where they run once for every demo rather than once per demo per push.
+#
+# CI is keyless on purpose (01-decisions.md §13): ANTHROPIC_API_KEY is never a repo secret,
+# so builds and tests here are deterministic and the narration ladder exercises its
+# fallback — which is the path a keyless demo actually ships.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The kit is a private submodule. Actions cannot read it with the default token,
+          # so `create-demo provision` sets DEMOKIT_READ_TOKEN as a repo secret.
+          submodules: recursive
+          token: ${{ secrets.DEMOKIT_READ_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+
+  # Pure `git grep` backstops. No install, so they cannot be defeated by a broken lockfile,
+  # and they answer in seconds.
+  #
+  # Each pattern below is assembled from shell variables rather than written out. That is not
+  # style: demo-kit's own CI greps this template's directory for the very strings these
+  # checks look for, so a workflow that spelled them out would fail the repo it lives in.
+  escape-hatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No type escape hatches
+        run: |
+          if git grep -nE '@ts-ignore|@ts-expect-error|@ts-nocheck|\bas any\b|\bas unknown as\b' -- 'web/'; then
+            echo "::error::a type escape hatch was found — fix the type, do not silence it"
+            exit 1
+          fi
+
+      - name: No secret-adjacent public env vars
+        run: |
+          # A NEXT_PUBLIC_ variable is compiled into the browser bundle. One holding a key, a
+          # passcode or a connection string publishes it to everyone who loads the page.
+          PREFIX='NEXT_PUBLIC'
+          SUFFIX='(KEY|PASSCODE|DATABASE)'
+          if git grep -nE "${PREFIX}_.*${SUFFIX}" -- . ':!.github'; then
+            echo "::error::a secret-adjacent value is exposed to the browser bundle"
+            exit 1
+          fi
+
+      - name: No API keys in tracked files
+        run: |
+          KEY_PREFIX='sk-''ant-'
+          if git grep -nE "$KEY_PREFIX" -- . ':!.github'; then
+            echo "::error::an Anthropic API key prefix was found in a tracked file"
+            exit 1
+          fi
+
+      - name: No unsafe DOM sinks
+        run: |
+          # Model output must never reach the DOM as markup.
+          SINKS='dangerouslySetInner''HTML|inner''HTML|document\.write'
+          if git grep -nE "$SINKS" -- 'web/'; then
+            echo "::error::an unsafe DOM sink was found"
+            exit 1
+          fi

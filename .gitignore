@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.DS_Store
+*.tsbuildinfo
+
+# Written by `vercel link`, and it names the project this checkout deploys to.
+.vercel

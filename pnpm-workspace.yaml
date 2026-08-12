@@ -1,0 +1,18 @@
+# The demo lives in `web/`; the kit comes from the submodule under vendor/demo-kit.
+#
+# The kit packages are listed one by one rather than by a glob. The submodule contains
+# every package demo-kit has, and a glob would pull all of them in — including `db`,
+# which is how drizzle and pg end up installed in a demo that has no database.
+packages:
+  - 'web'
+  - 'vendor/demo-kit/packages/data'
+  - 'vendor/demo-kit/packages/deck'
+  - 'vendor/demo-kit/packages/gate'
+  - 'vendor/demo-kit/packages/llm'
+  - 'vendor/demo-kit/packages/shell'
+
+# pnpm 11 fails the install rather than silently skipping a dependency’s build script,
+# so every dependency that has one is named here.
+allowBuilds:
+  esbuild: true # vitest’s bundler links its platform binary on install
+  sharp: true # Next’s image optimiser fetches its platform binary on install

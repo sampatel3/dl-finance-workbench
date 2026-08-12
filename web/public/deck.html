@@ -1,0 +1,221 @@
+<meta charset="utf-8">
+<title>Dl Finance Workbench — deck</title>
+
+<!--
+  This demo's deck, instantiated from `packages/deck/template-deck.html`. One self-contained
+  file, no build step, no dependency: open it in a browser to read it, `pnpm deck:slides` to
+  check each slide by looking at it, `pnpm deck:pdf` to print it — one slide to one page.
+
+  It lives in public/, which Next serves THROUGH middleware, so the passcode gate covers it
+  with no extra wiring. `/deck` is a rewrite to this file.
+
+  Everything is sized in `cqi` (1% of the deck's own width), so the slides hold their
+  proportions at any window size and print identically.
+
+  Three things must survive an edit: the `.slide` class on every section (three commands
+  count it and refuse to run without it), the `data-shot` attribute on every screenshot frame
+  (`deck aspects` stamps the real image shape onto it), and the `@page` block.
+
+  The words below are placeholder, like the data. The rule they are held to is not: nothing
+  in a deck may promise a capability the demo does not have.
+-->
+
+<style>
+  :root {
+    --ground: #0f2033;
+    --paper:  #f2f5f8;
+    --accent: #86b8dd;
+    --accent-on-paper: #15537f;
+    --on-dark-muted:  rgba(242,245,248,.74);
+    --on-paper-muted: rgba(14,23,32,.72);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0; padding: 2vmin; background: #08131f;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck { width: 100%; max-width: 1600px; margin: 0 auto; container-type: inline-size; }
+
+  /* Explicit height, not aspect-ratio: aspect-ratio is ignored on a flex item, which
+     silently sizes the slide to its content instead of to 16:9. */
+  .slide {
+    height: 56.25cqi; padding: 3.2cqi 4.2cqi 2.6cqi;
+    display: flex; flex-direction: column;
+    overflow: hidden; position: relative;
+  }
+  .slide + .slide { margin-top: 2vmin; }
+  .dark  { background: var(--ground); color: var(--paper); }
+  .paper { background: var(--paper);  color: var(--ground); }
+
+  .eyebrow {
+    font-size: .8cqi; letter-spacing: .2em; text-transform: uppercase;
+    font-weight: 600; color: var(--accent); margin-bottom: 1cqi;
+  }
+  .paper .eyebrow { color: var(--accent-on-paper); }
+
+  h1 {
+    margin: 0; font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-size: 2.55cqi; line-height: 1.16; letter-spacing: -0.02em; font-weight: 500;
+  }
+  .stand {
+    margin: .9cqi 0 1.7cqi; font-size: 1.12cqi; line-height: 1.52;
+    max-width: 92ch; color: var(--on-dark-muted);
+  }
+  .paper .stand { color: var(--on-paper-muted); }
+
+  /* The line along the bottom of a slide: the caveat, the count, the thing a reader would
+     otherwise ask out loud. `margin-top: auto` pins it to the foot however tall the slide's
+     content turns out to be. */
+  .foot {
+    margin-top: auto; padding-top: .9cqi;
+    border-top: .1cqi solid var(--accent);
+    font-size: .72cqi; line-height: 1.5; opacity: .78;
+  }
+  .paper .foot { border-top-color: var(--accent-on-paper); }
+  .foot b { font-weight: 650; }
+
+  .folio {
+    position: absolute; right: 4.2cqi; bottom: 1.3cqi;
+    font-size: .72cqi; letter-spacing: .1em; color: var(--on-dark-muted);
+  }
+  .paper .folio { color: var(--on-paper-muted); }
+
+  /* ------------------------------------------------------------- generic blocks --- */
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.6cqi; flex: 1; align-content: start; }
+  .cols > div { border-top: .12cqi solid rgba(242,245,248,.22); padding-top: 1.1cqi; }
+  .paper .cols > div { border-top-color: rgba(14,23,32,.16); }
+  .itemtitle { font-size: 1.06cqi; font-weight: 650; letter-spacing: -0.012em; line-height: 1.28; }
+  .itembody { margin-top: .42cqi; font-size: .92cqi; line-height: 1.5; color: var(--on-dark-muted); }
+  .paper .itembody { color: var(--on-paper-muted); }
+
+  ul.pts { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 1.35cqi; }
+  ul.pts li {
+    font-size: .96cqi; line-height: 1.5; color: var(--on-dark-muted);
+    padding-left: 1.3cqi; position: relative;
+  }
+  .paper ul.pts li { color: var(--on-paper-muted); }
+  ul.pts li::before {
+    content: ""; position: absolute; left: 0; top: .48cqi;
+    width: .32cqi; height: .32cqi; border-radius: 50%; background: var(--accent);
+  }
+  .paper ul.pts li::before { background: var(--accent-on-paper); }
+
+  /* ------------------------------------------------------- screenshots on a slide --- */
+  /* The one rule that makes a stretched screenshot impossible: an image takes its WIDTH from
+     the layout and its HEIGHT from itself. No `object-fit`, no flexed frame heights, nothing
+     that can put a picture in a box of a different shape. `deck aspects` writes the
+     `aspect-ratio` on each frame from the JPEG's own dimensions, so a reshot image at a new
+     size resizes its frame rather than being cropped into the old one. */
+  .shots { display: flex; gap: 2.2cqi; flex: 1; min-height: 0; align-items: flex-start; }
+  .shots > .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2.4cqi; }
+  /* 17cqi, and the number is load-bearing. A frame's height is its width over the picture's
+     own aspect ratio, so widening the phone column lengthens it — at 21cqi a portrait phone
+     shot runs past the bottom of the slide, which `deck slides` refuses out loud. Any change
+     here has to be re-checked with `pnpm deck:slides`. */
+  .shots > .phone { flex: none; width: 17cqi; }
+  .shot { display: flex; flex-direction: column; min-width: 0; }
+
+  /* `flex: none` is load-bearing, not tidiness: a frame is a flex item, and a flex column
+     that runs long shrinks its items — which squashes the picture inside a box of the wrong
+     shape, the exact fault this block exists to prevent. */
+  .frame {
+    flex: none; border-radius: .45cqi; overflow: hidden; position: relative;
+    border: .09cqi solid rgba(14,23,32,.14); background: rgba(14,23,32,.04);
+  }
+  .dark .frame { border-color: rgba(242,245,248,.2); background: rgba(242,245,248,.05); }
+  .frame img { display: block; width: 100%; height: auto; }
+
+  .cap { margin-top: .55cqi; font-size: .84cqi; line-height: 1.42; color: var(--on-paper-muted); }
+  .cap b { display: block; font-size: .96cqi; color: var(--ground); font-weight: 650; margin-bottom: .16cqi; }
+  .dark .cap { color: var(--on-dark-muted); }
+  .dark .cap b { color: var(--paper); }
+
+  /* 1600x900 CSS px is what `deck pdf` prints at (16.667 x 9.375in at 96dpi), so a slide is
+     exactly a page and nothing is scaled or split. */
+  @page { size: 1600px 900px; margin: 0; }
+  @media print {
+    body { padding: 0; background: #fff; }
+    .deck { width: 1600px; max-width: 1600px; }
+    .slide { width: 1600px; height: 900px; break-after: page; }
+    .slide:last-child { break-after: auto; }
+    .slide + .slide { margin-top: 0; }
+  }
+</style>
+
+<div class="deck">
+
+  <!-- 1 — WHAT THIS IS ---------------------------------------------------------------- -->
+  <section class="slide dark">
+    <div class="eyebrow">The demo</div>
+    <h1>A placeholder demo, built to be replaced</h1>
+    <p class="stand">Four sites, twelve closed months, two measures — every figure derived from one seed string. It exists to prove the framework runs end to end, not to describe a business.</p>
+
+    <div class="cols">
+      <div>
+        <div class="itemtitle">The data is generated</div>
+        <div class="itembody">Nothing here came from a real operation. The same seed builds the same world in every process, so a screenshot taken today matches the demo in six months.</div>
+      </div>
+      <div>
+        <div class="itemtitle">One condition is planted</div>
+        <div class="itembody">A detector reads the series and finds it. A second seed with nothing wrong in it proves the detector also stays quiet.</div>
+      </div>
+      <div>
+        <div class="itemtitle">The prose is checked</div>
+        <div class="itembody">The brief was written by a model at build time, from figures code produced. Every numeral in it was compared against them before it shipped.</div>
+      </div>
+    </div>
+
+    <div class="foot">Replace these slides with the demo's own. <b>Nothing in a deck may promise a capability the demo does not have.</b></div>
+    <div class="folio">1 / 3</div>
+  </section>
+
+  <!-- 2 — THE PRODUCT ON SCREEN -------------------------------------------------------- -->
+  <!-- Each frame's `data-shot` names a JPEG in public/shots and matches a `name` in
+       deck.config.mjs. `deck aspects` overwrites the `aspect-ratio` with the shape the JPEG
+       actually has; the values below only show the attribute in the form it looks for. Do
+       not maintain them by hand. Until `pnpm deck:shoot` has run, these frames are empty. -->
+  <section class="slide paper">
+    <div class="eyebrow">The product</div>
+    <h1>What a visitor actually sees</h1>
+    <p class="stand">The operations page at June 2026: twelve months of dispatched volume by site, and the same build at a phone's viewport.</p>
+
+    <div class="shots">
+      <div class="col">
+        <div class="shot">
+          <div class="frame" style="aspect-ratio:2.2869" data-shot="series"><img src="shots/series.jpg" alt="A line chart of twelve months of dispatched volume for four sites, with one line turning down in the last quarter"></div>
+          <div class="cap"><b>Twelve months</b>Hand-written SVG. There is no charting library in this demo.</div>
+        </div>
+      </div>
+
+      <div class="shot phone">
+        <div class="frame" style="aspect-ratio:0.5147" data-shot="phone"><img src="shots/phone.jpg" alt="The same operations page on a phone, with the figures stacked into one column"></div>
+        <div class="cap"><b>On a phone</b>The same build at a phone's true viewport.</div>
+      </div>
+    </div>
+
+    <div class="foot">Every figure on this slide came out of the running demo, photographed by <b>deck shoot</b>. None of it was drawn for the deck.</div>
+    <div class="folio">2 / 3</div>
+  </section>
+
+  <!-- 3 — HOW IT WORKS ----------------------------------------------------------------- -->
+  <section class="slide dark">
+    <div class="eyebrow">How it works</div>
+    <h1>The mechanism, in the reader's words</h1>
+    <p class="stand">The slide that survives the meeting is the one that explains the machinery without naming a library.</p>
+
+    <ul class="pts">
+      <li>The data is generated from a seed string, so it is the same on every machine and after every reload. It is not real, and the demo says so on its own gate.</li>
+      <li>Questions are answered by a model that can only read the demo's figures through two tools. It cannot produce a number; it can only ask for one.</li>
+      <li>When it cannot answer, it says which way it failed and offers questions that resolve. There is no second answer engine behind it.</li>
+      <li>Nothing a visitor does is stored. Making this a product would mean giving each visitor their own saved state, which is a different tier of the kit.</li>
+    </ul>
+
+    <div class="foot">Built with demo-kit. The passcode gate is a boundary, not authentication — a real deployment sits behind the customer's own identity provider.</div>
+    <div class="folio">3 / 3</div>
+  </section>
+
+</div>

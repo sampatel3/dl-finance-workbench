@@ -1,0 +1,6 @@
+# Deck output. Every JPEG here is reproducible with `pnpm deck:shoot` against a running
+# demo, and a committed screenshot is a screenshot that goes stale without anyone noticing.
+public/shots/
+
+# The printed deck goes to ../docs/deck/, which IS committed — that one is an artefact a
+# reader is given, not a build product.

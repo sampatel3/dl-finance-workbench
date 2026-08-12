@@ -1,0 +1,311 @@
+/*
+ * The demo's design language, as tokens and the few selectors that use them.
+ *
+ * This file is a starting posture, not a design system, and three things about it are
+ * deliberate.
+ *
+ *   There is no CSS framework and no component library. The kit ships zero UI dependencies
+ *   (01-decisions.md §16), because a template has to be readable in one sitting and a
+ *   demo's author is going to write their own product UI regardless. What is here is the
+ *   token layer plus the smallest set of selectors the placeholder product needs.
+ *
+ *   The tokens carry their reasoning inline. A hex value with no argument behind it is a
+ *   value nobody can change safely, and the first person to try will pick a different one.
+ *
+ *   `@demo-kit/shell` reads these same names — `--bg`, `--surface`, `--text`, `--accent`
+ *   and the rest — falling back to its own where a demo has not defined them. So a demo
+ *   gets one design system rather than two, and the tour furniture matches the product
+ *   without either knowing about the other.
+ *
+ * Both treatments are stated: `:root` is light and `.skin-dark` is the second, selected by
+ * a cookie read on the SERVER so the first painted frame is already correct.
+ */
+
+:root {
+  /* The canvas is deeper than a white page by roughly seven points, so that a white surface
+     laid on it reads as a pane rather than as nothing. Every contrast judgement in this file
+     is made against this colour, which is the harsher of the two. */
+  --bg: #e8edf3;
+  --surface: #ffffff;
+  --surface-2: #f4f6f9;   /* inset wells and grouped rows */
+
+  /* Hairlines, not shadows and not heavy rules. A demo made of stacked bordered boxes is the
+     single most common way one comes to look cheap; grouped cards divided by hairlines is
+     the same information with the furniture turned down. */
+  --border: #dde3e9;
+  --border-strong: #c2cad3;
+  --control-border: #8b95a1;
+
+  --text: #0e1720;
+  --label: #48545f;
+  /* Walked down from a lighter grey that measured 4.44:1 on white and worse on the canvas —
+     under AA everywhere it was used, and it was used on every small label on the page. This
+     measures 5.7:1 on white. */
+  --muted: #5c6874;
+
+  /* Interactive only, never a value. In any product where a figure can be good or bad,
+     green and red already carry meaning, so the colour the reader clicks has to stay out of
+     their way — which is why the accent is blue and why direction gets its own two tokens. */
+  --accent: #15537f;
+  --accent-deep: #0d3b5e;
+  --accent-soft: #e9f0f6;
+
+  --pos: #0f6b4f;
+  --neg: #a52833;
+
+  /* Chart ink. Held as tokens rather than as hex literals inside the chart component, so a
+     treatment can reach them: colours written into JSX are colours the dark surface cannot
+     restate, and four series tuned for a white canvas go muddy on a near-black one. The
+     chart itself reads only these, --text, --muted and --border. They are ink, not meaning —
+     no line here is "good" or "bad", which is what --pos and --neg are for. */
+  --series-1: #15537f;
+  --series-2: #2c7cb0;
+  --series-3: #a8632a;
+  --series-4: #7d8a99;
+
+  /* Tight radii: the page should read as an instrument rather than as app furniture. */
+  --radius: 8px;
+  --radius-md: 6px;
+
+  /* One shadow, and it is a lift rather than a drop — the pane sits on the canvas, it does
+     not float above it. */
+  --lift: 0 1px 2px rgba(14, 23, 32, .05), 0 8px 22px -14px rgba(14, 23, 32, .22);
+
+  /* Figures are set in the text face with tabular numerals, not in a monospace. Monospace
+     numerals read as engineering output; a reader scanning eight figures wants them to read
+     as the business. */
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+/*
+ * The second treatment. It restates the same names, so every rule below is written once —
+ * a stylesheet that names both treatments in every rule states every colour twice and
+ * drifts the first time one of them is edited.
+ */
+.skin-dark {
+  --bg: #0d1219;
+  --surface: #131a23;
+  --surface-2: #18202b;
+  --border: #26303d;
+  --border-strong: #3b4859;
+  --control-border: #5d6c84;
+  --text: #e6edf5;
+  --label: #b3c0cf;
+  --muted: #8a97a7;
+  --accent: #58a6ff;
+  --accent-deep: #1d5fbf;
+  --accent-soft: #16283f;
+  --pos: #4bb98a;
+  --neg: #e2707c;
+  /* Lifted and separated: on a near-black canvas the light treatment's deepest two blues
+     sit within a few points of the background and of each other, so a four-line chart
+     becomes a two-line chart with two ghosts. */
+  --series-1: #6aa9e0;
+  --series-2: #3f7fb8;
+  --series-3: #d08a4e;
+  --series-4: #9aa7b6;
+  --lift: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px -14px rgba(0, 0, 0, .7);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The treatment wrapper has to fill the viewport, or the dark canvas ends where the content
+   does and the page has a white foot. */
+.skin { min-height: 100dvh; background: var(--bg); }
+
+a { color: inherit; }
+
+/* ------------------------------------------------------------------------- the gate */
+
+.gate { display: grid; place-items: center; min-height: 100dvh; padding: 24px; }
+.gate-card {
+  display: grid; gap: 10px; width: 100%; max-width: 340px; padding: 28px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--lift);
+}
+.gate-mark {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: var(--radius-md); background: var(--accent-deep);
+  color: #fff; font-size: 15px; font-weight: 600;
+}
+.gate-title { margin: 0; font-size: 20px; letter-spacing: -0.015em; }
+.gate-sub, .gate-foot { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.gate-card label { font-size: 13px; font-weight: 600; }
+.gate-card input[type='password'] {
+  padding: 9px 11px; border: 1px solid var(--control-border); border-radius: var(--radius-md);
+  background: var(--surface); color: var(--text); font: inherit;
+}
+.gate-card button {
+  padding: 10px; border: 0; border-radius: var(--radius-md);
+  background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+}
+.gate-error { margin: 0; color: var(--neg); font-size: 13px; }
+.gate-foot { margin-top: 6px; }
+
+/* ---------------------------------------------------------------------- the product */
+
+/* Two chromes, one product. `?view=inner` means this render is inside the tour's window, so
+   it drops the page header the window's own title bar already provides. */
+.product { max-width: 1180px; margin: 0 auto; padding: 20px 20px 56px; }
+.product.inner { padding-top: 14px; }
+
+.masthead {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.masthead-mark {
+  display: grid; place-items: center; width: 28px; height: 28px; flex: none;
+  border-radius: var(--radius-md); background: var(--accent-deep);
+  color: #fff; font-size: 11px; font-weight: 700; letter-spacing: -0.02em;
+}
+.masthead-name { font-size: 14px; font-weight: 650; letter-spacing: -0.01em; }
+.masthead-sub { font-size: 11.5px; color: var(--muted); }
+.masthead-right { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+
+.section { margin-bottom: 22px; scroll-margin-top: 16px; }
+.section-head {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;
+}
+.section-title {
+  font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.section-note { font-size: 12px; color: var(--muted); }
+
+/* The mark `?focus=` leaves. Long enough to be seen, short enough not to become a state —
+   the class is removed after a couple of seconds by the shell's FocusOnLoad. */
+.focusable.focused {
+  outline: 2px solid var(--accent); outline-offset: 6px; border-radius: var(--radius);
+}
+
+/* A group of cards, not a stack of boxes: one pane, hairlines between the cells. On a narrow
+   screen it becomes one column and the hairlines turn to face the other way. */
+.cards {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--lift); overflow: hidden;
+}
+.card { padding: 14px 16px; }
+.card + .card { border-left: 1px solid var(--border); }
+.card-k { font-size: 11px; font-weight: 600; color: var(--muted); }
+.card-v {
+  margin-top: 4px; font-size: 24px; font-weight: 600; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.card-d { margin-top: 3px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.card-d.pos { color: var(--pos); }
+.card-d.neg { color: var(--neg); }
+
+@media (max-width: 720px) {
+  .cards { grid-template-columns: 1fr; }
+  .card + .card { border-left: 0; border-top: 1px solid var(--border); }
+}
+
+.pane {
+  padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--lift);
+}
+
+/* The chart. Sized by its viewBox and stretched by CSS, so it holds its shape at every
+   device width the tour's window offers — including a 402pt phone. */
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chart-axis { fill: var(--muted); font-size: 9px; font-variant-numeric: tabular-nums; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--label); }
+.legend-swatch { width: 12px; height: 2px; border-radius: 1px; }
+
+/* The bar row: a table that is a chart. The bar is the value, the figure beside it is the
+   same value in words — neither is decoration for the other. */
+.bars { display: grid; gap: 1px; background: var(--border); }
+.bar-row {
+  display: grid; grid-template-columns: 80px 1fr 86px; align-items: center; gap: 12px;
+  padding: 9px 2px; background: var(--surface);
+}
+.bar-name { font-size: 12.5px; font-weight: 600; }
+/* Both are spans, and both are declared block on purpose: an inline element ignores width
+   and height outright, so the fill renders at zero and the bar silently disappears. The
+   track is a grid item and would be blockified anyway; stating it means the pair keeps
+   working if either is ever moved out of the grid. */
+.bar-track {
+  display: block; height: 8px; border-radius: 999px;
+  background: var(--surface-2); overflow: hidden;
+}
+.bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.bar-value { text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+/* The brief. Its provenance line is not a footnote — a reader who cannot tell which words a
+   model wrote does not know what they are reading. */
+.brief-h { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; }
+.brief-b { margin: 8px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--label); max-width: 68ch; }
+.brief-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+  font-size: 11.5px; color: var(--muted);
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  font-size: 11px; font-weight: 600; color: var(--label);
+}
+
+/* ------------------------------------------------------------------------ asking it */
+
+.ask-form { display: flex; gap: 8px; }
+.ask-input {
+  flex: 1; min-width: 0; padding: 9px 12px;
+  border: 1px solid var(--control-border); border-radius: var(--radius-md);
+  background: var(--surface); color: var(--text); font: inherit; font-size: 13px;
+}
+.ask-send {
+  padding: 9px 16px; border: 0; border-radius: var(--radius-md);
+  background: var(--accent); color: #fff; font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.ask-send:disabled { opacity: .55; cursor: default; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip {
+  padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  font: inherit; font-size: 11.5px; color: var(--label); cursor: pointer; text-align: left;
+}
+.chip:hover { border-color: var(--control-border); color: var(--text); }
+
+.answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.answer-q { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.answer-a { margin: 0; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
+.answer.unavailable .answer-a { color: var(--label); }
+
+/* The audit trail under an answer: every figure the tools returned, and where to go and see
+   it. An answer without one is an answer a reader has to take on trust. */
+.cites { display: grid; gap: 1px; margin-top: 12px; background: var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.cite {
+  display: flex; align-items: baseline; gap: 10px; padding: 7px 10px;
+  background: var(--surface-2); font-size: 11.5px; text-decoration: none;
+}
+.cite-k { color: var(--muted); }
+.cite-v { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------------- tour extras */
+
+/* The treatment control, in the foot of the notes column. It is demo furniture, so it lives
+   with the notes rather than on the product. */
+.skin-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding-top: 10px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--muted);
+}

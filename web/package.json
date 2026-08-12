@@ -1,0 +1,36 @@
+{
+  "name": "web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "pnpm narrate && next build",
+    "start": "next start",
+    "narrate": "node --import ./scripts/ts-resolve.mjs scripts/narrate.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "deck:shoot": "deck shoot",
+    "deck:aspects": "deck aspects",
+    "deck:slides": "deck slides",
+    "deck:pdf": "deck pdf"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "@demo-kit/data": "workspace:*",
+    "@demo-kit/gate": "workspace:*",
+    "@demo-kit/llm": "workspace:*",
+    "@demo-kit/shell": "workspace:*",
+    "next": "^15.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@demo-kit/deck": "workspace:*",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
