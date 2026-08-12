@@ -19,6 +19,15 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@24.13.3)
 
+  packages/analysis:
+    dependencies:
+      '@kestrel/measures':
+        specifier: workspace:*
+        version: link:../measures
+      '@kestrel/model':
+        specifier: workspace:*
+        version: link:../model
+
   packages/measures:
     dependencies:
       '@kestrel/model':

@@ -1,0 +1,11 @@
+{
+  "extends": "../../vendor/demo-kit/tsconfig.base.json",
+  "compilerOptions": {
+    // Tests and siblings import `./period.ts` by its real name. There is no build step, so
+    // the extension a file is imported by should be the extension it has — and node's own
+    // type stripping resolves it with no loader, which is the whole promise of shipping
+    // TypeScript source. Legal because the base config sets `noEmit`.
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src"]
+}
