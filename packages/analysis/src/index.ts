@@ -7,3 +7,5 @@
  */
 
 export * from './bridge.ts';
+export * from './drivers.ts';
+export * from './forecast.ts';
