@@ -56,6 +56,16 @@ export interface Account {
    * currency model that has quietly stopped translating.
    */
   readonly translateAt?: 'closing' | 'average';
+  /**
+   * True where the account counts things rather than measuring money.
+   *
+   * Such an account must NOT be translated. Twelve people are twelve people in every currency, and
+   * dividing a headcount by an exchange rate produces a group of 519.96 staff — which is both absurd
+   * and small enough to survive a review. Hours are the same, and getting it wrong there is worse
+   * than absurd: utilisation is a ratio of two hour counts, so translating both would leave the ratio
+   * looking right while every hour figure behind it was wrong.
+   */
+  readonly nonMonetary?: boolean;
 }
 
 export const ACCOUNTS = [
@@ -111,10 +121,10 @@ export const ACCOUNTS = [
   //
   // On the fact table rather than beside it, because a driver that lives somewhere else is a
   // driver that will disagree with the P&L it is supposed to explain.
-  { code: 'headcount', label: 'Headcount (FTE)', basis: 'balance', statement: 'cf', polarity: 'neutral' },
-  { code: 'chargeable_hours', label: 'Chargeable hours', basis: 'flow', statement: 'cf', polarity: 'higher_is_better' },
-  { code: 'subcontract_hours', label: 'Subcontract hours', basis: 'flow', statement: 'cf', polarity: 'lower_is_better' },
-  { code: 'available_hours', label: 'Available hours', basis: 'flow', statement: 'cf', polarity: 'neutral' },
+  { code: 'headcount', label: 'Headcount (FTE)', basis: 'balance', statement: 'cf', polarity: 'neutral' , nonMonetary: true },
+  { code: 'chargeable_hours', label: 'Chargeable hours', basis: 'flow', statement: 'cf', polarity: 'higher_is_better' , nonMonetary: true },
+  { code: 'subcontract_hours', label: 'Subcontract hours', basis: 'flow', statement: 'cf', polarity: 'lower_is_better' , nonMonetary: true },
+  { code: 'available_hours', label: 'Available hours', basis: 'flow', statement: 'cf', polarity: 'neutral' , nonMonetary: true },
   { code: 'pipeline_weighted', label: 'Weighted pipeline', basis: 'balance', statement: 'cf', polarity: 'higher_is_better' },
 
   // ------------------------------------------------------------------ cash flow
@@ -154,6 +164,11 @@ export function basisOf(code: AccountCode): Basis {
  * One function so the rule lives in one place. `currency.ts` maps a basis to a rate kind; this
  * lets an account overrule it, and equity is the only thing that does.
  */
+/** True where the account counts things and must therefore never be translated. */
+export function isNonMonetary(code: AccountCode): boolean {
+  return account(code).nonMonetary === true;
+}
+
 export function translateAtOf(code: AccountCode): 'closing' | 'average' {
   const a = account(code);
   if (a.translateAt !== undefined) return a.translateAt;

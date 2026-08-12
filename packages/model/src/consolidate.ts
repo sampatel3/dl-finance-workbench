@@ -25,7 +25,7 @@
  */
 
 import type { AccountCode } from './taxonomy.ts';
-import { ACCOUNTS, account, accountsOnSide, translateAtOf } from './taxonomy.ts';
+import { ACCOUNTS, account, accountsOnSide, isNonMonetary, translateAtOf } from './taxonomy.ts';
 import type { Currency, Entity } from './entities.ts';
 import { PRESENTATION, entity, tradingEntities } from './entities.ts';
 import type { Scenario } from './facts.ts';
@@ -106,6 +106,8 @@ function translatedAmount(
     ...(request.asOfVintage === undefined ? {} : { asOfVintage: request.asOfVintage }),
   });
   if (result.value === null) return null;
+  // A count is a count in every currency. Translating one is how a group ends up with 519.96 staff.
+  if (isNonMonetary(accountId)) return result.value;
 
   const rate = rateFor(
     {
@@ -142,6 +144,7 @@ function translatedSegmentedTotal(
     ...(request.asOfVintage === undefined ? {} : { asOfVintage: request.asOfVintage }),
   });
   if (result.value === null) return null;
+  if (isNonMonetary(accountId)) return result.value;
   const rate = rateFor(
     {
       lens: request.lens,
