@@ -15,6 +15,12 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@24.13.3)
 
+  packages/model:
+    dependencies:
+      '@demo-kit/data':
+        specifier: workspace:*
+        version: link:../../vendor/demo-kit/packages/data
+
   vendor/demo-kit/packages/data: {}
 
   vendor/demo-kit/packages/deck:
