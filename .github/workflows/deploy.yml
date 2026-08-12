@@ -14,6 +14,11 @@ name: Deploy
 #  - Build HERE, deploy `--prebuilt`. A failed build then never touches production, and
 #    Vercel never needs to clone the private submodule — which is the only reason the
 #    submodule distribution works at all.
+#  - Build from the REPO ROOT, not from `web/`. The app is a member of a pnpm workspace whose
+#    node_modules live at the root, so a build run inside `web/` traces Next's server files to
+#    `../node_modules/…` — above the deploy root, so they are never uploaded and the deployed
+#    function dies on `ENOENT … next-server.js`. The root `vercel.json` is what points the
+#    root-level build back down at `web/`.
 #  - Verify by polling for the EXACT commit. Not "the deploy command exited 0", and not "the
 #    response body was non-empty" — the previous deployment answers both of those perfectly
 #    well.
@@ -78,20 +83,18 @@ jobs:
         run: pnpm exec drizzle-kit migrate
 
       - name: Pull production settings
-        working-directory: web
         run: vercel pull --yes --environment=production
 
       - name: Build
-        working-directory: web
-        env:
-          # Baked in so /api/health can name the commit it is serving. Without this the
-          # verify step below has nothing to check against.
-          DEMO_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: vercel build --prod --yes
 
       - name: Deploy
         id: deploy
-        working-directory: web
+        # The commit /api/health reports comes from Vercel's own VERCEL_GIT_COMMIT_SHA, which
+        # is set from the git metadata the CLI sends with this deploy — the checkout above is
+        # at head_sha, so that is the commit the live site will name. A build-time
+        # DEMO_COMMIT_SHA cannot do this job: the build's environment is gone by the time a
+        # request reaches the function, which is why health used to answer "dev" forever.
         run: |
           # The deployment's own URL, not the project alias: it is valid the moment this
           # command returns, so the verify step below is not racing an alias promotion.

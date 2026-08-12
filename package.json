@@ -14,6 +14,10 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },
+  "//dependencies": "Nothing at the root imports next. It is declared here because `vercel build` runs at the repo root (see vercel.json) and Vercel's Next.js builder refuses to start unless it can resolve next/package.json from there — pnpm keeps the app's copy inside web/node_modules, where it cannot. Same version as web/package.json, same copy from the store.",
+  "dependencies": {
+    "next": "^15.5.4"
+  },
   "devDependencies": {
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

@@ -28,6 +28,41 @@ pnpm -r typecheck && pnpm -r test
 whole: commentary ships the sentence code wrote, and Ask says plainly that it cannot look anything up
 rather than guessing.
 
+The deployed gate passcode is **`qgb9-wyjy-qz97`**. It is written down here on purpose: the repo is
+private, and a demo nobody can open is not a demo.
+
+## Deploying it
+
+Pushing to `main` is the deploy. CI runs; on green, the deploy workflow builds, ships `--prebuilt`,
+and then polls `/api/health` until the live site reports the exact commit it deployed. A deploy that
+cannot prove that fails.
+
+Everything runs from the repo **root**, not from `web/`, and `vercel.json` is what points the build
+back down at the app. The app is a member of a pnpm workspace whose `node_modules` live at the root,
+so a build run inside `web/` traces Next's server files above the deploy root: they never reach the
+deployment and the first request dies on a missing `next-server.js`. That is a lesson from the kit's
+own first real deploy rather than a precaution.
+
+To ship from here instead — the first deploy, or when Actions is unavailable:
+
+```sh
+pnpm -C ~/Code/sampatel3/demo-kit demo deploy --tier memory --dir "$PWD" \
+  --sha "$(git rev-parse HEAD)" --url https://dl-finance-workbench.vercel.app/api/health
+```
+
+## Updating the kit
+
+The shared machinery — the shell, the gate, the model seam, the deck — is vendored as a pinned
+submodule. A fix made there reaches this demo when the pin moves:
+
+```sh
+pnpm -C ~/Code/sampatel3/demo-kit demo update --dir "$PWD"
+```
+
+It fetches, installs, runs the tests, prints what changed and commits the pointer. This demo has
+already done it once, from `4e43a1d` to `a108a591`, which makes propagation proven rather than
+assumed.
+
 ## Layout
 
 ```
