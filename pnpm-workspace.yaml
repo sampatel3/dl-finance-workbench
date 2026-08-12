@@ -3,8 +3,16 @@
 # The kit packages are listed one by one rather than by a glob. The submodule contains
 # every package demo-kit has, and a glob would pull all of them in — including `db`,
 # which is how drizzle and pg end up installed in a demo that has no database.
+#
+# `packages/*` is this demo's own, and it is a hand-edit the scaffolder did not write. The kit's
+# position (its decision §17) is that a demo layers by convention until it grows layers worth
+# enforcing; a fact store with a declared grain, a measure catalogue that is also the semantic
+# layer, and three analysis engines are that condition, and `web/lib/` is the wrong home for them.
+# The edit is safe across upgrades: `demo update` moves the submodule pointer, installs, tests and
+# commits the pointer, and never rewrites this file.
 packages:
   - 'web'
+  - 'packages/*'
   - 'vendor/demo-kit/packages/data'
   - 'vendor/demo-kit/packages/deck'
   - 'vendor/demo-kit/packages/gate'

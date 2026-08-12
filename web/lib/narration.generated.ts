@@ -13,18 +13,18 @@ export const NARRATION: Readonly<Record<string, BriefRecord>> = {
     "title": "Jun 26 operations brief",
     "month": "2026-06",
     "figures": {
-      "networkVolume": 4952,
+      "networkVolume": 5004,
       "siteCount": 4,
-      "volumeBefore": 1110,
-      "volumeNow": 940,
-      "changeRate": -0.153
+      "volumeBefore": 1099,
+      "volumeNow": 963,
+      "changeRate": -0.124
     },
-    "finding": "East fell in each of the three months to Jun 26, from 1,110 units to 940, -15.3%.",
+    "finding": "East fell in each of the three months to Jun 26, from 1,099 units to 963, -12.4%.",
     "narration": {
       "headline": "Volume is falling at East",
-      "body": "East fell in each of the three months to Jun 26, from 1,110 units to 940, -15.3%. Across all 4 sites the network dispatched 4,952 units in Jun 26.",
+      "body": "East fell in each of the three months to Jun 26, from 1,099 units to 963, -12.4%. Across all 4 sites the network dispatched 5,004 units in Jun 26.",
       "narratedBy": "template",
-      "generatedAt": "2026-08-12T11:24:56.144Z"
+      "generatedAt": "2026-08-12T11:30:09.709Z"
     }
   }
 };
