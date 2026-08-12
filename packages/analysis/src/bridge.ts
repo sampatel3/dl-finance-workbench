@@ -46,12 +46,7 @@
  * quarter when it did not.
  */
 
-import type {
-  AccountCode,
-  FiscalMonth,
-  PeriodScope,
-  SegmentCode,
-} from '@kestrel/model';
+import type { AccountCode, FiscalMonth, PeriodScope, SegmentCode } from '@kestrel/model';
 import {
   SEGMENTS,
   entity,
@@ -77,6 +72,11 @@ export type BridgeBarKind =
   | 'mix'
   /** A segment with no natural unit: its movement cannot be split, so it is reported whole. */
   | 'rate'
+  /**
+   * The part of the measure that has no segment at all — intercompany trade on revenue, bought-in labour
+   * and the intercompany purchase on cost.
+   */
+  | 'unsegmented'
   | 'fx'
   /** Named, small, and reported. Never absorbed. */
   | 'other'
@@ -130,7 +130,9 @@ interface SegmentFigure {
 function segmentFigures(
   ctx: MeasureContext,
   accountId: AccountCode,
-  overrides: Partial<Pick<MeasureContext, 'scope' | 'scenario' | 'versionId' | 'lens' | 'comparativeScope'>> = {},
+  overrides: Partial<
+    Pick<MeasureContext, 'scope' | 'scenario' | 'versionId' | 'lens' | 'comparativeScope'>
+  > = {},
 ): Map<SegmentCode, SegmentFigure> {
   const scope = overrides.scope ?? ctx.scope;
   const scenario = overrides.scenario ?? ctx.scenario;
@@ -297,7 +299,9 @@ function decompose(
 // ---------------------------------------------------------------------------
 
 /** The accounts a bridge can be built over: the ones held by segment, with a quantity. */
-const BRIDGEABLE: Readonly<Record<string, { accountId: AccountCode; label: string; sign: 1 | -1 }>> = {
+const BRIDGEABLE: Readonly<
+  Record<string, { accountId: AccountCode; label: string; sign: 1 | -1 }>
+> = {
   revenue: { accountId: 'revenue', label: 'Revenue', sign: 1 },
   cost_of_sales: { accountId: 'cost_of_sales', label: 'Cost of sales', sign: 1 },
 };
@@ -353,7 +357,23 @@ export function buildBridge(request: BridgeRequest): Bridge {
   });
   const d = decompose(before, after);
 
-  const explained = d.volume + d.price + d.mix + d.rate + fx;
+  // A measure is not only its segmented account. Group revenue carries intercompany trade, and cost of
+  // sales carries bought-in labour and the intercompany purchase — none of which has a segment, so none
+  // of which can be split into price and volume. That movement is real and it has to go somewhere.
+  //
+  // It was going into the residual, and the residual was zero only because the difference happened to be
+  // the same in both periods. A change to the cost-to-serve assumption moved intercompany trade by £50k
+  // and the residual immediately became larger than the mix bar — a decomposition quietly explaining less
+  // than it claimed to, which is exactly what `sums` and the residual bar exist to prevent and exactly
+  // what an unnamed residual lets through. Named, the residual returns to rounding.
+  //
+  // Both sides are measured against their own lens: the comparative in reported terms, the current in
+  // constant currency, so the translation stays in the FX bar and is not counted twice.
+  const sumOf = (figures: Map<SegmentCode, SegmentFigure>): number =>
+    [...figures.values()].reduce((running, figure) => running + figure.value, 0);
+  const unsegmented = toConstant - sumOf(after) - (from - sumOf(before));
+
+  const explained = d.volume + d.price + d.mix + d.rate + fx + unsegmented;
   const residual = total - explained;
 
   // Annotated before the filter, not after it: an array literal infers `kind: string`, and the
@@ -387,6 +407,12 @@ export function buildBridge(request: BridgeRequest): Bridge {
       value: d.rate,
       bySegment: d.rateBySegment,
       note: 'segments with no natural unit — reported whole rather than split into price and volume',
+    },
+    {
+      kind: 'unsegmented',
+      label: request.measureId === 'revenue' ? 'Intercompany' : 'Bought-in and intercompany',
+      value: unsegmented,
+      note: 'the part of the measure held without a segment, so it has no units to split',
     },
     {
       kind: 'fx',
@@ -492,7 +518,9 @@ export function principalDriver(bridge: Bridge): BridgeBar | undefined {
 }
 
 /** The segment that contributed most to a bar. The second half of that caption. */
-export function principalSegment(bar: BridgeBar): { segment: SegmentCode; label: string; value: number } | undefined {
+export function principalSegment(
+  bar: BridgeBar,
+): { segment: SegmentCode; label: string; value: number } | undefined {
   if (bar.bySegment === undefined) return undefined;
   const top = [...bar.bySegment.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
   if (top === undefined) return undefined;

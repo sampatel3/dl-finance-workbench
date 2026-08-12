@@ -274,8 +274,18 @@ export function forecastWeeks(anchor: FiscalMonth): ForecastWeek[] {
 // ---------------------------------------------------------------------------
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ] as const;
 
 /** "July 2026". */

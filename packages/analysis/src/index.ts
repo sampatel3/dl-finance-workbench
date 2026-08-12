@@ -11,3 +11,5 @@ export * from './drivers.ts';
 export * from './forecast.ts';
 export * from './cash.ts';
 export * from './quality.ts';
+export * from './detectors.ts';
+export * from './priority.ts';

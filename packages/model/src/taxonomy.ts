@@ -70,31 +70,172 @@ export interface Account {
 
 export const ACCOUNTS = [
   // ------------------------------------------------------------------ profit and loss
-  { code: 'revenue', label: 'Revenue', basis: 'flow', statement: 'pl', polarity: 'higher_is_better' },
-  { code: 'revenue_ic', label: 'Intercompany revenue', basis: 'flow', statement: 'pl', polarity: 'neutral', intercompany: true },
-  { code: 'cost_of_sales', label: 'Cost of sales', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
-  { code: 'cost_of_sales_ic', label: 'Intercompany cost of sales', basis: 'flow', statement: 'pl', polarity: 'neutral', intercompany: true },
-  { code: 'subcontract_cost', label: 'Subcontract labour', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
-  { code: 'staff_cost', label: 'Staff cost', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
-  { code: 'other_opex', label: 'Other operating expense', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
-  { code: 'unmapped_opex', label: 'Unmapped operating expense', basis: 'flow', statement: 'pl', polarity: 'lower_is_better', unmapped: true },
-  { code: 'depreciation', label: 'Depreciation & amortisation', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
-  { code: 'interest_expense', label: 'Interest expense', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
-  { code: 'tax_expense', label: 'Tax expense', basis: 'flow', statement: 'pl', polarity: 'lower_is_better' },
+  {
+    code: 'revenue',
+    label: 'Revenue',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'higher_is_better',
+  },
+  {
+    code: 'revenue_ic',
+    label: 'Intercompany revenue',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'neutral',
+    intercompany: true,
+  },
+  {
+    code: 'cost_of_sales',
+    label: 'Cost of sales',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
+  {
+    code: 'cost_of_sales_ic',
+    label: 'Intercompany cost of sales',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'neutral',
+    intercompany: true,
+  },
+  {
+    code: 'subcontract_cost',
+    label: 'Subcontract labour',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
+  {
+    code: 'staff_cost',
+    label: 'Staff cost',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
+  {
+    code: 'other_opex',
+    label: 'Other operating expense',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
+  {
+    code: 'unmapped_opex',
+    label: 'Unmapped operating expense',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+    unmapped: true,
+  },
+  {
+    code: 'depreciation',
+    label: 'Depreciation & amortisation',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
+  {
+    code: 'interest_expense',
+    label: 'Interest expense',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
+  {
+    code: 'tax_expense',
+    label: 'Tax expense',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'lower_is_better',
+  },
 
   // ------------------------------------------------------------------ balance sheet: assets
-  { code: 'cash', label: 'Cash & equivalents', basis: 'balance', statement: 'bs', polarity: 'higher_is_better', side: 'asset' },
-  { code: 'receivables', label: 'Trade receivables', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'asset' },
-  { code: 'receivables_ic', label: 'Intercompany receivables', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'asset', intercompany: true },
-  { code: 'inventory', label: 'Inventory', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'asset' },
-  { code: 'fixed_assets', label: 'Property, plant & equipment', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'asset' },
-  { code: 'other_assets', label: 'Other assets', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'asset' },
+  {
+    code: 'cash',
+    label: 'Cash & equivalents',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'higher_is_better',
+    side: 'asset',
+  },
+  {
+    code: 'receivables',
+    label: 'Trade receivables',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'asset',
+  },
+  {
+    code: 'receivables_ic',
+    label: 'Intercompany receivables',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'asset',
+    intercompany: true,
+  },
+  {
+    code: 'inventory',
+    label: 'Inventory',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'asset',
+  },
+  {
+    code: 'fixed_assets',
+    label: 'Property, plant & equipment',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'asset',
+  },
+  {
+    code: 'other_assets',
+    label: 'Other assets',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'asset',
+  },
 
   // ------------------------------------------------------------------ balance sheet: liabilities
-  { code: 'payables', label: 'Trade payables', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'liability' },
-  { code: 'payables_ic', label: 'Intercompany payables', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'liability', intercompany: true },
-  { code: 'borrowings', label: 'Borrowings', basis: 'balance', statement: 'bs', polarity: 'lower_is_better', side: 'liability' },
-  { code: 'other_liabilities', label: 'Other liabilities', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'liability' },
+  {
+    code: 'payables',
+    label: 'Trade payables',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'liability',
+  },
+  {
+    code: 'payables_ic',
+    label: 'Intercompany payables',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'liability',
+    intercompany: true,
+  },
+  {
+    code: 'borrowings',
+    label: 'Borrowings',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'lower_is_better',
+    side: 'liability',
+  },
+  {
+    code: 'other_liabilities',
+    label: 'Other liabilities',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'liability',
+  },
 
   // ------------------------------------------------------------------ balance sheet: equity
   //
@@ -102,9 +243,32 @@ export const ACCOUNTS = [
   // equity moves at the prior closing rate, the year's profit at the average rate, and the
   // difference between them is the translation reserve. One line would hide the mechanism the
   // Controls surface exists to show.
-  { code: 'share_capital', label: 'Share capital', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'equity', translateAt: 'average' },
-  { code: 'retained_earnings', label: 'Retained earnings', basis: 'balance', statement: 'bs', polarity: 'higher_is_better', side: 'equity', translateAt: 'average' },
-  { code: 'translation_reserve', label: 'Cumulative translation reserve', basis: 'balance', statement: 'bs', polarity: 'neutral', side: 'equity' },
+  {
+    code: 'share_capital',
+    label: 'Share capital',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'equity',
+    translateAt: 'average',
+  },
+  {
+    code: 'retained_earnings',
+    label: 'Retained earnings',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'higher_is_better',
+    side: 'equity',
+    translateAt: 'average',
+  },
+  {
+    code: 'translation_reserve',
+    label: 'Cumulative translation reserve',
+    basis: 'balance',
+    statement: 'bs',
+    polarity: 'neutral',
+    side: 'equity',
+  },
 
   // ------------------------------------------------------------------ denominators
   //
@@ -112,25 +276,112 @@ export const ACCOUNTS = [
   // accounts at read time. A days-sales-outstanding ratio wants the average receivable over the
   // window, and computing that from a `balance` query is impossible: the query has already
   // collapsed the window to its last month.
-  { code: 'avg_receivables', label: 'Average receivables', basis: 'avg_balance', statement: 'bs', polarity: 'neutral' },
-  { code: 'avg_payables', label: 'Average payables', basis: 'avg_balance', statement: 'bs', polarity: 'neutral' },
-  { code: 'avg_inventory', label: 'Average inventory', basis: 'avg_balance', statement: 'bs', polarity: 'neutral' },
-  { code: 'avg_capital_employed', label: 'Average capital employed', basis: 'avg_balance', statement: 'bs', polarity: 'neutral' },
+  {
+    code: 'avg_receivables',
+    label: 'Average receivables',
+    basis: 'avg_balance',
+    statement: 'bs',
+    polarity: 'neutral',
+  },
+  {
+    code: 'avg_payables',
+    label: 'Average payables',
+    basis: 'avg_balance',
+    statement: 'bs',
+    polarity: 'neutral',
+  },
+  {
+    code: 'avg_inventory',
+    label: 'Average inventory',
+    basis: 'avg_balance',
+    statement: 'bs',
+    polarity: 'neutral',
+  },
+  {
+    code: 'avg_capital_employed',
+    label: 'Average capital employed',
+    basis: 'avg_balance',
+    statement: 'bs',
+    polarity: 'neutral',
+  },
 
   // ------------------------------------------------------------------ operational
   //
   // On the fact table rather than beside it, because a driver that lives somewhere else is a
   // driver that will disagree with the P&L it is supposed to explain.
-  { code: 'headcount', label: 'Headcount (FTE)', basis: 'balance', statement: 'cf', polarity: 'neutral' , nonMonetary: true },
-  { code: 'chargeable_hours', label: 'Chargeable hours', basis: 'flow', statement: 'cf', polarity: 'higher_is_better' , nonMonetary: true },
-  { code: 'subcontract_hours', label: 'Subcontract hours', basis: 'flow', statement: 'cf', polarity: 'lower_is_better' , nonMonetary: true },
-  { code: 'available_hours', label: 'Available hours', basis: 'flow', statement: 'cf', polarity: 'neutral' , nonMonetary: true },
-  { code: 'pipeline_weighted', label: 'Weighted pipeline', basis: 'balance', statement: 'cf', polarity: 'higher_is_better' },
+  {
+    code: 'headcount',
+    label: 'Headcount (FTE)',
+    basis: 'balance',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'chargeable_hours',
+    label: 'Chargeable hours',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'subcontract_hours',
+    label: 'Subcontract hours',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'available_hours',
+    label: 'Available hours',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'pipeline_weighted',
+    label: 'Weighted pipeline',
+    basis: 'balance',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+  },
+  // Two flows whose ratio is the conversion rate, rather than a rate stored as a fact. A rate cannot be
+  // summed across entities, so an account holding one would silently produce a group figure that is the
+  // sum of five percentages. Held as numerator and denominator, the conversion aggregates correctly as a
+  // weighted average without anybody having to remember that it should.
+  {
+    code: 'pipeline_converted',
+    label: 'Pipeline converted to order',
+    basis: 'balance',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+  },
 
   // ------------------------------------------------------------------ cash flow
-  { code: 'capex', label: 'Capital expenditure', basis: 'flow', statement: 'cf', polarity: 'neutral' },
-  { code: 'dividends', label: 'Dividends paid', basis: 'flow', statement: 'cf', polarity: 'neutral' },
-  { code: 'net_borrowing', label: 'Net borrowing drawn', basis: 'flow', statement: 'cf', polarity: 'neutral' },
+  {
+    code: 'capex',
+    label: 'Capital expenditure',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+  },
+  {
+    code: 'dividends',
+    label: 'Dividends paid',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+  },
+  {
+    code: 'net_borrowing',
+    label: 'Net borrowing drawn',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+  },
 ] as const satisfies readonly Account[];
 
 export type AccountCode = (typeof ACCOUNTS)[number]['code'];

@@ -28,6 +28,7 @@ import {
   buildWorld,
 } from './seed.ts';
 import { CALENDAR_YEAR, monthScope, priorYearScope, ytdScope } from './period.ts';
+import { closeCompleteness } from './vintages.ts';
 import { consolidate, groupPl } from './consolidate.ts';
 import { PRESENTATION, foreignEntities, subtree, tradingEntities } from './entities.ts';
 import type { World } from './seed.ts';
@@ -58,8 +59,15 @@ describe('the world is a pure function of its seed', () => {
     // disagree on which vintage or which segment produced it, and the drill-down is what would
     // then differ between one reader and the next.
     const rowsOf = (w: World) =>
-      tradingEntities().flatMap((e) =>
-        w.store.query({ entityId: e.id, accountId: 'revenue', scope: july, scenario: 'ACTUAL', versionId: ACTUAL_VERSION }).rows,
+      tradingEntities().flatMap(
+        (e) =>
+          w.store.query({
+            entityId: e.id,
+            accountId: 'revenue',
+            scope: july,
+            scenario: 'ACTUAL',
+            versionId: ACTUAL_VERSION,
+          }).rows,
       );
     expect(rowsOf(a)).toEqual(rowsOf(b));
   });
@@ -173,7 +181,10 @@ describe('currency', () => {
 describe('versions', () => {
   it('holds a budget, three superseded forecasts and one draft', () => {
     expect(VERSIONS.map((v) => v.id)).toEqual(['budget-fy26', 'v4', 'v5', 'v6', 'v7']);
-    expect(VERSIONS.filter((v) => v.status === 'approved').map((v) => v.id)).toEqual(['budget-fy26', 'v6']);
+    expect(VERSIONS.filter((v) => v.status === 'approved').map((v) => v.id)).toEqual([
+      'budget-fy26',
+      'v6',
+    ]);
     expect(VERSIONS.find((v) => v.id === 'v7')?.status).toBe('draft');
   });
 
@@ -223,11 +234,21 @@ describe('the restatement', () => {
     // PLANTED 11. A reclassification between cost of sales and operating expense is the right
     // restatement to plant precisely because it changes the margin and not the profit — so a reader
     // who only watches the bottom line sees nothing, and the vintage is the only way to explain it.
-    const before = world.store.query({ ...base, accountId: 'cost_of_sales', asOfVintage: `v-${RESTATEMENT_MONTH}-core` }).value ?? 0;
+    const before =
+      world.store.query({
+        ...base,
+        accountId: 'cost_of_sales',
+        asOfVintage: `v-${RESTATEMENT_MONTH}-core`,
+      }).value ?? 0;
     const after = world.store.query({ ...base, accountId: 'cost_of_sales' }).value ?? 0;
     expect(before - after).toBe(RESTATEMENT_MAJOR * 100);
 
-    const opexBefore = world.store.query({ ...base, accountId: 'other_opex', asOfVintage: `v-${RESTATEMENT_MONTH}-core` }).value ?? 0;
+    const opexBefore =
+      world.store.query({
+        ...base,
+        accountId: 'other_opex',
+        asOfVintage: `v-${RESTATEMENT_MONTH}-core`,
+      }).value ?? 0;
     const opexAfter = world.store.query({ ...base, accountId: 'other_opex' }).value ?? 0;
     expect(opexAfter - opexBefore).toBe(RESTATEMENT_MAJOR * 100);
   });
@@ -288,7 +309,14 @@ describe('the healthy twin', () => {
   it('still balances, so a clean world is not a differently-broken one', () => {
     const c = group(healthy);
     expect(c.lines.get('cash')?.group).not.toBeNull();
-    const assets = ['cash', 'receivables', 'receivables_ic', 'inventory', 'fixed_assets', 'other_assets'] as const;
+    const assets = [
+      'cash',
+      'receivables',
+      'receivables_ic',
+      'inventory',
+      'fixed_assets',
+      'other_assets',
+    ] as const;
     const total = assets.reduce((sum, code) => sum + (c.lines.get(code)?.group ?? 0), 0);
     expect(total).toBeGreaterThan(0);
   });
@@ -318,10 +346,15 @@ describe('the entity subtree is the row-level access primitive', () => {
 describe('year-to-date reconciles to its months', () => {
   it('for a flow, and reads the closing month for a balance', () => {
     const ytd = ytdScope(SEED_END, CALENDAR_YEAR);
-    const perMonth = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07'].reduce(
-      (sum, month) => sum + groupPl(group(world, 'reported', monthScope(month))).revenue,
-      0,
-    );
+    const perMonth = [
+      '2026-01',
+      '2026-02',
+      '2026-03',
+      '2026-04',
+      '2026-05',
+      '2026-06',
+      '2026-07',
+    ].reduce((sum, month) => sum + groupPl(group(world, 'reported', monthScope(month))).revenue, 0);
     const ytdRevenue = groupPl(group(world, 'reported', ytd)).revenue;
 
     // Within five hundredths of one per cent — and the gap is a decision rather than a defect. A
@@ -334,6 +367,106 @@ describe('year-to-date reconciles to its months', () => {
     expect(drift).toBeLessThan(0.0005);
 
     // Cash is a balance: the year-to-date figure is July's, not the sum of seven months'.
-    expect(group(world, 'reported', ytd).lines.get('cash')?.group).toBe(group(world).lines.get('cash')?.group);
+    expect(group(world, 'reported', ytd).lines.get('cash')?.group).toBe(
+      group(world).lines.get('cash')?.group,
+    );
+  });
+});
+
+describe('close readiness is a first-class object, not a flag on a figure', () => {
+  // PLANTED 10. The reason it is an object: a consolidated number built from four closed ledgers and one
+  // that has only submitted is not wrong, and it is not final either, and the difference is invisible in
+  // the figure. Without somewhere to hold that, the only honest options are to omit the entity or to
+  // print the total and say nothing — and every real group reporting pack does the second.
+  it('says where every entity is, in every month', () => {
+    expect(world.closePositions.length).toBe(MONTHS.length * tradingEntities().length);
+    for (const position of world.closePositions) {
+      expect(['not_submitted', 'submitted', 'closed']).toContain(position.state);
+      // An owner on every position, including the closed ones: "who do I ask" is a question about the
+      // ones that are late, and a field that is only populated when something is wrong is a field
+      // nobody trusts.
+      expect(position.owner.length).toBeGreaterThan(3);
+    }
+  });
+
+  it('and exactly one ledger is open, in the month the demo is about', () => {
+    const july = closeCompleteness(world.closePositions, SEED_END);
+    expect(july.total).toBe(5);
+    expect(july.closed).toBe(4);
+    expect(july.open.map((p) => p.entityId)).toEqual(['inc']);
+    expect(july.open[0]?.state).toBe('submitted');
+    // And it says why, in words a reviewer can act on rather than a status nobody can question.
+    expect(july.open[0]?.note).toMatch(/under review/);
+  });
+
+  it('and every earlier month is closed, so the one open position is the finding', () => {
+    for (const month of MONTHS.filter((m) => m !== SEED_END)) {
+      const completeness = closeCompleteness(world.closePositions, month);
+      expect(completeness.open).toEqual([]);
+      expect(completeness.closed).toBe(completeness.total);
+    }
+  });
+
+  it('and completeness is counted by entity, never weighted by value', () => {
+    // A weighting by revenue would let the group report itself 97% closed while the entity holding the
+    // exposure is the open one, and "97% closed" is precisely the figure that stops a question being
+    // asked. Four of five is a worse-looking number and a more useful one.
+    const july = closeCompleteness(world.closePositions, SEED_END);
+    expect(july.closed / july.total).toBe(0.8);
+  });
+
+  it('and the healthy twin has nothing open', () => {
+    const twin = closeCompleteness(buildHealthyWorld().closePositions, SEED_END);
+    expect(twin.open).toEqual([]);
+    expect(twin.closed).toBe(twin.total);
+  });
+});
+
+describe('the services cost-to-serve assumption reaches the data', () => {
+  // Conditions 2, 3 and 9 are one cause seen at three horizons, and the cause is this assumption. It has
+  // to move the services segments and leave the product segments alone, or the finding it produces is a
+  // group-wide drift that nobody owns.
+  const forecastScope = monthScope(SEED_END);
+
+  function segmentCost(w: World, segmentId: 'contracts' | 'equipment', versionId: string): number {
+    return tradingEntities().reduce((total, e) => {
+      const result = w.store.query({
+        entityId: e.id,
+        accountId: 'cost_of_sales',
+        scope: forecastScope,
+        scenario: versionId === ACTUAL_VERSION ? 'ACTUAL' : 'FORECAST',
+        versionId,
+        segmentId,
+        costCentreId: null,
+      });
+      return total + (result.value ?? 0);
+    }, 0);
+  }
+
+  it('so a services segment costs more than the forecast assumed', () => {
+    expect(segmentCost(world, 'contracts', ACTUAL_VERSION)).toBeGreaterThan(
+      segmentCost(world, 'contracts', 'v6'),
+    );
+  });
+
+  it('and it is read from the segment’s division rather than a list of codes', () => {
+    // So a third service line picks the assumption up instead of silently escaping it. Equipment moves
+    // too — every version has a unit-cost assumption — but by less, because only services carries both.
+    const servicesGap =
+      segmentCost(world, 'contracts', ACTUAL_VERSION) / segmentCost(world, 'contracts', 'v6') - 1;
+    const productsGap =
+      segmentCost(world, 'equipment', ACTUAL_VERSION) / segmentCost(world, 'equipment', 'v6') - 1;
+    expect(servicesGap).toBeGreaterThan(productsGap);
+    expect(servicesGap).toBeGreaterThan(0.04);
+  });
+
+  it('and the healthy twin has no gap at all, on either', () => {
+    const twin = buildHealthyWorld();
+    expect(segmentCost(twin, 'contracts', ACTUAL_VERSION)).toBe(
+      segmentCost(twin, 'contracts', 'v6'),
+    );
+    expect(segmentCost(twin, 'equipment', ACTUAL_VERSION)).toBe(
+      segmentCost(twin, 'equipment', 'v6'),
+    );
   });
 });

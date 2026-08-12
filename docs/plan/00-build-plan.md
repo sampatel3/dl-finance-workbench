@@ -113,14 +113,14 @@ reason and was found by reviewing the revision against this plan.
 | # | Condition | What it makes demonstrable |
 | --- | --- | --- |
 | 1 | Revenue £0.7m ahead of forecast v6, mainly on volume | The bridge, with a favourable finding — a demo where every finding is bad news reads as a scold |
-| 2 | Service-contract gross margin 3.4pts below forecast | Segmented margin variance, and slide 5's own second sentence |
-| 3 | Subcontract blended rate above assumption for three consecutive months | Driver attribution, and the run-rate-versus-timing split |
+| 2 | Service-contract gross margin 267bps below forecast, and projects 404bps, while the group is **ahead** | Segmented margin variance, and slide 5's own second sentence. The figure is what the seed produces rather than a target it was tuned to hit — see verification finding 24 |
+| 3 | Subcontract blended rate above the forecast **in force at the time** for three consecutive months, spanning two versions | Driver attribution, and the run-rate-versus-timing split |
 | 4 | EUR weakened over the comparative period | Reported versus constant currency, and FX as a bridge bar |
 | 5 | Days sales outstanding at Kestrel Gulf up 9 days over three months | Working capital as a driver, and the P&L-to-cash path |
 | 6 | The 13-week forecast dips to £2.1m in week 9, under a £2.5m board floor | The cash surface, the floor breach, and the scenario that makes it worse |
 | 7 | Two new GL accounts in the July load are unmapped, £212k at stake | The unmapped-account gap that F5 says every real pilot hits |
 | 8 | An intercompany mismatch of £48k between Gulf and Manufacturing | A named reconciliation check that **fails**, rather than a green tick |
-| 9 | Forecast versions v4, v5 and v6 each under-called service cost of sales | Forecast bias — a same-direction miss three vintages running |
+| 9 | Forecast versions v4, v5 and v6 each under-called the cost to serve, and by less each time | Forecast bias — a same-direction miss three vintages running, and the amplification into EBITDA that makes it findable |
 | 10 | Kestrel Inc has submitted July but not closed it | Close readiness, and a group figure that carries a completeness flag |
 | 11 | The June restatement above | Vintages, "as at" reporting, and why an approved pack pins one |
 | 12 | CRM pipeline conversion running above assumption — roughly £0.8m of full-year revenue at stake if it holds | **The Opportunities board.** A forward-looking favourable, carrying a *run scenario* action rather than an investigation |

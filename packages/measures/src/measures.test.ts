@@ -62,11 +62,22 @@ describe('the catalogue is the semantic layer', () => {
     }
   });
 
-  it('and keeps a driver nobody in Finance owns yet in draft rather than pretending', () => {
-    // Pipeline coverage comes from the CRM's own weighting, which is the state most operational
-    // drivers actually arrive in. A catalogue where everything is approved is a catalogue nobody read.
-    expect(measure('pipeline_coverage').status).toBe('draft');
-    expect(MEASURES.filter((m) => m.status === 'draft')).toHaveLength(1);
+  it('and keeps the drivers nobody in Finance owns yet in draft rather than pretending', () => {
+    // Both come from the CRM's own weighting, which is the state most operational drivers actually
+    // arrive in. A catalogue where everything is approved is a catalogue nobody read.
+    //
+    // Asserted as *which* measures are draft rather than how many. A count says nothing about whether the
+    // right ones are draft, and it fails for the wrong reason the moment a second honest draft is added —
+    // which is what happened when pipeline conversion arrived.
+    expect(
+      MEASURES.filter((m) => m.status === 'draft')
+        .map((m) => m.id)
+        .sort(),
+    ).toEqual(['pipeline_conversion', 'pipeline_coverage']);
+    // And every one of them names the same owner outside Finance, which is why they are draft.
+    for (const m of MEASURES.filter((d) => d.status === 'draft')) {
+      expect(m.owner).toBe('Sales Director');
+    }
   });
 
   it('throws on a measure that does not exist rather than returning nothing', () => {

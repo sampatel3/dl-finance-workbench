@@ -142,11 +142,7 @@ export function rateKindFor(basis: 'flow' | 'balance' | 'avg_balance'): RateKind
  * stated here once because getting it backwards produces figures that are wrong by a factor of
  * five and still look like money.
  */
-export function translate(
-  amountMinor: number,
-  from: Currency,
-  rate: number,
-): number {
+export function translate(amountMinor: number, from: Currency, rate: number): number {
   if (from === PRESENTATION) return amountMinor;
   if (rate === 0) throw new Error(`Cannot translate at a zero rate (${from})`);
   return Math.round(amountMinor / rate);
@@ -188,7 +184,9 @@ export function rateFor(
   if (currency === PRESENTATION) return 1;
 
   const scope =
-    ctx.lens === 'constant' && ctx.comparativeScope !== undefined ? ctx.comparativeScope : ctx.scope;
+    ctx.lens === 'constant' && ctx.comparativeScope !== undefined
+      ? ctx.comparativeScope
+      : ctx.scope;
 
   return kind === 'closing'
     ? ctx.rates.closingAt(currency, scope)

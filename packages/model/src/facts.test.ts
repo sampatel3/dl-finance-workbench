@@ -43,7 +43,13 @@ describe('basis decides how a window is evaluated', () => {
       fact({ accountId: 'revenue', month: '2026-02', amountMinor: 200 }),
       fact({ accountId: 'revenue', month: '2026-03', amountMinor: 300 }),
     );
-    const r = store.query({ entityId: 'e1', accountId: 'revenue', scope: q1, scenario: 'ACTUAL', versionId: 'actual' });
+    const r = store.query({
+      entityId: 'e1',
+      accountId: 'revenue',
+      scope: q1,
+      scenario: 'ACTUAL',
+      versionId: 'actual',
+    });
     expect(r.value).toBe(600);
     expect(r.monthsUsed).toEqual(['2026-01', '2026-02', '2026-03']);
   });
@@ -54,7 +60,13 @@ describe('basis decides how a window is evaluated', () => {
       fact({ accountId: 'cash', month: '2026-02', amountMinor: 200 }),
       fact({ accountId: 'cash', month: '2026-03', amountMinor: 300 }),
     );
-    const r = store.query({ entityId: 'e1', accountId: 'cash', scope: q1, scenario: 'ACTUAL', versionId: 'actual' });
+    const r = store.query({
+      entityId: 'e1',
+      accountId: 'cash',
+      scope: q1,
+      scenario: 'ACTUAL',
+      versionId: 'actual',
+    });
     // 600 would be the answer if basis were ignored, and 600 looks exactly like a cash balance.
     expect(r.value).toBe(300);
     expect(r.monthsUsed).toEqual(['2026-03']);
@@ -67,7 +79,13 @@ describe('basis decides how a window is evaluated', () => {
       // receivables balance a third lower than any month actually held.
       fact({ accountId: 'avg_receivables', month: '2026-03', amountMinor: 300 }),
     );
-    const r = store.query({ entityId: 'e1', accountId: 'avg_receivables', scope: q1, scenario: 'ACTUAL', versionId: 'actual' });
+    const r = store.query({
+      entityId: 'e1',
+      accountId: 'avg_receivables',
+      scope: q1,
+      scenario: 'ACTUAL',
+      versionId: 'actual',
+    });
     expect(r.value).toBe(200);
     expect(r.monthsUsed).toEqual(['2026-01', '2026-03']);
   });
@@ -87,7 +105,15 @@ describe('a missing month is not a zero', () => {
     expect(absent.rows).toEqual([]);
 
     const genuineZero = storeWith(fact({ accountId: 'cash', month: '2026-01', amountMinor: 0 }));
-    expect(genuineZero.query({ entityId: 'e1', accountId: 'cash', scope: q1, scenario: 'ACTUAL', versionId: 'actual' }).value).toBe(0);
+    expect(
+      genuineZero.query({
+        entityId: 'e1',
+        accountId: 'cash',
+        scope: q1,
+        scenario: 'ACTUAL',
+        versionId: 'actual',
+      }).value,
+    ).toBe(0);
   });
 });
 
@@ -95,10 +121,21 @@ describe('a null dimension is the aggregate, and a different row from its childr
   it('so the two levels can never be summed together by accident', () => {
     const store = storeWith(
       fact({ accountId: 'staff_cost', month: '2026-01', amountMinor: 1000, costCentreId: null }),
-      fact({ accountId: 'staff_cost', month: '2026-01', amountMinor: 600, costCentreId: 'operations' }),
+      fact({
+        accountId: 'staff_cost',
+        month: '2026-01',
+        amountMinor: 600,
+        costCentreId: 'operations',
+      }),
       fact({ accountId: 'staff_cost', month: '2026-01', amountMinor: 400, costCentreId: 'it' }),
     );
-    const base = { entityId: 'e1', accountId: 'staff_cost', scope: monthScope('2026-01'), scenario: 'ACTUAL', versionId: 'actual' } as const;
+    const base = {
+      entityId: 'e1',
+      accountId: 'staff_cost',
+      scope: monthScope('2026-01'),
+      scenario: 'ACTUAL',
+      versionId: 'actual',
+    } as const;
 
     // The aggregate.
     expect(store.query({ ...base, costCentreId: null }).value).toBe(1000);
@@ -112,10 +149,29 @@ describe('a null dimension is the aggregate, and a different row from its childr
 
 describe('a restatement replaces rather than adds', () => {
   const restated = storeWith(
-    fact({ accountId: 'cost_of_sales', month: '2026-01', amountMinor: 1000, vintageId: 'v1', segmentId: 'equipment' }),
-    fact({ accountId: 'cost_of_sales', month: '2026-01', amountMinor: 690, vintageId: 'v2', segmentId: 'equipment' }),
+    fact({
+      accountId: 'cost_of_sales',
+      month: '2026-01',
+      amountMinor: 1000,
+      vintageId: 'v1',
+      segmentId: 'equipment',
+    }),
+    fact({
+      accountId: 'cost_of_sales',
+      month: '2026-01',
+      amountMinor: 690,
+      vintageId: 'v2',
+      segmentId: 'equipment',
+    }),
   );
-  const base = { entityId: 'e1', accountId: 'cost_of_sales', scope: monthScope('2026-01'), scenario: 'ACTUAL', versionId: 'actual', segmentId: 'equipment' } as const;
+  const base = {
+    entityId: 'e1',
+    accountId: 'cost_of_sales',
+    scope: monthScope('2026-01'),
+    scenario: 'ACTUAL',
+    versionId: 'actual',
+    segmentId: 'equipment',
+  } as const;
 
   it('reads the later load, and does not sum the two', () => {
     const r = restated.query(base);
@@ -133,20 +189,57 @@ describe('a restatement replaces rather than adds', () => {
 describe('quantity', () => {
   it('sums where every row has one', () => {
     const store = storeWith(
-      fact({ accountId: 'revenue', month: '2026-01', amountMinor: 1000, segmentId: 'equipment', quantity: 4 }),
-      fact({ accountId: 'revenue', month: '2026-02', amountMinor: 1500, segmentId: 'equipment', quantity: 6 }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-01',
+        amountMinor: 1000,
+        segmentId: 'equipment',
+        quantity: 4,
+      }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-02',
+        amountMinor: 1500,
+        segmentId: 'equipment',
+        quantity: 6,
+      }),
     );
-    const r = store.query({ entityId: 'e1', accountId: 'revenue', scope: q1, scenario: 'ACTUAL', versionId: 'actual', segmentId: 'equipment' });
+    const r = store.query({
+      entityId: 'e1',
+      accountId: 'revenue',
+      scope: q1,
+      scenario: 'ACTUAL',
+      versionId: 'actual',
+      segmentId: 'equipment',
+    });
     expect(r.quantity).toBe(10);
   });
 
   it('is null where any row lacks one, because a partial volume yields a wrong price', () => {
     const store = storeWith(
-      fact({ accountId: 'revenue', month: '2026-01', amountMinor: 1000, segmentId: 'equipment', quantity: 4 }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-01',
+        amountMinor: 1000,
+        segmentId: 'equipment',
+        quantity: 4,
+      }),
       // Project revenue has no natural unit.
-      fact({ accountId: 'revenue', month: '2026-02', amountMinor: 1500, segmentId: 'projects', quantity: null }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-02',
+        amountMinor: 1500,
+        segmentId: 'projects',
+        quantity: null,
+      }),
     );
-    const r = store.query({ entityId: 'e1', accountId: 'revenue', scope: q1, scenario: 'ACTUAL', versionId: 'actual' });
+    const r = store.query({
+      entityId: 'e1',
+      accountId: 'revenue',
+      scope: q1,
+      scenario: 'ACTUAL',
+      versionId: 'actual',
+    });
     expect(r.value).toBe(2500);
     // 4 units for £2,500 would imply a price of £625 for something that is mostly not units at all.
     expect(r.quantity).toBeNull();
@@ -156,21 +249,45 @@ describe('quantity', () => {
 describe('the store refuses a figure it cannot reconcile', () => {
   it('rejects a fractional amount, naming the account and the month', () => {
     const store = new FactStore(order);
-    expect(() => store.add(fact({ accountId: 'cash', month: '2026-01', amountMinor: 100.5 }))).toThrow(
-      /integers in minor units/,
-    );
+    expect(() =>
+      store.add(fact({ accountId: 'cash', month: '2026-01', amountMinor: 100.5 })),
+    ).toThrow(/integers in minor units/);
   });
 });
 
 describe('scenarios and versions are separate keys', () => {
   it('so a budget figure can never be read as an actual', () => {
     const store = storeWith(
-      fact({ accountId: 'revenue', month: '2026-01', amountMinor: 100, scenario: 'ACTUAL', versionId: 'actual' }),
-      fact({ accountId: 'revenue', month: '2026-01', amountMinor: 90, scenario: 'BUDGET', versionId: 'budget-fy26' }),
-      fact({ accountId: 'revenue', month: '2026-01', amountMinor: 95, scenario: 'FORECAST', versionId: 'v6' }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-01',
+        amountMinor: 100,
+        scenario: 'ACTUAL',
+        versionId: 'actual',
+      }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-01',
+        amountMinor: 90,
+        scenario: 'BUDGET',
+        versionId: 'budget-fy26',
+      }),
+      fact({
+        accountId: 'revenue',
+        month: '2026-01',
+        amountMinor: 95,
+        scenario: 'FORECAST',
+        versionId: 'v6',
+      }),
     );
     const at = (scenario: 'ACTUAL' | 'BUDGET' | 'FORECAST', versionId: string): number | null =>
-      store.query({ entityId: 'e1', accountId: 'revenue', scope: monthScope('2026-01'), scenario, versionId }).value;
+      store.query({
+        entityId: 'e1',
+        accountId: 'revenue',
+        scope: monthScope('2026-01'),
+        scenario,
+        versionId,
+      }).value;
 
     expect(at('ACTUAL', 'actual')).toBe(100);
     expect(at('BUDGET', 'budget-fy26')).toBe(90);

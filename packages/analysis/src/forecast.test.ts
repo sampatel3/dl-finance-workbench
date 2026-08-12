@@ -62,7 +62,9 @@ describe('a driver is a thing somebody can change', () => {
 
   it('reads through the measure catalogue, so a driver cannot disagree with what it explains', () => {
     const rate = readDriver('subcontract_rate', ctx({ entityIds: subtree('gulf') }));
-    expect(rate.value).toBe(computeMeasure('subcontract_rate', ctx({ entityIds: subtree('gulf') })).value);
+    expect(rate.value).toBe(
+      computeMeasure('subcontract_rate', ctx({ entityIds: subtree('gulf') })).value,
+    );
     expect(rate.value ?? 0).toBeGreaterThan(0);
   });
 
@@ -141,7 +143,9 @@ describe('the version diff', () => {
 
   it('round-trips: applying the changes to v6 reproduces v7 exactly', () => {
     // The completeness test. A diff that misses a change tells a reader nothing else moved.
-    expect(applyChanges(version('v6').assumptions, diff.changes)).toEqual(version('v7').assumptions);
+    expect(applyChanges(version('v6').assumptions, diff.changes)).toEqual(
+      version('v7').assumptions,
+    );
   });
 
   it('reports the total impact on the four measures a CFO asks about', () => {

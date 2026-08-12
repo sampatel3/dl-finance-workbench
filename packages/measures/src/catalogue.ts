@@ -178,6 +178,20 @@ export const MEASURES: readonly MeasureDefinition[] = [
     compute: (get) => get('subcontract_cost'),
   },
   {
+    id: 'subcontract_hours',
+    label: 'Subcontract hours',
+    unit: 'hours',
+    // Neutral: more bought-in hours is neither good nor bad on its own — it is good if it is covering
+    // demand own capacity cannot and bad if it is covering demand own capacity should. The rate and
+    // utilisation are the two measures that decide which.
+    polarity: 'neutral',
+    formula: 'hours bought in from subcontractors',
+    owner: 'Operations Director',
+    status: 'approved',
+    trend: 'sum',
+    compute: (get) => get('subcontract_hours'),
+  },
+  {
     id: 'subcontract_rate',
     label: 'Subcontract rate',
     unit: 'rate',
@@ -187,7 +201,17 @@ export const MEASURES: readonly MeasureDefinition[] = [
     status: 'approved',
     trend: 'mean',
     note: 'The blended rate actually paid, which is the driver a forecast assumption is set against.',
-    compute: (get) => div(get('subcontract_cost'), get('subcontract_hours')),
+    // Every fact amount is held scaled into minor units, counts included — so a ratio of two accounts
+    // comes back *unscaled*, and that is correct for a `percent` or a `ratio` and wrong by a hundred for
+    // a `rate`, which is itself a minor-unit unit. This was reading £0.35 an hour for a £35 rate, and it
+    // was invisible because the two figures it is compared against — the forecast's own assumption and
+    // last month's rate — are scaled identically, so every comparison looked right and every printed
+    // figure was wrong. Utilisation and gross margin divide two scaled accounts too and need no factor,
+    // which is exactly why this is easy to miss.
+    compute: (get) => {
+      const ratio = div(get('subcontract_cost'), get('subcontract_hours'));
+      return ratio === null ? null : ratio * 100;
+    },
   },
   {
     id: 'staff_cost',
@@ -505,6 +529,19 @@ export const MEASURES: readonly MeasureDefinition[] = [
     status: 'draft',
     trend: 'last',
     compute: (get) => div(get('pipeline_weighted'), revenue(get)),
+  },
+  {
+    id: 'pipeline_conversion',
+    label: 'Pipeline conversion',
+    unit: 'ratio',
+    polarity: 'higher_is_better',
+    formula: 'pipeline converted to order ÷ weighted pipeline',
+    owner: 'Sales Director',
+    // Draft for the same reason coverage is, and it is the one that raises a board item — so the caveat
+    // travels on the finding rather than living only here.
+    status: 'draft',
+    trend: 'last',
+    compute: (get) => div(get('pipeline_converted'), get('pipeline_weighted')),
   },
 ];
 

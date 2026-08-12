@@ -114,7 +114,9 @@ function translatedAmount(
       lens: request.lens,
       rates: request.rates,
       scope: request.scope,
-      ...(request.comparativeScope === undefined ? {} : { comparativeScope: request.comparativeScope }),
+      ...(request.comparativeScope === undefined
+        ? {}
+        : { comparativeScope: request.comparativeScope }),
     },
     e.functional,
     translateAtOf(accountId),
@@ -150,7 +152,9 @@ function translatedSegmentedTotal(
       lens: request.lens,
       rates: request.rates,
       scope: request.scope,
-      ...(request.comparativeScope === undefined ? {} : { comparativeScope: request.comparativeScope }),
+      ...(request.comparativeScope === undefined
+        ? {}
+        : { comparativeScope: request.comparativeScope }),
     },
     e.functional,
     translateAtOf(accountId),
@@ -215,8 +219,9 @@ export function consolidate(request: ConsolidationRequest): Consolidation {
     }
     const assets = sideTotal(lines, 'asset', e.id);
     const liabilities = sideTotal(lines, 'liability', e.id);
-    const capital = (lines.get('share_capital')?.byEntity.get(e.id) ?? 0)
-      + (lines.get('retained_earnings')?.byEntity.get(e.id) ?? 0);
+    const capital =
+      (lines.get('share_capital')?.byEntity.get(e.id) ?? 0) +
+      (lines.get('retained_earnings')?.byEntity.get(e.id) ?? 0);
     reserveByEntity.set(e.id, assets - liabilities - capital);
   }
   const translationReserve = [...reserveByEntity.values()].reduce((sum, v) => sum + v, 0);
@@ -319,10 +324,16 @@ export function groupPl(c: Consolidation): {
 }
 
 /** Every account with a non-zero elimination — the Controls surface's elimination list. */
-export function eliminations(c: Consolidation): { accountId: AccountCode; label: string; amount: number }[] {
+export function eliminations(
+  c: Consolidation,
+): { accountId: AccountCode; label: string; amount: number }[] {
   return [...c.lines.values()]
     .filter((line) => line.eliminated !== 0)
-    .map((line) => ({ accountId: line.accountId, label: account(line.accountId).label, amount: line.eliminated }));
+    .map((line) => ({
+      accountId: line.accountId,
+      label: account(line.accountId).label,
+      amount: line.eliminated,
+    }));
 }
 
 /** The presentation currency, restated here so callers need not import two modules to format. */

@@ -178,27 +178,50 @@ describe('bias is a run across versions', () => {
   });
 
   it('and stays quiet on the measures the forecast is merely noisy about', () => {
-    // Revenue is missed by more in absolute terms than subcontract cost is, and in both directions —
+    // Revenue is missed by more on average than subcontract cost is, and in both directions —
     // optimistic in v4, nearly right in v5, short in v6. That is a forecast doing its job imperfectly,
     // which is not a finding. A detector that called it bias would be reporting the existence of
     // forecasting rather than a fault in it.
-    for (const measureId of ['revenue', 'cost_of_sales', 'ebitda']) {
+    for (const measureId of ['revenue', 'gross_profit', 'dso', 'utilisation']) {
       const noise = detectBias(measureId, ctx());
       expect(noise.biased).toBe(false);
       expect(noise.consecutiveVersions).toBeLessThan(BIAS_RUN_THRESHOLD);
+      expect(noise.withheld).toBe('run too short');
     }
+    // And revenue's average miss is larger than the threshold, so it is the *run* test keeping it quiet
+    // and not the size test. Both tests have to be able to be the one that fires.
+    expect(Math.abs(detectBias('revenue', ctx()).meanSignedError)).toBeGreaterThan(
+      BIAS_MATERIALITY,
+    );
+  });
+
+  it('and follows the planted cause into the measures it flows through', () => {
+    // The cost to serve was under-called in every version, so cost of sales is biased, and EBITDA — a
+    // small difference of two large numbers — is biased by an order more. That amplification is the
+    // reason the bias surface is worth having: nobody would find a 2% cost miss by looking at cost, and
+    // everybody notices a 20% EBITDA miss. The drill runs the other way, from the noticed to the cause.
+    const cost = detectBias('cost_of_sales', ctx());
+    const ebitda = detectBias('ebitda', ctx());
+    expect(cost.biased).toBe(true);
+    expect(cost.direction).toBe('under');
+    expect(ebitda.biased).toBe(true);
+    // Costs under-called means profit over-called. Opposite directions from one cause, which a detector
+    // keyed on the sign of the error rather than on the measure's polarity would report as two problems.
+    expect(ebitda.direction).toBe('over');
+    expect(Math.abs(ebitda.meanSignedError)).toBeGreaterThan(Math.abs(cost.meanSignedError));
   });
 
   it('and a run without size is not a finding either', () => {
-    // Gross margin was over-called in all three versions — a full run — by 81 basis points of itself.
-    // Real, consistent, and not worth anybody's afternoon. Both tests have to pass, for the same reason
-    // the materiality policy needs an absolute floor as well as a relative one: a detector that fires
-    // on a consistent rounding error gets switched off, and then it is not there for the one that counts.
-    const margin = detectBias('gross_margin', ctx());
-    expect(margin.consecutiveVersions).toBeGreaterThanOrEqual(BIAS_RUN_THRESHOLD);
-    expect(Math.abs(margin.meanSignedError)).toBeLessThan(BIAS_MATERIALITY);
-    expect(margin.biased).toBe(false);
-    expect(margin.withheld).toBe('movement immaterial');
+    // Days payable outstanding was over-called in all three versions — a full run — by 58 basis points of
+    // itself. Real, consistent, and not worth anybody's afternoon. Both tests have to pass, for the same
+    // reason the materiality policy needs an absolute floor as well as a relative one: a detector that
+    // fires on a consistent rounding error gets switched off, and then it is not there for the one that
+    // counts.
+    const dpo = detectBias('dpo', ctx());
+    expect(dpo.consecutiveVersions).toBeGreaterThanOrEqual(BIAS_RUN_THRESHOLD);
+    expect(Math.abs(dpo.meanSignedError)).toBeLessThan(BIAS_MATERIALITY);
+    expect(dpo.biased).toBe(false);
+    expect(dpo.withheld).toBe('movement immaterial');
   });
 
   it('and says how many versions it had to go on, because three out of three is a weak run', () => {

@@ -40,7 +40,8 @@ export interface DriverDefinition {
   /** The measures this driver moves. The edge that makes attribution possible. */
   readonly moves: readonly string[];
   /** Where the value comes from: a catalogue measure, or a quantity read from the segments. */
-  readonly source: { readonly measureId: string } | { readonly quantity: 'units' | 'blended_price' };
+  readonly source:
+    { readonly measureId: string } | { readonly quantity: 'units' | 'blended_price' };
   /** One line on why this driver is worth watching. */
   readonly note?: string;
 }
@@ -132,7 +133,18 @@ export const DRIVERS: readonly DriverDefinition[] = [
     owner: 'Sales Director',
     moves: ['revenue'],
     source: { measureId: 'pipeline_coverage' },
-    note: 'The least reliable feed in the product, and the one behind the forward-looking opportunity.',
+    note: 'How much pipeline stands behind the revenue. Coverage, not conversion — a big pipeline converting badly and a small one converting well look identical here, which is why both are drivers.',
+  },
+  {
+    id: 'pipeline_conversion',
+    label: 'Pipeline conversion',
+    unit: 'ratio',
+    // Observed in the actual and assumed in every forecast, which is what makes the gap between them a
+    // finding. The least reliable feed in the product, and the one behind the forward-looking opportunity.
+    kind: 'observed',
+    owner: 'Sales Director',
+    moves: ['revenue'],
+    source: { measureId: 'pipeline_conversion' },
   },
 ];
 
@@ -180,7 +192,12 @@ function unitFigures(ctx: MeasureContext): { units: number | null; blendedPrice:
         continue;
       }
       const rate = rateFor(
-        { lens: ctx.lens, rates: ctx.rates, scope: ctx.scope, ...(ctx.comparativeScope === undefined ? {} : { comparativeScope: ctx.comparativeScope }) },
+        {
+          lens: ctx.lens,
+          rates: ctx.rates,
+          scope: ctx.scope,
+          ...(ctx.comparativeScope === undefined ? {} : { comparativeScope: ctx.comparativeScope }),
+        },
         e.functional,
         translateAtOf('revenue'),
       );
@@ -263,7 +280,10 @@ export function attributeBar(
     return { bar, unattributed: 'not attributed to any driver' };
   }
   if (bar.kind === 'rate') {
-    return { bar, unattributed: 'segments with no natural unit, so no volume or price driver applies' };
+    return {
+      bar,
+      unattributed: 'segments with no natural unit, so no volume or price driver applies',
+    };
   }
 
   const driverId = BAR_DRIVER[bar.kind];

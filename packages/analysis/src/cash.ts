@@ -81,7 +81,11 @@ export interface DirectForecast {
   /** The lowest closing balance across the horizon, and the week it happens in. */
   readonly low: { readonly amount: number; readonly week: ForecastWeek; readonly index: number };
   /** The first week below the floor, or undefined where the horizon holds. */
-  readonly breach?: { readonly week: ForecastWeek; readonly index: number; readonly shortfall: number };
+  readonly breach?: {
+    readonly week: ForecastWeek;
+    readonly index: number;
+    readonly shortfall: number;
+  };
   readonly floorMinor: number;
 }
 
@@ -107,8 +111,12 @@ const INTEREST_WEEK = 12;
 const DIVIDEND_WEEK = 9;
 
 /** Collections cluster after month end; supplier runs cluster before it. */
-const RECEIPT_PROFILE = [1.24, 0.86, 0.79, 1.31, 0.92, 0.74, 1.18, 0.95, 0.81, 1.27, 0.9, 0.77, 1.26];
-const SUPPLIER_PROFILE = [0.82, 1.18, 0.88, 0.79, 1.24, 1.11, 0.85, 0.83, 1.16, 0.86, 0.8, 1.15, 0.87];
+const RECEIPT_PROFILE = [
+  1.24, 0.86, 0.79, 1.31, 0.92, 0.74, 1.18, 0.95, 0.81, 1.27, 0.9, 0.77, 1.26,
+];
+const SUPPLIER_PROFILE = [
+  0.82, 1.18, 0.88, 0.79, 1.24, 1.11, 0.85, 0.83, 1.16, 0.86, 0.8, 1.15, 0.87,
+];
 
 const sum = (values: readonly number[]): number => values.reduce((total, v) => total + v, 0);
 
@@ -120,7 +128,10 @@ const sum = (values: readonly number[]): number => values.reduce((total, v) => t
  * a monthly figure divided by 4.33. That is what makes a change in collection days move the cash
  * line, which is the mechanism the whole scenario answer rests on.
  */
-export function directForecast(ctx: MeasureContext, anchor: FiscalMonth = ctx.scope.endMonth): DirectForecast {
+export function directForecast(
+  ctx: MeasureContext,
+  anchor: FiscalMonth = ctx.scope.endMonth,
+): DirectForecast {
   const at = (measureId: string, scope: PeriodScope): number =>
     computeMeasure(measureId, { ...ctx, scope }).value ?? 0;
 
@@ -169,7 +180,8 @@ export function directForecast(ctx: MeasureContext, anchor: FiscalMonth = ctx.sc
 
     // Financing is drawn evenly; a revolver does not wait for a week either.
     const receipts = Math.round(
-      (totalReceipts * (RECEIPT_PROFILE[i] ?? 1)) / receiptWeight + borrowingTotal / CASH_HORIZON_WEEKS,
+      (totalReceipts * (RECEIPT_PROFILE[i] ?? 1)) / receiptWeight +
+        borrowingTotal / CASH_HORIZON_WEEKS,
     );
 
     let payments = (supplierTotal * (SUPPLIER_PROFILE[i] ?? 1)) / supplierWeight + otherPerWeek;
@@ -264,11 +276,18 @@ export function scoreCashForecast(
   for (const forecast of locked) {
     const observed = byWeek.get(forecast.week);
     if (observed === undefined) continue;
-    const receiptsError = forecast.receipts === 0 ? 0 : Math.abs(observed.receipts - forecast.receipts) / Math.abs(forecast.receipts);
-    const paymentsError = forecast.payments === 0 ? 0 : Math.abs(observed.payments - forecast.payments) / Math.abs(forecast.payments);
+    const receiptsError =
+      forecast.receipts === 0
+        ? 0
+        : Math.abs(observed.receipts - forecast.receipts) / Math.abs(forecast.receipts);
+    const paymentsError =
+      forecast.payments === 0
+        ? 0
+        : Math.abs(observed.payments - forecast.payments) / Math.abs(forecast.payments);
     const netForecast = forecast.receipts - forecast.payments;
     const netActual = observed.receipts - observed.payments;
-    const netError = netForecast === 0 ? 0 : Math.abs(netActual - netForecast) / Math.abs(netForecast);
+    const netError =
+      netForecast === 0 ? 0 : Math.abs(netActual - netForecast) / Math.abs(netForecast);
 
     weeks.push({
       week: forecast.week,
@@ -351,7 +370,9 @@ export function indirectBridge(ctx: MeasureContext): IndirectBridge {
   const to = at('cash', ctx.scope);
 
   const ebitda = at('ebitda', ctx.scope);
-  const workingCapitalMovement = -(at('working_capital', ctx.scope) - at('working_capital', priorScope));
+  const workingCapitalMovement = -(
+    at('working_capital', ctx.scope) - at('working_capital', priorScope)
+  );
   const interest = -at('interest', ctx.scope);
   const tax = -at('tax', ctx.scope);
 
@@ -375,7 +396,12 @@ export function indirectBridge(ctx: MeasureContext): IndirectBridge {
     { kind: 'capex', label: 'Capital expenditure', value: capex },
     { kind: 'interest', label: 'Interest', value: interest },
     { kind: 'tax', label: 'Tax', value: tax },
-    { kind: 'financing', label: 'Financing', value: financing, note: 'net borrowing drawn, less dividends paid' },
+    {
+      kind: 'financing',
+      label: 'Financing',
+      value: financing,
+      note: 'net borrowing drawn, less dividends paid',
+    },
     { kind: 'other', label: 'Other', value: residual, note: 'not attributed to any line above' },
     { kind: 'closing', label: 'Closing cash', value: to },
   ];
@@ -404,7 +430,10 @@ export function indirectBridge(ctx: MeasureContext): IndirectBridge {
  * translation every other flow takes. Skipping that would put a dirham of capital spend into a
  * sterling cash bridge at face value.
  */
-function cashFlowAccount(ctx: MeasureContext, accountId: 'capex' | 'dividends' | 'net_borrowing'): number {
+function cashFlowAccount(
+  ctx: MeasureContext,
+  accountId: 'capex' | 'dividends' | 'net_borrowing',
+): number {
   let total = 0;
   for (const entityId of ctx.entityIds) {
     const e = entity(entityId);

@@ -28,7 +28,7 @@
 import { noise } from '@demo-kit/data';
 
 import type { AccountCode, CostCentreCode, SegmentCode } from './taxonomy.ts';
-import { COST_CENTRES } from './taxonomy.ts';
+import { COST_CENTRES, SEGMENTS, segment } from './taxonomy.ts';
 import type { Currency } from './entities.ts';
 import { INTERCOMPANY, PRESENTATION, entity, tradingEntities } from './entities.ts';
 import type { Fact, Scenario } from './facts.ts';
@@ -37,7 +37,7 @@ import type { MonthRate, RateTable } from './currency.ts';
 import { Rates } from './currency.ts';
 import type { FiscalMonth } from './period.ts';
 import { addMonths, daysInMonth, monthsBetween } from './period.ts';
-import type { MappingSet, SourceSystem, Vintage } from './vintages.ts';
+import type { ClosePosition, MappingSet, SourceSystem, Vintage } from './vintages.ts';
 import { VintageRegister } from './vintages.ts';
 
 // ---------------------------------------------------------------------------
@@ -132,6 +132,17 @@ interface EntitySpec {
   readonly subcontractHoursGrowth?: number;
   readonly subcontractRate?: number;
   readonly subcontractRateDrift?: number;
+  /**
+   * Which segments the bought-in labour is worked on, as weights summing to one.
+   *
+   * Held per entity because it is a fact about the business rather than a convention: production
+   * overflow at the factory is equipment work, and bought-in engineers at the service companies are on
+   * contracts and projects. Without it subcontract cost has no segment, and then a segment-sliced gross
+   * margin silently excludes the largest cost in the services division — so the planted service-margin
+   * condition existed in the group figure and was invisible at exactly the level a reader would drill to
+   * find it.
+   */
+  readonly subcontractSegments?: Readonly<Partial<Record<SegmentCode, number>>>;
 
   /** Own delivery capacity, so utilisation is a real ratio rather than a made-up percentage. */
   readonly chargeableHours?: number;
@@ -255,6 +266,8 @@ const SPECS: readonly EntitySpec[] = [
     subcontractHoursGrowth: 0.0072,
     subcontractRate: 41.8,
     subcontractRateDrift: 0.0058,
+    // Production overflow: bought-in machining and fabrication, on the equipment line.
+    subcontractSegments: { equipment: 0.78, spares: 0.22 },
     chargeableHours: 21_400,
     availableHours: 27_600,
     headcount: 168,
@@ -305,6 +318,8 @@ const SPECS: readonly EntitySpec[] = [
     subcontractHoursGrowth: 0.0094,
     subcontractRate: 121.4,
     subcontractRateDrift: 0.0071,
+    // Bought-in engineers, mostly on the contracted service base. PLANTED 2 lands here.
+    subcontractSegments: { contracts: 0.7, projects: 0.3 },
     chargeableHours: 29_800,
     availableHours: 41_200,
     headcount: 232,
@@ -408,6 +423,7 @@ const SPECS: readonly EntitySpec[] = [
     subcontractHoursGrowth: 0.0081,
     subcontractRate: 84.5,
     subcontractRateDrift: 0.0049,
+    subcontractSegments: { contracts: 0.55, projects: 0.45 },
     chargeableHours: 4_900,
     availableHours: 6_600,
     headcount: 31,
@@ -540,13 +556,26 @@ const RATE_DRIFT: Readonly<Record<Exclude<Currency, 'GBP'>, number>> = {
   AED: 0.0011,
 };
 
-function buildRates(seed: string): RateTable {
+/**
+ * The healthy twin's rates carry no drift, only noise.
+ *
+ * Condition 4 lives in the rate table rather than in the ledger, so it is the one planted condition the
+ * twin cannot be cleaned of by changing an assumption — and it was surviving there, silently, because
+ * `buildRates` was never told which world it was building. A twin whose euro still weakens gives the
+ * constant-currency detector something real to find, and then the detector's silence on the twin is the
+ * thing being asserted and it is not silent.
+ *
+ * Noise stays. A twin with rates frozen to six decimal places would let a bug that ignores rates
+ * entirely pass every test the twin is in.
+ */
+function buildRates(seed: string, healthy: boolean): RateTable {
   const rates: MonthRate[] = [];
   for (const currency of ['USD', 'EUR', 'AED'] as const) {
     let previousClosing = 0;
     for (const month of MONTHS) {
       const t = MONTHS.indexOf(month) - ANCHOR_INDEX;
-      const trend = RATE_ANCHOR[currency] * (1 + RATE_DRIFT[currency]) ** t;
+      const drift = healthy ? 0 : RATE_DRIFT[currency];
+      const trend = RATE_ANCHOR[currency] * (1 + drift) ** t;
       const closing = trend * (1 + noise(`${seed}|fx|${currency}|${month}`) * 0.011);
       // The average is the mean of this month's close and last month's, which is what a monthly
       // close actually uses and is why average and closing differ by a real amount rather than by
@@ -585,6 +614,20 @@ export interface AssumptionSet {
   readonly volume: number;
   readonly price: number;
   readonly unitCost: number;
+  /**
+   * The cost to serve on the **services** division only — contracts and projects.
+   *
+   * A group-wide unit-cost multiplier cannot express the condition the client's own slide 5 describes:
+   * services margin behind plan while the group is ahead of it. Everything moving together is not a
+   * finding anybody can act on, because there is nobody to give it to. A cost-to-serve assumption on the
+   * service book is also how a forecast is actually built — the service business is priced on a rate card
+   * and delivered at a cost that drifts, and the gap between those two is the thing FP&A argues about.
+   *
+   * It carries three of the twelve conditions at once, which is the point: the margin miss on services
+   * (2), the delivery rate above assumption (3), and the same-direction miss across versions (9) are one
+   * cause seen at three horizons, and a reader can drill from any of them to the other two.
+   */
+  readonly serviceDeliveryCost: number;
   readonly subcontractRate: number;
   readonly subcontractHours: number;
   readonly dsoDays: number;
@@ -595,6 +638,7 @@ export const ACTUAL_ASSUMPTIONS: AssumptionSet = {
   volume: 1,
   price: 1,
   unitCost: 1,
+  serviceDeliveryCost: 1,
   subcontractRate: 1,
   subcontractHours: 1,
   dsoDays: 0,
@@ -640,6 +684,7 @@ export const VERSIONS: readonly VersionSpec[] = [
       volume: 0.938,
       price: 0.992,
       unitCost: 0.984,
+      serviceDeliveryCost: 0.902,
       subcontractRate: 0.918,
       subcontractHours: 0.952,
       dsoDays: 0,
@@ -658,6 +703,7 @@ export const VERSIONS: readonly VersionSpec[] = [
       volume: 1.028,
       price: 1.006,
       unitCost: 1.011,
+      serviceDeliveryCost: 0.912,
       subcontractRate: 0.929,
       subcontractHours: 0.958,
       dsoDays: 0,
@@ -676,6 +722,7 @@ export const VERSIONS: readonly VersionSpec[] = [
       volume: 1.009,
       price: 0.997,
       unitCost: 0.996,
+      serviceDeliveryCost: 0.928,
       subcontractRate: 0.947,
       subcontractHours: 0.969,
       dsoDays: 0,
@@ -693,6 +740,7 @@ export const VERSIONS: readonly VersionSpec[] = [
       volume: 0.946,
       price: 0.998,
       unitCost: 0.993,
+      serviceDeliveryCost: 0.941,
       subcontractRate: 0.962,
       subcontractHours: 0.981,
       dsoDays: 0,
@@ -710,6 +758,7 @@ export const VERSIONS: readonly VersionSpec[] = [
       volume: 1,
       price: 1,
       unitCost: 1,
+      serviceDeliveryCost: 1.008,
       subcontractRate: 1.032,
       subcontractHours: 1.014,
       dsoDays: 6,
@@ -765,6 +814,16 @@ function drift(base: number, rate: number, index: number): number {
   return base * (1 + rate) ** (index - ANCHOR_INDEX);
 }
 
+/**
+ * The cost-to-serve multiplier, which applies to the services division and to nothing else.
+ *
+ * Read from the segment's own division rather than from a list of segment codes, so adding a third
+ * service line picks the assumption up instead of silently escaping it.
+ */
+function serviceCostFactor(code: SegmentCode, a: AssumptionSet): number {
+  return segment(code).division === 'services' ? a.serviceDeliveryCost : 1;
+}
+
 function monthPl(
   s: EntitySpec,
   month: FiscalMonth,
@@ -796,6 +855,7 @@ function monthPl(
     const unitCost =
       drift(seg.unitCost, seg.unitCostDrift, index) *
       a.unitCost *
+      serviceCostFactor(seg.segment, a) *
       (1 + noise(`${seed}|${s.id}|${seg.segment}|${month}|cost`) * 0.009);
     revenueBySegment.set(seg.segment, { revenue: units * price, units });
     costBySegment.set(seg.segment, { cost: units * unitCost, units });
@@ -808,7 +868,10 @@ function monthPl(
       a.volume *
       (1 + noise(`${seed}|${s.id}|${seg.segment}|${month}|rev`) * 0.028);
     revenueBySegment.set(seg.segment, { revenue, units: null });
-    costBySegment.set(seg.segment, { cost: revenue * seg.costRate * a.unitCost, units: null });
+    costBySegment.set(seg.segment, {
+      cost: revenue * seg.costRate * a.unitCost * serviceCostFactor(seg.segment, a),
+      units: null,
+    });
   }
 
   const revenue = [...revenueBySegment.values()].reduce((sum, r) => sum + r.revenue, 0);
@@ -1010,9 +1073,13 @@ function closeMonth(
   carried: Carried,
   a: AssumptionSet,
   index: number,
+  healthy: boolean,
 ): Closed {
   const days = daysInMonth(month);
-  const dsoExtra = (s.id === 'gulf' ? (GULF_DSO_DRIFT[month] ?? 0) : 0) + a.dsoDays;
+  // PLANTED 5, and gated on `healthy` — it was not, so the twin's Gulf collections slipped the same
+  // nine days and the working-capital detector had something real to find there.
+  const gulfSlip = !healthy && s.id === 'gulf' ? (GULF_DSO_DRIFT[month] ?? 0) : 0;
+  const dsoExtra = gulfSlip + a.dsoDays;
 
   const receivables = ((pl.revenue + pl.revenueIc) * (s.dso + dsoExtra)) / days;
   const receivablesIc = (pl.revenueIc * 45) / days;
@@ -1160,6 +1227,7 @@ function emitMinor(
   month: FiscalMonth,
   amountMinor: number,
   costCentreId: CostCentreCode | null = null,
+  segmentId: SegmentCode | null = null,
 ): void {
   ctx.facts.push({
     entityId: ctx.entityId,
@@ -1168,7 +1236,7 @@ function emitMinor(
     scenario: ctx.scenario,
     versionId: ctx.versionId,
     costCentreId,
-    segmentId: null,
+    segmentId,
     vintageId: ctx.vintageFor(month),
     amountMinor,
     quantity: null,
@@ -1184,11 +1252,12 @@ function emitMinor(
  * from is the defect this product exists to be trusted about. So the allocation is integer
  * arithmetic, and the last centre takes the remainder.
  */
-function splitByCostCentre(
-  weights: Partial<Record<CostCentreCode, number>>,
+function splitByWeights<K extends string>(
+  order: readonly K[],
+  weights: Readonly<Partial<Record<K, number>>>,
   totalMinor: number,
-): { costCentre: CostCentreCode; amountMinor: number }[] {
-  const entries = COST_CENTRES.map((c) => c.code).filter((code) => (weights[code] ?? 0) > 0);
+): { key: K; amountMinor: number }[] {
+  const entries = order.filter((code) => (weights[code] ?? 0) > 0);
   const weightTotal = entries.reduce((sum, code) => sum + (weights[code] ?? 0), 0);
   let assigned = 0;
   return entries.map((code, i) => {
@@ -1197,8 +1266,19 @@ function splitByCostCentre(
       ? totalMinor - assigned
       : Math.round((totalMinor * (weights[code] ?? 0)) / weightTotal);
     assigned += amountMinor;
-    return { costCentre: code, amountMinor };
+    return { key: code, amountMinor };
   });
+}
+
+function splitByCostCentre(
+  weights: Partial<Record<CostCentreCode, number>>,
+  totalMinor: number,
+): { costCentre: CostCentreCode; amountMinor: number }[] {
+  return splitByWeights(
+    COST_CENTRES.map((c) => c.code),
+    weights,
+    totalMinor,
+  ).map(({ key, amountMinor }) => ({ costCentre: key, amountMinor }));
 }
 
 // ---------------------------------------------------------------------------
@@ -1211,6 +1291,8 @@ export interface World {
   readonly rates: Rates;
   readonly register: VintageRegister;
   readonly mappingSets: readonly MappingSet[];
+  /** Where each entity is in the close, per month. */
+  readonly closePositions: readonly ClosePosition[];
   readonly months: readonly FiscalMonth[];
   readonly dataThrough: FiscalMonth;
   readonly versions: readonly VersionSpec[];
@@ -1368,6 +1450,40 @@ function buildMappingSets(healthy: boolean): MappingSet[] {
 }
 
 /**
+ * PLANTED 10 — Kestrel Inc has submitted July and not closed it.
+ *
+ * Every prior month is closed everywhere, so the one open position is the finding rather than the
+ * normal state of things. It matters because the group revenue figure on the front page is built from
+ * it: the number is not wrong, it is not final, and nothing in the figure itself says so.
+ */
+const OPEN_CLOSE_ENTITY = 'inc';
+
+function buildClosePositions(healthy: boolean): ClosePosition[] {
+  const positions: ClosePosition[] = [];
+  for (const month of MONTHS) {
+    for (const e of tradingEntities()) {
+      const open = !healthy && month === SEED_END && e.id === OPEN_CLOSE_ENTITY;
+      positions.push({
+        entityId: e.id,
+        month,
+        state: open ? 'submitted' : 'closed',
+        owner: open ? 'US Financial Controller' : 'Group Financial Controller',
+        submittedAt: `${month}-04T09:00:00Z`,
+        ...(open ? {} : { closedAt: `${month}-06T17:00:00Z` }),
+        ...(open
+          ? {
+              note:
+                'Trial balance submitted; revenue cut-off on two project milestones still under ' +
+                'review, so the figures may move before close.',
+            }
+          : {}),
+      });
+    }
+  }
+  return positions;
+}
+
+/**
  * Generate every fact for one entity under one version's assumptions.
  *
  * `actualsThrough` is what makes a forecast version a forecast: months up to it are the actual
@@ -1394,7 +1510,7 @@ function generateEntity(
     const pl = monthPl(s, month, index, effective, seed, carried ?? zeroCarried(s), rates, healthy);
     if (carried === null) carried = openingCarried(s, pl, month, effective);
 
-    const closed = closeMonth(s, month, pl, carried, effective, index);
+    const closed = closeMonth(s, month, pl, carried, effective, index, healthy);
 
     // ---- profit and loss, by segment where the account has one
     for (const [segmentCode, row] of pl.revenueBySegment) {
@@ -1406,6 +1522,16 @@ function generateEntity(
     if (pl.revenueIc !== 0) emit(ctx, 'revenue_ic', month, pl.revenueIc);
     if (pl.costIc !== 0) emit(ctx, 'cost_of_sales_ic', month, pl.costIc);
     if (pl.subcontractCost !== 0) {
+      // By segment first, then the aggregate. The aggregate is a different row from its children — the
+      // null-dimension rule — so a query that omits the segment gets the total and one that names a
+      // segment gets that segment, and neither silently returns the other.
+      for (const part of splitByWeights(
+        SEGMENTS.map((seg) => seg.code),
+        s.subcontractSegments ?? {},
+        cents(pl.subcontractCost),
+      )) {
+        emitMinor(ctx, 'subcontract_cost', month, part.amountMinor, null, part.key);
+      }
       emit(ctx, 'subcontract_cost', month, pl.subcontractCost, {
         quantity: Math.round(pl.subcontractHours),
       });
@@ -1502,12 +1628,22 @@ function generateEntity(
         quantity: Math.round(pl.subcontractHours),
       });
     if (s.pipelineWeighted !== undefined) {
+      const weighted =
+        drift(s.pipelineWeighted, 0.0042, index) *
+        (1 + noise(`${seed}|${s.id}|${month}|pipe`) * 0.03);
+      emit(ctx, 'pipeline_weighted', month, weighted);
+      // PLANTED 12 — the conversion the CRM is achieving against the one the forecast assumes. It was
+      // declared in the assumption set and never used in the arithmetic, so the condition existed in a
+      // pair of constants and in no fact: the detector for it could not fire, and the Opportunities board
+      // that condition 12 was added to fill would still have been empty. The assumption reaches the data
+      // here, which is what makes the opportunity drillable to a row rather than asserted in prose.
       emit(
         ctx,
-        'pipeline_weighted',
+        'pipeline_converted',
         month,
-        drift(s.pipelineWeighted, 0.0042, index) *
-          (1 + noise(`${seed}|${s.id}|${month}|pipe`) * 0.03),
+        weighted *
+          effective.pipelineConversion *
+          (1 + noise(`${seed}|${s.id}|${month}|conv`) * 0.012),
       );
     }
     emit(ctx, 'capex', month, s.monthlyCapex * (1 + 0.0018) ** (index - ANCHOR_INDEX));
@@ -1519,16 +1655,25 @@ function generateEntity(
 }
 
 /**
- * The healthy twin's assumptions: the planted drifts removed rather than the seed re-tuned.
+ * The healthy twin's assumptions: **every lever set to what arrived.**
  *
- * Both subcontract levers are neutralised, not just the rate. The first version of this reset the rate
- * alone, and the forecast-bias detector went on firing on the healthy world — because the versions
- * under-called subcontract *hours* as well, and hours × rate is the cost. A half-removed condition is
- * worse than none: it makes a false positive look like a proven detector.
+ * So the twin's forecasts are exactly right, and every finding that is a forecast variance — revenue
+ * ahead of plan, a segment margin behind it, a habitual bias, a driver running above assumption —
+ * has nothing to fire on. That is the point. A twin whose forecasts are merely *different* proves
+ * nothing about a detector, because a detector that fires there might be right.
+ *
+ * Two attempts got here. The first reset the subcontract rate alone and left the hours, and the cost
+ * is hours × rate, so the planted bias survived at full strength. The second reset both and left
+ * volume, price and unit cost, so revenue and every margin still carried a variance. A half-removed
+ * condition is worse than none: it makes a false positive look like a proven detector.
  */
 function healthyAssumptions(a: AssumptionSet): AssumptionSet {
   return {
     ...a,
+    volume: 1,
+    price: 1,
+    unitCost: 1,
+    serviceDeliveryCost: 1,
     subcontractRate: 1,
     subcontractHours: 1,
     dsoDays: 0,
@@ -1630,7 +1775,7 @@ export function buildWorld(options: WorldOptions): World {
   const { seed, healthy = false } = options;
   // Rates first: the intercompany transfer is denominated in the seller's currency and recorded by
   // the buyer at the month's rate, so the generator needs the table before it can emit a fact.
-  const rates = new Rates(buildRates(seed));
+  const rates = new Rates(buildRates(seed, healthy));
   const register = buildRegister(healthy);
   const store = new FactStore({
     rank: (id) => {
@@ -1679,6 +1824,7 @@ export function buildWorld(options: WorldOptions): World {
     rates,
     register,
     mappingSets,
+    closePositions: buildClosePositions(healthy),
     months: MONTHS,
     dataThrough: SEED_END,
     versions: VERSIONS,

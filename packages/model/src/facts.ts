@@ -178,7 +178,10 @@ export class FactStore {
       if (!window.has(f.month)) return false;
       if (q.costCentreId !== undefined && f.costCentreId !== q.costCentreId) return false;
       if (q.segmentId !== undefined && f.segmentId !== q.segmentId) return false;
-      if (q.asOfVintage !== undefined && this.#order.rank(f.vintageId) > this.#order.rank(q.asOfVintage)) {
+      if (
+        q.asOfVintage !== undefined &&
+        this.#order.rank(f.vintageId) > this.#order.rank(q.asOfVintage)
+      ) {
         return false;
       }
       return true;
@@ -234,12 +237,16 @@ export class FactStore {
     for (const row of rows) {
       const cell = `${row.month}|${row.costCentreId ?? ''}|${row.segmentId ?? ''}`;
       const held = best.get(cell);
-      if (held === undefined || this.#order.rank(row.vintageId) > this.#order.rank(held.vintageId)) {
+      if (
+        held === undefined ||
+        this.#order.rank(row.vintageId) > this.#order.rank(held.vintageId)
+      ) {
         best.set(cell, row);
       }
     }
     return [...best.values()].sort(
-      (a, b) => compareMonths(a.month, b.month) || (a.segmentId ?? '').localeCompare(b.segmentId ?? ''),
+      (a, b) =>
+        compareMonths(a.month, b.month) || (a.segmentId ?? '').localeCompare(b.segmentId ?? ''),
     );
   }
 

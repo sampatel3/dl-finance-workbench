@@ -176,6 +176,66 @@ export function mappingSetFor(
 ): MappingSet | undefined {
   return sets
     .filter((s) => s.status !== 'draft')
-    .filter((s) => s.effectiveFrom <= month && (s.effectiveTo === undefined || month <= s.effectiveTo))
+    .filter(
+      (s) => s.effectiveFrom <= month && (s.effectiveTo === undefined || month <= s.effectiveTo),
+    )
     .sort((a, b) => b.version - a.version)[0];
+}
+
+/**
+ * Where each entity is in the close.
+ *
+ * The reason this is a first-class object rather than a boolean on the group figure: a consolidated
+ * number built from four closed ledgers and one that has only *submitted* is not wrong, but it is not
+ * final either, and the difference is invisible in the figure. Every group total in this product can
+ * therefore say how much of itself is closed — which is the honest version of the number a controller
+ * would otherwise annotate by hand in an email.
+ *
+ * `submitted` and `closed` are separate states because they are separate acts. A subsidiary submits a
+ * trial balance; the group closes the period. Between the two sit the adjustments that are exactly what
+ * a reviewer wants to know are still possible.
+ */
+export type CloseState =
+  /** Nothing has arrived. */
+  | 'not_submitted'
+  /** A trial balance has landed and is being reviewed. Figures may still move. */
+  | 'submitted'
+  /** Reviewed, adjusted and locked. Figures will not move except by restatement. */
+  | 'closed';
+
+export interface ClosePosition {
+  readonly entityId: string;
+  readonly month: FiscalMonth;
+  readonly state: CloseState;
+  /** Who the group is waiting on, where it is waiting. Named, because "pending" is not an owner. */
+  readonly owner: string;
+  /** Stated, never read from a clock. */
+  readonly submittedAt?: string;
+  readonly closedAt?: string;
+  /** Why it is not closed, in words a reviewer can act on. */
+  readonly note?: string;
+}
+
+/** The close positions for a month, in entity order. */
+export function closePositionsFor(
+  positions: readonly ClosePosition[],
+  month: FiscalMonth,
+): ClosePosition[] {
+  return positions.filter((p) => p.month === month);
+}
+
+/**
+ * What share of a month is closed, by entity count.
+ *
+ * By count rather than by value, deliberately. A weighting by revenue would let the group report 97%
+ * closed while the entity holding the exposure is the open one, and "97% closed" is precisely the kind
+ * of figure that stops a question being asked.
+ */
+export function closeCompleteness(
+  positions: readonly ClosePosition[],
+  month: FiscalMonth,
+): { readonly closed: number; readonly total: number; readonly open: readonly ClosePosition[] } {
+  const forMonth = closePositionsFor(positions, month);
+  const open = forMonth.filter((p) => p.state !== 'closed');
+  return { closed: forMonth.length - open.length, total: forMonth.length, open };
 }

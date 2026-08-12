@@ -14,7 +14,14 @@ import { describe, expect, it } from 'vitest';
 
 import { ACCOUNTS, accountsOnSide } from './taxonomy.ts';
 import { PRESENTATION, tradingEntities } from './entities.ts';
-import { ACTUAL_VERSION, IC_MATERIALITY_MINOR, IC_MISMATCH_MONTH, MONTHS, SEED_END, buildWorld } from './seed.ts';
+import {
+  ACTUAL_VERSION,
+  IC_MATERIALITY_MINOR,
+  IC_MISMATCH_MONTH,
+  MONTHS,
+  SEED_END,
+  buildWorld,
+} from './seed.ts';
 import { monthScope } from './period.ts';
 import { balanceSheetTotals, consolidate } from './consolidate.ts';
 import type { AccountCode } from './taxonomy.ts';
@@ -38,7 +45,12 @@ function value(w: World, entityId: string, accountId: AccountCode, month: Fiscal
   );
 }
 
-function sideTotal(w: World, entityId: string, side: 'asset' | 'liability' | 'equity', month: FiscalMonth): number {
+function sideTotal(
+  w: World,
+  entityId: string,
+  side: 'asset' | 'liability' | 'equity',
+  month: FiscalMonth,
+): number {
   return accountsOnSide(side).reduce((sum, code) => sum + value(w, entityId, code, month), 0);
 }
 

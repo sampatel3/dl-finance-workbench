@@ -90,7 +90,10 @@ describe('the bars sum to the total', () => {
   });
 
   it('and the gross-profit bridge, which is composed from the other two', () => {
-    const bridge = grossProfitBridge({ ctx: ctx(), comparator: { id: 'forecast', versionId: 'v6' } });
+    const bridge = grossProfitBridge({
+      ctx: ctx(),
+      comparator: { id: 'forecast', versionId: 'v6' },
+    });
     expect(bridge.sums).toBe(true);
     // Composed rather than recomputed, so it must agree with the measure layer at both ends.
     expect(bridge.to).toBe(computeMeasure('gross_profit', ctx()).value);
@@ -150,7 +153,11 @@ describe('FX is separated before anything commercial is attributed', () => {
   });
 
   it('and a group bridge does', () => {
-    const bridge = buildBridge({ measureId: 'revenue', ctx: ctx(), comparator: { id: 'prior_year' } });
+    const bridge = buildBridge({
+      measureId: 'revenue',
+      ctx: ctx(),
+      comparator: { id: 'prior_year' },
+    });
     const fx = bridge.bars.find((bar) => bar.kind === 'fx');
     expect(fx).toBeDefined();
     expect(fx?.value).not.toBe(0);
@@ -209,8 +216,8 @@ describe('a trend cannot be bridged', () => {
   it('and says why rather than returning an empty decomposition', () => {
     // There are no quantities behind a fitted line, so there is nothing to attribute. Returning zero
     // bars that sum to the total would be technically true and completely useless.
-    expect(() => buildBridge({ measureId: 'revenue', ctx: ctx(), comparator: { id: 'trend' } })).toThrow(
-      /trend cannot be bridged/i,
-    );
+    expect(() =>
+      buildBridge({ measureId: 'revenue', ctx: ctx(), comparator: { id: 'trend' } }),
+    ).toThrow(/trend cannot be bridged/i);
   });
 });

@@ -141,7 +141,9 @@ export function priorityOf(
 ): Priority {
   const { current, comparativeValue } = comparison;
   if (current.value === null || comparativeValue === null || comparativeValue === 0) return 'low';
-  const multiple = Math.abs((current.value - comparativeValue) / comparativeValue) / policy.thresholds[classOf].relative;
+  const multiple =
+    Math.abs((current.value - comparativeValue) / comparativeValue) /
+    policy.thresholds[classOf].relative;
   if (multiple >= 3) return 'high';
   if (multiple >= 1.5) return 'medium';
   return 'low';

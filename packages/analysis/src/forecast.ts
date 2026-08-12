@@ -75,6 +75,14 @@ export const ASSUMPTIONS: readonly AssumptionMeta[] = [
     form: 'multiplier',
   },
   {
+    key: 'serviceDeliveryCost',
+    label: 'Cost to serve, services',
+    unit: 'percent',
+    owner: 'Services Director',
+    form: 'multiplier',
+    note: 'Applied to delivery cost on contracts and projects only. Every version has under-called it — the margin miss on services, the rate above assumption and the forecast bias are all this one number.',
+  },
+  {
     key: 'subcontractRate',
     label: 'Subcontract rate',
     unit: 'percent',
@@ -111,7 +119,7 @@ export const ASSUMPTIONS: readonly AssumptionMeta[] = [
 
 export interface AssumptionChange {
   readonly key: keyof AssumptionSet;
-  readonly label: string
+  readonly label: string;
   readonly unit: Unit;
   readonly owner: string;
   readonly from: number;
@@ -165,11 +173,7 @@ export const DIFF_MEASURES = ['revenue', 'gross_margin', 'ebitda', 'cash'] as co
  * from computing each measure twice, once per version, which is why it is also exact — and why it is
  * a total rather than a decomposition.
  */
-export function versionDiff(
-  fromId: string,
-  toId: string,
-  ctx: MeasureContext,
-): VersionDiff {
+export function versionDiff(fromId: string, toId: string, ctx: MeasureContext): VersionDiff {
   const from = version(fromId);
   const to = version(toId);
 
@@ -251,6 +255,25 @@ export function applyChanges(
  */
 export function versionList(): readonly VersionSpec[] {
   return VERSIONS;
+}
+
+/**
+ * The forecast that was in force during a given month.
+ *
+ * The most recent version whose actuals stop *before* that month — so the figure it holds for the month
+ * is a projection rather than a record. Needed by any rule that looks for a run across months, because
+ * comparing three months against today's version compares two of them to themselves: a version's own
+ * actuals are not its forecast, so an actual can never be "above assumption" inside its cut-off.
+ *
+ * It is also how an FP&A team actually reads it. "We have been over on contractor rates for three
+ * months" means over on whatever we were assuming at the time, and a run that spans two versions is a
+ * stronger finding than one inside a single version, not a weaker one — it survived a re-forecast.
+ */
+export function forecastInForce(month: string): VersionSpec | undefined {
+  return VERSIONS.filter((v) => v.scenario === 'FORECAST')
+    .filter((v) => v.actualsThrough < month)
+    .sort((a, b) => (a.actualsThrough < b.actualsThrough ? -1 : 1))
+    .pop();
 }
 
 /** The version in force: the approved forecast, not the draft on top of it. */

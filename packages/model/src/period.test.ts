@@ -137,7 +137,9 @@ describe('labels', () => {
     // Otherwise the one thing on a page whose claim is that everything moves is the period label.
     expect(ytdScope('2026-03', CALENDAR_YEAR).label).toBe('YTD through March 2026');
     expect(ytdScope('2026-07', CALENDAR_YEAR).label).toBe('YTD through July 2026');
-    expect(ytdScope('2026-03', CALENDAR_YEAR).label).not.toBe(ytdScope('2026-07', CALENDAR_YEAR).label);
+    expect(ytdScope('2026-03', CALENDAR_YEAR).label).not.toBe(
+      ytdScope('2026-07', CALENDAR_YEAR).label,
+    );
   });
 
   it('read the way a finance team writes them', () => {
