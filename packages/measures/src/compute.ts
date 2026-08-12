@@ -36,7 +36,7 @@ import type {
   Rates,
   Scenario,
   SegmentCode,
-} from "@kestrel/model";
+} from '@kestrel/model';
 import {
   consolidate,
   entity,
@@ -47,11 +47,11 @@ import {
   translate,
   translateAtOf,
   rateFor,
-} from "@kestrel/model";
+} from '@kestrel/model';
 
-import type { MeasureDefinition, Resolver } from "./catalogue.ts";
-import { annualisationFor, measure } from "./catalogue.ts";
-import type { Unit } from "./units.ts";
+import type { MeasureDefinition, Resolver } from './catalogue.ts';
+import { annualisationFor, measure } from './catalogue.ts';
+import type { Unit } from './units.ts';
 
 export interface MeasureContext {
   readonly store: FactStore;
@@ -88,7 +88,7 @@ export interface MeasureValue {
   readonly polarity: Polarity;
   readonly formula: string;
   readonly owner: string;
-  readonly status: "approved" | "draft";
+  readonly status: 'approved' | 'draft';
   readonly note?: string;
   /** Currency in minor units; percent and ratio as rates. */
   readonly value: number | null;
@@ -127,11 +127,11 @@ function cacheKey(ctx: MeasureContext): string {
     ctx.scenario,
     ctx.versionId,
     ctx.lens,
-    ctx.comparativeScope?.startMonth ?? "",
-    ctx.comparativeScope?.endMonth ?? "",
-    ctx.asOfVintage ?? "",
-    [...ctx.entityIds].sort().join(","),
-  ].join("|");
+    ctx.comparativeScope?.startMonth ?? '',
+    ctx.comparativeScope?.endMonth ?? '',
+    ctx.asOfVintage ?? '',
+    [...ctx.entityIds].sort().join(','),
+  ].join('|');
 }
 
 function consolidationFor(ctx: MeasureContext): Consolidation {
@@ -146,9 +146,7 @@ function consolidationFor(ctx: MeasureContext): Consolidation {
     versionId: ctx.versionId,
     lens: ctx.lens,
     entityIds: ctx.entityIds,
-    ...(ctx.comparativeScope === undefined
-      ? {}
-      : { comparativeScope: ctx.comparativeScope }),
+    ...(ctx.comparativeScope === undefined ? {} : { comparativeScope: ctx.comparativeScope }),
     ...(ctx.asOfVintage === undefined ? {} : { asOfVintage: ctx.asOfVintage }),
   });
   consolidationCache.set(key, built);
@@ -165,17 +163,13 @@ export function isSliced(ctx: MeasureContext): boolean {
 }
 
 /** The reading of one account, whichever path the context calls for. */
-function readAccount(
-  ctx: MeasureContext,
-  accountId: AccountCode,
-): Omit<MeasureInput, "label"> {
+function readAccount(ctx: MeasureContext, accountId: AccountCode): Omit<MeasureInput, 'label'> {
   if (!isSliced(ctx)) {
     const c = consolidationFor(ctx);
     const line = c.lines.get(accountId);
     // A consolidation computes every account, so an absent line means the account produced nothing
     // anywhere — which is a genuine null rather than a missing lookup.
-    const value =
-      line === undefined || line.byEntity.size === 0 ? null : line.group;
+    const value = line === undefined || line.byEntity.size === 0 ? null : line.group;
     return {
       accountId,
       value,
@@ -205,9 +199,7 @@ function readAccount(
       ...(ctx.costCentreId === undefined
         ? { costCentreId: null }
         : { costCentreId: ctx.costCentreId }),
-      ...(ctx.asOfVintage === undefined
-        ? {}
-        : { asOfVintage: ctx.asOfVintage }),
+      ...(ctx.asOfVintage === undefined ? {} : { asOfVintage: ctx.asOfVintage }),
     });
     if (result.value === null) continue;
     any = true;
@@ -227,9 +219,7 @@ function readAccount(
         );
     byEntity.set(
       entityId,
-      rate === null
-        ? result.value
-        : translate(result.value, e.functional, rate),
+      rate === null ? result.value : translate(result.value, e.functional, rate),
     );
     for (const month of result.monthsUsed) months.add(month);
     for (const vintage of result.vintageIds) vintages.add(vintage);
@@ -260,7 +250,7 @@ function readAccount(
 export function computeMeasure(id: string, ctx: MeasureContext): MeasureValue {
   const definition: MeasureDefinition = measure(id);
   const inputs: MeasureInput[] = [];
-  const seen = new Map<AccountCode, Omit<MeasureInput, "label">>();
+  const seen = new Map<AccountCode, Omit<MeasureInput, 'label'>>();
 
   const get: Resolver = (accountId, label) => {
     // An account read twice by one definition is one input, not two. Composite measures read the
@@ -276,8 +266,7 @@ export function computeMeasure(id: string, ctx: MeasureContext): MeasureValue {
   };
 
   const raw = definition.compute(get, { scope: ctx.scope });
-  const value =
-    raw === null ? null : raw * annualisationFor(definition, ctx.scope);
+  const value = raw === null ? null : raw * annualisationFor(definition, ctx.scope);
 
   return {
     measure: definition.id,
@@ -296,9 +285,7 @@ export function computeMeasure(id: string, ctx: MeasureContext): MeasureValue {
     entityIds: ctx.entityIds,
     consolidated: !isSliced(ctx),
     ...(ctx.segmentId === undefined ? {} : { segmentId: ctx.segmentId }),
-    ...(ctx.costCentreId === undefined
-      ? {}
-      : { costCentreId: ctx.costCentreId }),
+    ...(ctx.costCentreId === undefined ? {} : { costCentreId: ctx.costCentreId }),
     inputs,
   };
 }
@@ -311,10 +298,7 @@ export function computeMeasure(id: string, ctx: MeasureContext): MeasureValue {
  * its numerator's share. Splitting a group gross margin by its revenue contribution gives every
  * entity the group's margin, which is confidently wrong.
  */
-export function computeByEntity(
-  id: string,
-  ctx: MeasureContext,
-): Map<string, MeasureValue> {
+export function computeByEntity(id: string, ctx: MeasureContext): Map<string, MeasureValue> {
   const out = new Map<string, MeasureValue>();
   for (const entityId of ctx.entityIds) {
     out.set(entityId, computeMeasure(id, { ...ctx, entityIds: [entityId] }));
@@ -359,29 +343,29 @@ function accountLabel(accountId: AccountCode): string {
  * "Revenue" in a drill-down would be the one place the distinction disappears.
  */
 const ACCOUNT_LABELS: Partial<Record<AccountCode, string>> = {
-  revenue: "External revenue",
-  revenue_ic: "Intercompany revenue (unmatched)",
-  cost_of_sales: "Direct cost of sales",
-  cost_of_sales_ic: "Intercompany purchases (unmatched)",
-  subcontract_cost: "Subcontract labour",
-  subcontract_hours: "Subcontract hours",
-  staff_cost: "Staff cost",
-  other_opex: "Other operating expense",
-  unmapped_opex: "Unmapped operating expense",
-  depreciation: "Depreciation & amortisation",
-  interest_expense: "Interest expense",
-  tax_expense: "Tax expense",
-  cash: "Cash & equivalents",
-  receivables: "Trade receivables",
-  payables: "Trade payables",
-  inventory: "Inventory",
-  borrowings: "Borrowings",
-  avg_receivables: "Average receivables",
-  avg_payables: "Average payables",
-  avg_inventory: "Average inventory",
-  avg_capital_employed: "Average capital employed",
-  headcount: "Headcount (FTE)",
-  chargeable_hours: "Chargeable hours",
-  available_hours: "Available hours",
-  pipeline_weighted: "Weighted pipeline",
+  revenue: 'External revenue',
+  revenue_ic: 'Intercompany revenue (unmatched)',
+  cost_of_sales: 'Direct cost of sales',
+  cost_of_sales_ic: 'Intercompany purchases (unmatched)',
+  subcontract_cost: 'Subcontract labour',
+  subcontract_hours: 'Subcontract hours',
+  staff_cost: 'Staff cost',
+  other_opex: 'Other operating expense',
+  unmapped_opex: 'Unmapped operating expense',
+  depreciation: 'Depreciation & amortisation',
+  interest_expense: 'Interest expense',
+  tax_expense: 'Tax expense',
+  cash: 'Cash & equivalents',
+  receivables: 'Trade receivables',
+  payables: 'Trade payables',
+  inventory: 'Inventory',
+  borrowings: 'Borrowings',
+  avg_receivables: 'Average receivables',
+  avg_payables: 'Average payables',
+  avg_inventory: 'Average inventory',
+  avg_capital_employed: 'Average capital employed',
+  headcount: 'Headcount (FTE)',
+  chargeable_hours: 'Chargeable hours',
+  available_hours: 'Available hours',
+  pipeline_weighted: 'Weighted pipeline',
 };
