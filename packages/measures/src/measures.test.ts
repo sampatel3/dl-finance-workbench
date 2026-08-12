@@ -16,6 +16,7 @@ import {
   ACTUAL_VERSION,
   CALENDAR_YEAR,
   SEED_END,
+  buildHealthyWorld,
   buildWorld,
   daysInScope,
   halfYearScope,
@@ -24,7 +25,12 @@ import {
   ytdScope,
 } from '@kestrel/model';
 
-import { computeByEntity, computeMeasure, allEntityIds } from './compute.ts';
+import {
+  computeByEntity,
+  computeMeasure,
+  allEntityIds,
+  resetConsolidationCache,
+} from './compute.ts';
 import type { MeasureContext } from './compute.ts';
 import { MEASURES, measure, measureIds } from './catalogue.ts';
 import { COMPARATORS, compareMeasure, resolveComparator, trendExpectation } from './comparator.ts';
@@ -70,9 +76,12 @@ describe('the catalogue is the semantic layer', () => {
 
 describe('a period reconciles to its parts', () => {
   it('a half-year flow equals the sum of its two quarters', () => {
-    const h1 = computeMeasure('revenue', ctx({ scope: halfYearScope(2026, 1, CALENDAR_YEAR) })).value ?? 0;
-    const q1 = computeMeasure('revenue', ctx({ scope: quarterScope(2026, 1, CALENDAR_YEAR) })).value ?? 0;
-    const q2 = computeMeasure('revenue', ctx({ scope: quarterScope(2026, 2, CALENDAR_YEAR) })).value ?? 0;
+    const h1 =
+      computeMeasure('revenue', ctx({ scope: halfYearScope(2026, 1, CALENDAR_YEAR) })).value ?? 0;
+    const q1 =
+      computeMeasure('revenue', ctx({ scope: quarterScope(2026, 1, CALENDAR_YEAR) })).value ?? 0;
+    const q2 =
+      computeMeasure('revenue', ctx({ scope: quarterScope(2026, 2, CALENDAR_YEAR) })).value ?? 0;
 
     // Within a hundredth of a per cent: each window translates at the unweighted mean of its own
     // monthly rates, so two quarters and one half-year are not the same rounding. A basis error
@@ -85,8 +94,10 @@ describe('a period reconciles to its parts', () => {
     const june = computeMeasure('cash', ctx({ scope: monthScope('2026-06') })).value;
     expect(h1).toBe(june);
 
-    const q1 = computeMeasure('cash', ctx({ scope: quarterScope(2026, 1, CALENDAR_YEAR) })).value ?? 0;
-    const q2 = computeMeasure('cash', ctx({ scope: quarterScope(2026, 2, CALENDAR_YEAR) })).value ?? 0;
+    const q1 =
+      computeMeasure('cash', ctx({ scope: quarterScope(2026, 1, CALENDAR_YEAR) })).value ?? 0;
+    const q2 =
+      computeMeasure('cash', ctx({ scope: quarterScope(2026, 2, CALENDAR_YEAR) })).value ?? 0;
     // The failure this guards: summing two quarters of closing cash. It produces a number that looks
     // exactly like a cash balance and is roughly twice the truth.
     expect(h1).not.toBe(q1 + q2);
@@ -94,7 +105,8 @@ describe('a period reconciles to its parts', () => {
 
   it('a margin is not annualised, and a return on capital is', () => {
     const month = computeMeasure('gross_margin', ctx({ scope: monthScope(SEED_END) })).value ?? 0;
-    const ytd = computeMeasure('gross_margin', ctx({ scope: ytdScope(SEED_END, CALENDAR_YEAR) })).value ?? 0;
+    const ytd =
+      computeMeasure('gross_margin', ctx({ scope: ytdScope(SEED_END, CALENDAR_YEAR) })).value ?? 0;
     // Both are ratios of two flows over their own window, so both are in the same range. Annualising
     // one would put it near three.
     expect(month).toBeGreaterThan(0.3);
@@ -107,7 +119,8 @@ describe('a period reconciles to its parts', () => {
     // A seven-month return annualised is bigger than the same seven months unannualised — which is
     // the arithmetic the flag exists to perform, checked by comparing a month to a year-to-date.
     const roceMonth = computeMeasure('roce', ctx({ scope: monthScope(SEED_END) })).value ?? 0;
-    const roceYtd = computeMeasure('roce', ctx({ scope: ytdScope(SEED_END, CALENDAR_YEAR) })).value ?? 0;
+    const roceYtd =
+      computeMeasure('roce', ctx({ scope: ytdScope(SEED_END, CALENDAR_YEAR) })).value ?? 0;
     expect(roceMonth).toBeGreaterThan(0);
     expect(roceYtd).toBeGreaterThan(0);
   });
@@ -204,14 +217,22 @@ describe('the five comparators', () => {
   });
 
   it('produce different comparatives, so the choice is a real one', () => {
-    const values = COMPARATORS.map((id) => compareMeasure('revenue', ctx(), { id }).comparativeValue);
+    const values = COMPARATORS.map(
+      (id) => compareMeasure('revenue', ctx(), { id }).comparativeValue,
+    );
     expect(new Set(values).size).toBe(COMPARATORS.length);
     for (const value of values) expect(value).not.toBeNull();
   });
 
   it('and a named forecast version is honoured, because "which drivers changed since v6" needs it', () => {
-    const v6 = compareMeasure('revenue', ctx(), { id: 'forecast', versionId: 'v6' }).comparativeValue;
-    const v5 = compareMeasure('revenue', ctx(), { id: 'forecast', versionId: 'v5' }).comparativeValue;
+    const v6 = compareMeasure('revenue', ctx(), {
+      id: 'forecast',
+      versionId: 'v6',
+    }).comparativeValue;
+    const v5 = compareMeasure('revenue', ctx(), {
+      id: 'forecast',
+      versionId: 'v5',
+    }).comparativeValue;
     expect(v6).not.toBe(v5);
   });
 });
@@ -321,9 +342,14 @@ describe('the drill spine', () => {
 
   it('and the inputs reproduce the figure they were recorded for', () => {
     const value = computeMeasure('gross_profit', ctx());
-    const of = (accountId: string) => value.inputs.find((i) => i.accountId === accountId)?.value ?? 0;
+    const of = (accountId: string) =>
+      value.inputs.find((i) => i.accountId === accountId)?.value ?? 0;
     const rebuilt =
-      of('revenue') + of('revenue_ic') - of('cost_of_sales') - of('cost_of_sales_ic') - of('subcontract_cost');
+      of('revenue') +
+      of('revenue_ic') -
+      of('cost_of_sales') -
+      of('cost_of_sales_ic') -
+      of('subcontract_cost');
     expect(rebuilt).toBe(value.value);
   });
 
@@ -401,11 +427,50 @@ describe('formatting happens once, at the edge', () => {
   });
 });
 
+describe('the consolidation memo is keyed by which world it read', () => {
+  // The cache key once named the scope, the scenario, the version, the lens, the entities and the
+  // vintage — everything inside a world, and not which world. So the healthy twin's first query hit the
+  // real world's entry and returned its numbers, and every twin assertion downstream was comparing the
+  // real world to itself. Nothing looked wrong: the figures were plausible, internally consistent, and
+  // belonged to a different dataset.
+  const healthy = buildHealthyWorld();
+
+  const healthyCtx = (): MeasureContext => ({
+    ...ctx(),
+    store: healthy.store,
+    rates: healthy.rates,
+  });
+
+  it('returns the twin’s own numbers, not the world queried first', () => {
+    // Order matters to the defect and must not matter to the result: the real world is queried first
+    // here, exactly as it was when this was broken.
+    const real = computeMeasure('revenue', ctx()).value;
+    const twin = computeMeasure('revenue', healthyCtx()).value;
+    expect(real).not.toBeNull();
+    expect(twin).not.toBe(real);
+  });
+
+  it('and keeps memoising within one world, which is what the cache is for', () => {
+    // The fix must not have turned the memo off.
+    const first = computeMeasure('ebitda', ctx());
+    expect(computeMeasure('ebitda', ctx()).value).toBe(first.value);
+    expect(computeMeasure('ebitda', healthyCtx()).value).not.toBe(first.value);
+  });
+
+  it('and a reset clears it without changing an answer', () => {
+    const before = computeMeasure('cash', healthyCtx()).value;
+    resetConsolidationCache();
+    expect(computeMeasure('cash', healthyCtx()).value).toBe(before);
+  });
+});
+
 describe('the concept slide’s four figures, read through the measure layer', () => {
   it('are what the executive surface will print', () => {
     const scope = monthScope(SEED_END);
     expect(formatValue(computeMeasure('revenue', ctx({ scope })).value, 'currency')).toBe('£12.4m');
-    expect(formatValue(computeMeasure('gross_margin', ctx({ scope })).value, 'percent')).toBe('41.8%');
+    expect(formatValue(computeMeasure('gross_margin', ctx({ scope })).value, 'percent')).toBe(
+      '41.8%',
+    );
     expect(formatValue(computeMeasure('ebitda', ctx({ scope })).value, 'currency')).toBe('£2.1m');
     expect(formatValue(computeMeasure('cash', ctx({ scope })).value, 'currency')).toBe('£4.8m');
   });

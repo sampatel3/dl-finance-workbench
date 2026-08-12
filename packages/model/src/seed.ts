@@ -186,8 +186,24 @@ const SPECS: readonly EntitySpec[] = [
   {
     id: 'manufacturing',
     unitised: [
-      { segment: 'equipment', units: 141, unitGrowth: 0.0042, price: 24_800, priceDrift: 0.0016, unitCost: 14_030, unitCostDrift: 0.0019 },
-      { segment: 'spares', units: 4_395, unitGrowth: 0.0061, price: 205, priceDrift: 0.0012, unitCost: 103.8, unitCostDrift: 0.0014 },
+      {
+        segment: 'equipment',
+        units: 141,
+        unitGrowth: 0.0042,
+        price: 24_800,
+        priceDrift: 0.0016,
+        unitCost: 14_030,
+        unitCostDrift: 0.0019,
+      },
+      {
+        segment: 'spares',
+        units: 4_395,
+        unitGrowth: 0.0061,
+        price: 205,
+        priceDrift: 0.0012,
+        unitCost: 103.8,
+        unitCostDrift: 0.0014,
+      },
     ],
     unUnitised: [],
     headcount: 214,
@@ -209,13 +225,27 @@ const SPECS: readonly EntitySpec[] = [
     interestRate: 0.062,
     taxRate: 0.25,
     dividendRate: 0.8192,
-    costCentreWeights: { operations: 0.44, engineering: 0.19, sales: 0.16, finance_admin: 0.13, it: 0.08 },
+    costCentreWeights: {
+      operations: 0.44,
+      engineering: 0.19,
+      sales: 0.16,
+      finance_admin: 0.13,
+      it: 0.08,
+    },
     pipelineWeighted: 9_400_000,
   },
   {
     id: 'services',
     unitised: [
-      { segment: 'contracts', units: 1_872, unitGrowth: 0.0048, price: 1_082, priceDrift: 0.0014, unitCost: 450.5, unitCostDrift: 0.0022 },
+      {
+        segment: 'contracts',
+        units: 1_872,
+        unitGrowth: 0.0048,
+        price: 1_082,
+        priceDrift: 0.0014,
+        unitCost: 450.5,
+        unitCostDrift: 0.0022,
+      },
     ],
     unUnitised: [{ segment: 'projects', revenue: 941_000, revenueGrowth: 0.0034, costRate: 0.605 }],
     // PLANTED 2 and 3 — the subcontract rate drifts up faster than the price it is recovered in,
@@ -246,15 +276,31 @@ const SPECS: readonly EntitySpec[] = [
     interestRate: 0.064,
     taxRate: 0.25,
     dividendRate: 0.8192,
-    costCentreWeights: { field_service: 0.47, engineering: 0.14, sales: 0.17, finance_admin: 0.14, it: 0.08 },
+    costCentreWeights: {
+      field_service: 0.47,
+      engineering: 0.14,
+      sales: 0.17,
+      finance_admin: 0.14,
+      it: 0.08,
+    },
     pipelineWeighted: 6_100_000,
   },
   {
     id: 'gulf',
     unitised: [
-      { segment: 'contracts', units: 6_133, unitGrowth: 0.0069, price: 1_705, priceDrift: 0.0018, unitCost: 714.4, unitCostDrift: 0.0026 },
+      {
+        segment: 'contracts',
+        units: 6_133,
+        unitGrowth: 0.0069,
+        price: 1_705,
+        priceDrift: 0.0018,
+        unitCost: 714.4,
+        unitCostDrift: 0.0026,
+      },
     ],
-    unUnitised: [{ segment: 'projects', revenue: 2_140_000, revenueGrowth: 0.0051, costRate: 0.621 }],
+    unUnitised: [
+      { segment: 'projects', revenue: 2_140_000, revenueGrowth: 0.0051, costRate: 0.621 },
+    ],
     subcontractHours: 14_600,
     subcontractHoursGrowth: 0.0094,
     subcontractRate: 121.4,
@@ -284,14 +330,36 @@ const SPECS: readonly EntitySpec[] = [
     // UAE corporate tax, 9%.
     taxRate: 0.09,
     dividendRate: 0.7942,
-    costCentreWeights: { field_service: 0.49, engineering: 0.13, sales: 0.16, finance_admin: 0.14, it: 0.08 },
+    costCentreWeights: {
+      field_service: 0.49,
+      engineering: 0.13,
+      sales: 0.16,
+      finance_admin: 0.14,
+      it: 0.08,
+    },
     pipelineWeighted: 21_400_000,
   },
   {
     id: 'europe',
     unitised: [
-      { segment: 'equipment', units: 40, unitGrowth: 0.0036, price: 33_100, priceDrift: 0.0013, unitCost: 19_000, unitCostDrift: 0.0017 },
-      { segment: 'spares', units: 1_700, unitGrowth: 0.0052, price: 268, priceDrift: 0.0011, unitCost: 137.2, unitCostDrift: 0.0013 },
+      {
+        segment: 'equipment',
+        units: 40,
+        unitGrowth: 0.0036,
+        price: 33_100,
+        priceDrift: 0.0013,
+        unitCost: 19_000,
+        unitCostDrift: 0.0017,
+      },
+      {
+        segment: 'spares',
+        units: 1_700,
+        unitGrowth: 0.0052,
+        price: 268,
+        priceDrift: 0.0011,
+        unitCost: 137.2,
+        unitCostDrift: 0.0013,
+      },
     ],
     unUnitised: [],
     headcount: 74,
@@ -313,13 +381,27 @@ const SPECS: readonly EntitySpec[] = [
     interestRate: 0.049,
     taxRate: 0.3,
     dividendRate: 0.7942,
-    costCentreWeights: { operations: 0.41, engineering: 0.18, sales: 0.18, finance_admin: 0.15, it: 0.08 },
+    costCentreWeights: {
+      operations: 0.41,
+      engineering: 0.18,
+      sales: 0.18,
+      finance_admin: 0.15,
+      it: 0.08,
+    },
     pipelineWeighted: 3_800_000,
   },
   {
     id: 'inc',
     unitised: [
-      { segment: 'contracts', units: 611, unitGrowth: 0.0058, price: 1_235, priceDrift: 0.0017, unitCost: 531.4, unitCostDrift: 0.0021 },
+      {
+        segment: 'contracts',
+        units: 611,
+        unitGrowth: 0.0058,
+        price: 1_235,
+        priceDrift: 0.0017,
+        unitCost: 531.4,
+        unitCostDrift: 0.0021,
+      },
     ],
     unUnitised: [{ segment: 'projects', revenue: 168_000, revenueGrowth: 0.0062, costRate: 0.626 }],
     subcontractHours: 2_140,
@@ -347,7 +429,13 @@ const SPECS: readonly EntitySpec[] = [
     interestRate: 0.071,
     taxRate: 0.21,
     dividendRate: 0.7942,
-    costCentreWeights: { field_service: 0.44, engineering: 0.12, sales: 0.21, finance_admin: 0.15, it: 0.08 },
+    costCentreWeights: {
+      field_service: 0.44,
+      engineering: 0.12,
+      sales: 0.21,
+      finance_admin: 0.15,
+      it: 0.08,
+    },
     pipelineWeighted: 1_900_000,
   },
 ];
@@ -372,9 +460,27 @@ const GULF_DSO_DRIFT: Readonly<Record<FiscalMonth, number>> = {
 };
 
 /** PLANTED 7 — two ledger accounts appeared in the July load with no mapping. */
-export const UNMAPPED_JULY: readonly { entityId: string; costCentre: CostCentreCode; sourceCode: string; sourceLabel: string; major: number }[] = [
-  { entityId: 'services', costCentre: 'field_service', sourceCode: '58420', sourceLabel: 'Subcontract labour — framework', major: 148_000 },
-  { entityId: 'manufacturing', costCentre: 'it', sourceCode: '61155', sourceLabel: 'Software subscriptions', major: 64_000 },
+export const UNMAPPED_JULY: readonly {
+  entityId: string;
+  costCentre: CostCentreCode;
+  sourceCode: string;
+  sourceLabel: string;
+  major: number;
+}[] = [
+  {
+    entityId: 'services',
+    costCentre: 'field_service',
+    sourceCode: '58420',
+    sourceLabel: 'Subcontract labour — framework',
+    major: 148_000,
+  },
+  {
+    entityId: 'manufacturing',
+    costCentre: 'it',
+    sourceCode: '61155',
+    sourceLabel: 'Software subscriptions',
+    major: 64_000,
+  },
 ];
 
 /** PLANTED 8 — the Gulf entity has not recorded one intercompany invoice. */
@@ -510,9 +616,19 @@ export interface VersionSpec {
  * The versions the demo holds.
  *
  * PLANTED 1 — v6 assumed 5.4% less volume than July delivered, at nearly the same price, so the
- * revenue variance decomposes as mostly volume. PLANTED 9 — the budget, v4, v5 and v6 each assumed
- * a subcontract rate below the one that arrived, and each by less than the last: a same-direction
- * miss across four consecutive versions, which is bias rather than bad luck.
+ * revenue variance decomposes as mostly volume.
+ *
+ * PLANTED 9 — v4, v5 and v6 each assumed a subcontract rate *and* an hours figure below the ones
+ * that arrived, and each by less than the last: a same-direction miss across three consecutive
+ * versions, shrinking, so no single variance looks like a pattern.
+ *
+ * The volume, price and unit-cost assumptions deliberately **straddle** what arrived — v4 optimistic,
+ * v5 nearly right, v6 short. That is the point rather than an accident of calibration. An earlier
+ * version of this table had every multiplier below 1, which made every forecast conservative about
+ * everything, and the bias detector then fired on revenue, cost of sales and EBITDA alike — correctly,
+ * because the data really was uniformly biased, and uselessly, because a detector that fires on
+ * everything has found nothing. A forecast that is noisy about volume and habitually wrong about one
+ * cost is both more realistic and the only shape in which the finding means anything.
  */
 export const VERSIONS: readonly VersionSpec[] = [
   {
@@ -520,7 +636,15 @@ export const VERSIONS: readonly VersionSpec[] = [
     label: 'Budget FY26',
     scenario: 'BUDGET',
     actualsThrough: '2025-12',
-    assumptions: { volume: 0.938, price: 0.992, unitCost: 0.984, subcontractRate: 0.918, subcontractHours: 0.952, dsoDays: 0, pipelineConversion: PIPELINE_CONVERSION_ASSUMED },
+    assumptions: {
+      volume: 0.938,
+      price: 0.992,
+      unitCost: 0.984,
+      subcontractRate: 0.918,
+      subcontractHours: 0.952,
+      dsoDays: 0,
+      pipelineConversion: PIPELINE_CONVERSION_ASSUMED,
+    },
     status: 'approved',
     owner: 'Group FP&A',
   },
@@ -529,7 +653,16 @@ export const VERSIONS: readonly VersionSpec[] = [
     label: 'Forecast v4',
     scenario: 'FORECAST',
     actualsThrough: '2025-12',
-    assumptions: { volume: 0.944, price: 0.994, unitCost: 0.986, subcontractRate: 0.929, subcontractHours: 0.958, dsoDays: 0, pipelineConversion: PIPELINE_CONVERSION_ASSUMED },
+    // Optimistic on volume: the first cut at FY26, made before the year started.
+    assumptions: {
+      volume: 1.028,
+      price: 1.006,
+      unitCost: 1.011,
+      subcontractRate: 0.929,
+      subcontractHours: 0.958,
+      dsoDays: 0,
+      pipelineConversion: PIPELINE_CONVERSION_ASSUMED,
+    },
     status: 'superseded',
     owner: 'Group FP&A',
   },
@@ -538,7 +671,16 @@ export const VERSIONS: readonly VersionSpec[] = [
     label: 'Forecast v5',
     scenario: 'FORECAST',
     actualsThrough: '2026-03',
-    assumptions: { volume: 0.951, price: 0.996, unitCost: 0.989, subcontractRate: 0.947, subcontractHours: 0.969, dsoDays: 0, pipelineConversion: PIPELINE_CONVERSION_ASSUMED },
+    // Trimmed at Q3, and nearly right on volume — which is what makes the subcontract miss stand out.
+    assumptions: {
+      volume: 1.009,
+      price: 0.997,
+      unitCost: 0.996,
+      subcontractRate: 0.947,
+      subcontractHours: 0.969,
+      dsoDays: 0,
+      pipelineConversion: PIPELINE_CONVERSION_ASSUMED,
+    },
     status: 'superseded',
     owner: 'Group FP&A',
   },
@@ -547,7 +689,15 @@ export const VERSIONS: readonly VersionSpec[] = [
     label: 'Forecast v6',
     scenario: 'FORECAST',
     actualsThrough: '2026-06',
-    assumptions: { volume: 0.946, price: 0.998, unitCost: 0.993, subcontractRate: 0.962, subcontractHours: 0.981, dsoDays: 0, pipelineConversion: PIPELINE_CONVERSION_ASSUMED },
+    assumptions: {
+      volume: 0.946,
+      price: 0.998,
+      unitCost: 0.993,
+      subcontractRate: 0.962,
+      subcontractHours: 0.981,
+      dsoDays: 0,
+      pipelineConversion: PIPELINE_CONVERSION_ASSUMED,
+    },
     status: 'approved',
     owner: 'Group FP&A',
   },
@@ -556,7 +706,15 @@ export const VERSIONS: readonly VersionSpec[] = [
     label: 'Forecast v7',
     scenario: 'FORECAST',
     actualsThrough: '2026-07',
-    assumptions: { volume: 1, price: 1, unitCost: 1, subcontractRate: 1.032, subcontractHours: 1.014, dsoDays: 6, pipelineConversion: PIPELINE_CONVERSION_ACTUAL },
+    assumptions: {
+      volume: 1,
+      price: 1,
+      unitCost: 1,
+      subcontractRate: 1.032,
+      subcontractHours: 1.014,
+      dsoDays: 6,
+      pipelineConversion: PIPELINE_CONVERSION_ACTUAL,
+    },
     status: 'draft',
     owner: 'Group FP&A',
   },
@@ -674,13 +832,17 @@ function monthPl(
   const chargeableHours =
     s.chargeableHours === undefined
       ? 0
-      : drift(s.chargeableHours, 0.0021, index) * season * a.volume * (1 + noise(`${seed}|${s.id}|${month}|ch`) * 0.019);
+      : drift(s.chargeableHours, 0.0021, index) *
+        season *
+        a.volume *
+        (1 + noise(`${seed}|${s.id}|${month}|ch`) * 0.019);
   const availableHours =
     s.availableHours === undefined ? 0 : drift(s.availableHours, 0.0014, index);
 
   const headcount = Math.round(drift(s.headcount, s.headcountGrowth, index));
   const staffCost = (headcount * drift(s.costPerHead, s.costPerHeadDrift, index)) / 12;
-  const otherOpex = revenue * s.otherOpexRate * (1 + noise(`${seed}|${s.id}|${month}|opex`) * 0.017);
+  const otherOpex =
+    revenue * s.otherOpexRate * (1 + noise(`${seed}|${s.id}|${month}|opex`) * 0.017);
 
   // PLANTED 7 — the unmapped accounts land in July only, and only as actuals: a forecast cannot
   // have failed to map an account that had not appeared when it was made.
@@ -907,17 +1069,28 @@ function borrowingDraw(s: EntitySpec, month: FiscalMonth, index: number): number
 }
 
 /** The opening balance sheet: every balance chosen, and retained earnings the one that balances it. */
-function openingCarried(s: EntitySpec, firstPl: MonthPl, firstMonth: FiscalMonth, a: AssumptionSet): Carried {
+function openingCarried(
+  s: EntitySpec,
+  firstPl: MonthPl,
+  firstMonth: FiscalMonth,
+  a: AssumptionSet,
+): Carried {
   const days = daysInMonth(firstMonth);
   const dsoExtra = a.dsoDays;
   const receivables = ((firstPl.revenue + firstPl.revenueIc) * (s.dso + dsoExtra)) / days;
   const receivablesIc = (firstPl.revenueIc * 45) / days;
   const inventory = (firstPl.costOfSales * s.dio) / days;
-  const payables = ((firstPl.costOfSales + firstPl.subcontractCost + firstPl.otherOpex) * s.dpo) / days;
+  const payables =
+    ((firstPl.costOfSales + firstPl.subcontractCost + firstPl.otherOpex) * s.dpo) / days;
   const payablesIc = (firstPl.costIc * 45) / days;
 
   const assets =
-    s.openingCash + receivables + receivablesIc + inventory + s.openingFixedAssets + s.openingOtherAssets;
+    s.openingCash +
+    receivables +
+    receivablesIc +
+    inventory +
+    s.openingFixedAssets +
+    s.openingOtherAssets;
   const liabilities = payables + payablesIc + s.openingBorrowings + s.openingOtherLiabilities;
 
   return {
@@ -955,7 +1128,11 @@ function emit(
   accountId: AccountCode,
   month: FiscalMonth,
   major: number,
-  options: { costCentreId?: CostCentreCode | null; segmentId?: SegmentCode | null; quantity?: number | null } = {},
+  options: {
+    costCentreId?: CostCentreCode | null;
+    segmentId?: SegmentCode | null;
+    quantity?: number | null;
+  } = {},
 ): void {
   ctx.facts.push({
     entityId: ctx.entityId,
@@ -1056,15 +1233,69 @@ function buildRegister(healthy: boolean): VintageRegister {
   const register = new VintageRegister();
 
   const sources: readonly SourceSystem[] = [
-    { id: 'sap-uk', name: 'SAP S/4HANA — UK ledgers', mechanism: 'universal_journal_cds', entityIds: ['manufacturing', 'services'], feed: 'gl' },
-    { id: 'fusion-gulf', name: 'Oracle Fusion — Gulf ledger', mechanism: 'bi_cloud_connector', entityIds: ['gulf'], feed: 'gl' },
-    { id: 'd365-eu', name: 'Dynamics 365 F&O — Europe', mechanism: 'lake_link', entityIds: ['europe'], feed: 'gl' },
-    { id: 'netsuite-us', name: 'NetSuite — US', mechanism: 'rest_api', entityIds: ['inc'], feed: 'gl' },
-    { id: 'plan-anaplan', name: 'Anaplan — budget & forecast', mechanism: 'rest_api', entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'], feed: 'plan' },
-    { id: 'psa', name: 'Field service PSA — hours & utilisation', mechanism: 'rest_api', entityIds: ['services', 'gulf', 'inc'], feed: 'operational' },
-    { id: 'crm', name: 'Salesforce — weighted pipeline', mechanism: 'rest_api', entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'], feed: 'pipeline' },
-    { id: 'payroll', name: 'Group payroll — headcount & cost', mechanism: 'file_contract', entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'], feed: 'payroll' },
-    { id: 'bank', name: 'Bank statements — camt.053', mechanism: 'bank_statement_camt', entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'], feed: 'bank' },
+    {
+      id: 'sap-uk',
+      name: 'SAP S/4HANA — UK ledgers',
+      mechanism: 'universal_journal_cds',
+      entityIds: ['manufacturing', 'services'],
+      feed: 'gl',
+    },
+    {
+      id: 'fusion-gulf',
+      name: 'Oracle Fusion — Gulf ledger',
+      mechanism: 'bi_cloud_connector',
+      entityIds: ['gulf'],
+      feed: 'gl',
+    },
+    {
+      id: 'd365-eu',
+      name: 'Dynamics 365 F&O — Europe',
+      mechanism: 'lake_link',
+      entityIds: ['europe'],
+      feed: 'gl',
+    },
+    {
+      id: 'netsuite-us',
+      name: 'NetSuite — US',
+      mechanism: 'rest_api',
+      entityIds: ['inc'],
+      feed: 'gl',
+    },
+    {
+      id: 'plan-anaplan',
+      name: 'Anaplan — budget & forecast',
+      mechanism: 'rest_api',
+      entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'],
+      feed: 'plan',
+    },
+    {
+      id: 'psa',
+      name: 'Field service PSA — hours & utilisation',
+      mechanism: 'rest_api',
+      entityIds: ['services', 'gulf', 'inc'],
+      feed: 'operational',
+    },
+    {
+      id: 'crm',
+      name: 'Salesforce — weighted pipeline',
+      mechanism: 'rest_api',
+      entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'],
+      feed: 'pipeline',
+    },
+    {
+      id: 'payroll',
+      name: 'Group payroll — headcount & cost',
+      mechanism: 'file_contract',
+      entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'],
+      feed: 'payroll',
+    },
+    {
+      id: 'bank',
+      name: 'Bank statements — camt.053',
+      mechanism: 'bank_statement_camt',
+      entityIds: ['manufacturing', 'services', 'gulf', 'europe', 'inc'],
+      feed: 'bank',
+    },
   ];
   for (const source of sources) register.addSource(source);
 
@@ -1175,7 +1406,9 @@ function generateEntity(
     if (pl.revenueIc !== 0) emit(ctx, 'revenue_ic', month, pl.revenueIc);
     if (pl.costIc !== 0) emit(ctx, 'cost_of_sales_ic', month, pl.costIc);
     if (pl.subcontractCost !== 0) {
-      emit(ctx, 'subcontract_cost', month, pl.subcontractCost, { quantity: Math.round(pl.subcontractHours) });
+      emit(ctx, 'subcontract_cost', month, pl.subcontractCost, {
+        quantity: Math.round(pl.subcontractHours),
+      });
     }
 
     for (const part of splitByCostCentre(s.costCentreWeights, cents(pl.staffCost))) {
@@ -1245,16 +1478,37 @@ function generateEntity(
       ctx,
       'avg_capital_employed',
       month,
-      (carried.borrowings + carried.retainedEarnings + s.shareCapital + next.borrowings + next.retainedEarnings + s.shareCapital) / 2,
+      (carried.borrowings +
+        carried.retainedEarnings +
+        s.shareCapital +
+        next.borrowings +
+        next.retainedEarnings +
+        s.shareCapital) /
+        2,
     );
 
     // ---- operational drivers and cash flow
     emit(ctx, 'headcount', month, pl.headcount, { quantity: pl.headcount });
-    if (pl.chargeableHours !== 0) emit(ctx, 'chargeable_hours', month, pl.chargeableHours, { quantity: Math.round(pl.chargeableHours) });
-    if (pl.availableHours !== 0) emit(ctx, 'available_hours', month, pl.availableHours, { quantity: Math.round(pl.availableHours) });
-    if (pl.subcontractHours !== 0) emit(ctx, 'subcontract_hours', month, pl.subcontractHours, { quantity: Math.round(pl.subcontractHours) });
+    if (pl.chargeableHours !== 0)
+      emit(ctx, 'chargeable_hours', month, pl.chargeableHours, {
+        quantity: Math.round(pl.chargeableHours),
+      });
+    if (pl.availableHours !== 0)
+      emit(ctx, 'available_hours', month, pl.availableHours, {
+        quantity: Math.round(pl.availableHours),
+      });
+    if (pl.subcontractHours !== 0)
+      emit(ctx, 'subcontract_hours', month, pl.subcontractHours, {
+        quantity: Math.round(pl.subcontractHours),
+      });
     if (s.pipelineWeighted !== undefined) {
-      emit(ctx, 'pipeline_weighted', month, drift(s.pipelineWeighted, 0.0042, index) * (1 + noise(`${seed}|${s.id}|${month}|pipe`) * 0.03));
+      emit(
+        ctx,
+        'pipeline_weighted',
+        month,
+        drift(s.pipelineWeighted, 0.0042, index) *
+          (1 + noise(`${seed}|${s.id}|${month}|pipe`) * 0.03),
+      );
     }
     emit(ctx, 'capex', month, s.monthlyCapex * (1 + 0.0018) ** (index - ANCHOR_INDEX));
     emit(ctx, 'dividends', month, pl.netIncome > 0 ? pl.netIncome * s.dividendRate : 0);
@@ -1264,9 +1518,22 @@ function generateEntity(
   });
 }
 
-/** The healthy twin's assumptions: the planted drifts removed rather than the seed re-tuned. */
+/**
+ * The healthy twin's assumptions: the planted drifts removed rather than the seed re-tuned.
+ *
+ * Both subcontract levers are neutralised, not just the rate. The first version of this reset the rate
+ * alone, and the forecast-bias detector went on firing on the healthy world — because the versions
+ * under-called subcontract *hours* as well, and hours × rate is the cost. A half-removed condition is
+ * worse than none: it makes a false positive look like a proven detector.
+ */
 function healthyAssumptions(a: AssumptionSet): AssumptionSet {
-  return { ...a, subcontractRate: 1, dsoDays: 0, pipelineConversion: PIPELINE_CONVERSION_ASSUMED };
+  return {
+    ...a,
+    subcontractRate: 1,
+    subcontractHours: 1,
+    dsoDays: 0,
+    pipelineConversion: PIPELINE_CONVERSION_ASSUMED,
+  };
 }
 
 function zeroCarried(s: EntitySpec): Carried {
@@ -1300,7 +1567,12 @@ function emitRestatement(store: FactStore, world: Omit<World, 'store'>, healthy:
     cost: store.query({
       entityId: RESTATEMENT_ENTITY,
       accountId: 'cost_of_sales',
-      scope: { type: 'MONTH', startMonth: RESTATEMENT_MONTH, endMonth: RESTATEMENT_MONTH, label: RESTATEMENT_MONTH },
+      scope: {
+        type: 'MONTH',
+        startMonth: RESTATEMENT_MONTH,
+        endMonth: RESTATEMENT_MONTH,
+        label: RESTATEMENT_MONTH,
+      },
       scenario: 'ACTUAL',
       versionId: ACTUAL_VERSION,
       segmentId: undefined,
@@ -1309,7 +1581,12 @@ function emitRestatement(store: FactStore, world: Omit<World, 'store'>, healthy:
     opex: store.query({
       entityId: RESTATEMENT_ENTITY,
       accountId: 'other_opex',
-      scope: { type: 'MONTH', startMonth: RESTATEMENT_MONTH, endMonth: RESTATEMENT_MONTH, label: RESTATEMENT_MONTH },
+      scope: {
+        type: 'MONTH',
+        startMonth: RESTATEMENT_MONTH,
+        endMonth: RESTATEMENT_MONTH,
+        label: RESTATEMENT_MONTH,
+      },
       scenario: 'ACTUAL',
       versionId: ACTUAL_VERSION,
       costCentreId: null,

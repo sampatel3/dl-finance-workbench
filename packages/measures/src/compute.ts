@@ -114,13 +114,48 @@ export interface MeasureValue {
  *
  * A screen asks for thirty measures over one window, and each of them reads five or six accounts; a
  * consolidation computes every account for every entity in one pass. Without the cache that is
- * thirty passes over the same data for one page. The key names everything the result depends on, and
- * the world is immutable, so nothing is ever invalidated — the cache is a memo, not state.
+ * thirty passes over the same data for one page. The world is immutable, so nothing is ever
+ * invalidated — the cache is a memo, not state.
+ *
+ * ## The world has to be part of the key
+ *
+ * It was not, and the omission was expensive. The key named the scope, the scenario, the version, the
+ * lens, the entities and the vintage — everything *inside* a world — and left out **which world**.
+ * Two worlds exist in this product: the demo's own and the healthy twin whose job is to prove the
+ * detectors stay quiet. Querying the same window on the twin returned the real world's cached numbers,
+ * so every healthy-twin assertion was reading the real world twice and passing by comparing a thing to
+ * itself. The detectors were not proven quiet; they were never asked.
+ *
+ * It surfaced because the twin reported a planted bias it could not have had. Nothing about it was
+ * visible in a figure — the numbers were plausible, self-consistent and wrong about their own
+ * provenance, which is the failure mode a cache key produces and the reason identity belongs in the
+ * key rather than in a convention about who calls what.
  */
 const consolidationCache = new Map<string, Consolidation>();
 
+/**
+ * A stable identity per world, assigned on first sight.
+ *
+ * A WeakMap rather than a field on the store, so no caller can construct a context that forgets to
+ * identify itself — the thing that went wrong once already. Both the store and the rate table are
+ * identified: they normally travel together out of `buildWorld`, but a test that pairs one world's
+ * facts with another's rates is a legitimate thing to do and must not collide.
+ */
+const worldIds = new WeakMap<object, string>();
+let nextWorldId = 0;
+
+function worldId(o: object): string {
+  const existing = worldIds.get(o);
+  if (existing !== undefined) return existing;
+  const assigned = `w${(nextWorldId += 1)}`;
+  worldIds.set(o, assigned);
+  return assigned;
+}
+
 function cacheKey(ctx: MeasureContext): string {
   return [
+    worldId(ctx.store),
+    worldId(ctx.rates),
     ctx.scope.type,
     ctx.scope.startMonth,
     ctx.scope.endMonth,
