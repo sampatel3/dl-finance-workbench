@@ -1,4 +1,4 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { SEGMENTS, entity, segment as segmentSpec } from '@kestrel/model';
 import { compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
 import {
@@ -11,6 +11,7 @@ import {
 
 import { CashColumns } from '../../../components/CashColumns';
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { ThreeWaySplit } from '../../../components/ThreeWaySplit';
 import { Waterfall } from '../../../components/Waterfall';
@@ -80,13 +81,24 @@ function Row({
       : c.current.value - c.comparativeValue;
   return (
     <tr className={active ? 'row-active' : ''}>
-      <th scope="row">{href === undefined ? label : <a href={href}>{label}</a>}</th>
+      <th scope="row">{label}</th>
       <td className="num">{formatValue(c.current.value, c.current.unit)}</td>
       <td className="num">{formatValue(c.comparativeValue, c.current.unit)}</td>
       <td className={`num ${directionClass(c.favourable)}`}>{movement(money, c.current.unit)}</td>
       <td className={`num ${directionClass(c.favourable)}`}>
         {movement(c.movement, c.movementUnit)}
       </td>
+      {href === undefined ? null : (
+        <td>
+          <a
+            className="finding-action"
+            href={href}
+            aria-label={`Open commentary and evidence for ${label}`}
+          >
+            Commentary &amp; evidence
+          </a>
+        </td>
+      )}
     </tr>
   );
 }
@@ -95,6 +107,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
+  const selectedMeasure = typeof params.measure === 'string' ? params.measure : undefined;
   const selectedSegment = typeof params.segment === 'string' ? params.segment : undefined;
 
   const view = viewOf(params);
@@ -168,20 +181,84 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         </div>
       </section>
 
-      {marginBridge === null ? null : (
-        <section className="section focusable" id="section-margin" aria-label="Gross profit bridge">
-          <div className="section-head">
-            <h2 className="section-title">Gross profit, decomposed</h2>
-            <span className="section-note">
-              Composed as revenue less cost, so the two bridges cannot disagree about the same
-              movement.
-            </span>
+      <section className="section focusable" id="section-margin" aria-label="Gross profit bridge">
+        <div className="section-head">
+          <h2 className="section-title">Gross profit, decomposed</h2>
+          <span className="section-note">
+            Composed as revenue less cost, so the two bridges cannot disagree about the same
+            movement.
+          </span>
+        </div>
+        {marginBridge === null ? (
+          <div className="pane">
+            <p className="board-empty">
+              A trend cannot be bridged: there are no planned quantities behind a fitted line, so
+              there is nothing to attribute. Choose a comparator that names a version.
+            </p>
           </div>
+        ) : (
           <div className="pane">
             <Waterfall bridge={marginBridge} favourableWhen="up" />
           </div>
-        </section>
-      )}
+        )}
+      </section>
+
+      <section
+        className="section focusable"
+        id="section-ebitda"
+        aria-label="EBITDA composition"
+      >
+        <div className="section-head">
+          <h2 className="section-title">EBITDA, composed</h2>
+          <span className="section-note">
+            Gross profit less operating expense. Each component is read from the governed measure
+            catalogue against {basis}, so this view ties directly to the headline figure.
+          </span>
+        </div>
+        <div className="pane pane-scroll">
+          <table className="grid">
+            <caption>EBITDA composition</caption>
+            <thead>
+              <tr>
+                <th scope="col">Measure</th>
+                <th scope="col" className="num">
+                  Actual
+                </th>
+                <th scope="col" className="num">
+                  Comparative
+                </th>
+                <th scope="col" className="num">
+                  Variance
+                </th>
+                <th scope="col" className="num">
+                  %
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <Row
+                label="Gross profit"
+                measureId="gross_profit"
+                ctx={ctx}
+                comparator={view.comparator}
+              />
+              <Row
+                label="Operating expense"
+                measureId="opex"
+                ctx={ctx}
+                comparator={view.comparator}
+              />
+              <Row
+                label="EBITDA"
+                measureId="ebitda"
+                ctx={ctx}
+                comparator={view.comparator}
+                active={selectedMeasure === 'ebitda'}
+              />
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section className="section focusable" id="section-levels" aria-label="By entity and segment">
         <div className="section-head">
@@ -210,6 +287,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
                 <th scope="col" className="num">
                   %
                 </th>
+                <th scope="col">Evidence</th>
               </tr>
             </thead>
             <tbody>
@@ -245,6 +323,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
                 <th scope="col" className="num">
                   Relative
                 </th>
+                <th scope="col">Evidence</th>
               </tr>
             </thead>
             <tbody>
@@ -264,9 +343,9 @@ export default async function Performance({ searchParams }: { searchParams: Prom
             </tbody>
           </table>
           <p className="chart-note">
-            Open any row for its commentary, quantified drivers, accounts and source rows. A segment
-            slice is combined rather than consolidated: intercompany trade has no segment, so it is
-            not eliminated here. The group row above is the consolidated figure.
+            Use the named evidence action for commentary, quantified drivers, accounts and source
+            rows. A segment slice is combined rather than consolidated: intercompany trade has no
+            segment, so it is not eliminated here. The group row above is the consolidated figure.
           </p>
         </div>
       </section>

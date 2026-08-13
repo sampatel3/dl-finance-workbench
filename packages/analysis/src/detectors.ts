@@ -785,7 +785,7 @@ const unmappedAccounts: DetectorDefinition = {
         action: {
           kind: 'open_mapping',
           label: 'Open the mapping set',
-          href: `/app/controls?panel=mapping&set=${set.id}`,
+          href: `/app/controls?focus=section-mappings&set=${set.id}`,
           owner: set.owner,
         },
         fingerprint: fingerprint(unmappedAccounts.id, dctx, [set.id]),
@@ -840,7 +840,9 @@ const intercompanyMismatch: DetectorDefinition = {
         action: {
           kind: 'open_reconciliation',
           label: 'Open the intercompany reconciliation',
-          href: `/app/controls?panel=intercompany&month=${dctx.ctx.scope.endMonth}`,
+          href:
+            `/app/controls?focus=section-checks&check=intercompany_trading` +
+            `&month=${dctx.ctx.scope.endMonth}`,
           owner: 'Group Financial Controller',
         },
         fingerprint: fingerprint(intercompanyMismatch.id, dctx),
@@ -972,7 +974,7 @@ const closeIncomplete: DetectorDefinition = {
         action: {
           kind: 'open_close',
           label: 'Open close readiness',
-          href: `/app/controls?panel=close&month=${month}`,
+          href: `/app/controls?focus=section-close&month=${month}`,
           owner: completeness.open[0]?.owner ?? 'Group Financial Controller',
         },
         fingerprint: fingerprint(
@@ -1045,7 +1047,7 @@ const restatementInLoad: DetectorDefinition = {
         action: {
           kind: 'open_vintages',
           label: 'Open the load register',
-          href: `/app/controls?panel=vintages&vintage=${vintage.id}`,
+          href: `/app/controls?focus=section-vintages&vintage=${vintage.id}`,
           owner: 'Group Financial Controller',
         },
         fingerprint: fingerprint(restatementInLoad.id, dctx, [vintage.id]),

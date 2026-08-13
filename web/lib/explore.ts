@@ -208,6 +208,7 @@ export function exploreHref(
 ): string {
   const next = paramsIntoSearch(params);
   next.delete('drill');
+  next.delete('focus');
 
   if (key === 'scenario' || key === 'version') {
     if (key === 'scenario' && value === 'actual') next.delete('scenario');
@@ -252,7 +253,25 @@ export function exploreExportHref(params: Params): string {
 export function exploreDrillHref(params: Params, row: number, column: number): string {
   const next = paramsIntoSearch(params);
   next.set('drill', `${row}:${column}`);
+  next.set('focus', 'section-drill');
   return `/app/explore?${next.toString()}`;
+}
+
+/** Close the selected cell while preserving the pivot and returning focus to the grid. */
+export function exploreCloseDrillHref(params: Params): string {
+  const next = paramsIntoSearch(params);
+  const drill = first(params.drill);
+  const origin = drill?.match(/^(\d+):(\d+)$/);
+  next.delete('drill');
+  next.delete('focus');
+  next.set(
+    'focus',
+    origin === null || origin === undefined
+      ? 'explore-grid'
+      : `explore-cell-${origin[1]}-${origin[2]}`,
+  );
+  const query = next.toString();
+  return query === '' ? '/app/explore' : `/app/explore?${query}`;
 }
 
 export interface CellProvenance {

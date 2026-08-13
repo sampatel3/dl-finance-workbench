@@ -1,13 +1,15 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
-import { SEGMENTS, VERSIONS } from '@kestrel/model';
+import { resolveView } from '@demo-kit/shell';
+import { SEGMENTS, VERSIONS, entity } from '@kestrel/model';
 import { compareMeasure, formatValue, measure } from '@kestrel/measures';
 import { DIMENSIONS, DIMENSION_LABELS, drillCell } from '@kestrel/analysis';
 
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import {
   ALL_EXPLORE_MEASURES,
   cellProvenance,
+  exploreCloseDrillHref,
   exploreDrillHref,
   exploreExportHref,
   exploreHref,
@@ -80,13 +82,25 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
   const [rowRaw, colRaw] = (drillRaw ?? '').split(':');
   const rowIndex = Number(rowRaw);
   const colIndex = Number(colRaw);
+  const selectedRow = Number.isInteger(rowIndex) ? pivot.rows[rowIndex] : undefined;
+  const selectedColumn = Number.isInteger(colIndex) ? pivot.columnPaths[colIndex] : undefined;
   const openCell =
-    Number.isInteger(rowIndex) && Number.isInteger(colIndex)
-      ? pivot.rows[rowIndex]?.cells[colIndex]
+    selectedRow !== undefined && selectedColumn !== undefined
+      ? selectedRow.cells[colIndex]
       : undefined;
+  const openComparison =
+    openCell === undefined ? undefined : comparisons[rowIndex]?.[colIndex];
   const drill = openCell === undefined ? null : drillCell(openCell);
   const provenance =
     openCell === undefined ? null : cellProvenance(openCell.measureId, openCell.ctx);
+  const drillPath =
+    openCell === undefined || selectedRow === undefined || selectedColumn === undefined
+      ? []
+      : [
+          measure(openCell.measureId).label,
+          ...selectedRow.path.map((member) => member.label),
+          ...selectedColumn.map((member) => member.label),
+        ].filter((label, index, labels) => labels.indexOf(label) === index);
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
@@ -217,7 +231,11 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
         </p>
 
         <div className="pane pane-scroll">
-          <table className="grid grid-pivot">
+          <table className="grid grid-pivot" id="explore-grid">
+            <caption>
+              Open any {datasetLabel} value to drill. Comparator and variance remain alongside as
+              context.
+            </caption>
             <thead>
               <tr>
                 <th scope="col">{rows.map((d) => DIMENSION_LABELS[d]).join(' › ')}</th>
@@ -247,9 +265,24 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                   <th scope="row">{row.path.map((m) => m.label).join(' › ')}</th>
                   {row.cells.flatMap((cell, c) => {
                     const comparison = comparisons[r]?.[c];
+                    const selected = r === rowIndex && c === colIndex;
+                    const cellContext = [
+                      measure(cell.measureId).label,
+                      ...row.path.map((member) => member.label),
+                      ...(pivot.columnPaths[c] ?? []).map((member) => member.label),
+                    ].filter((label, index, labels) => labels.indexOf(label) === index);
                     return [
-                      <td key={`${c}-actual`} className="num">
-                        <a className="cell-link" href={exploreDrillHref(params, r, c)}>
+                      <td
+                        key={`${c}-actual`}
+                        className={`num cell-drillable${selected ? ' cell-selected' : ''}`}
+                      >
+                        <a
+                          id={`explore-cell-${r}-${c}`}
+                          className={`cell-link${selected ? ' is-selected' : ''}`}
+                          href={exploreDrillHref(params, r, c)}
+                          aria-current={selected ? 'location' : undefined}
+                          aria-label={`Drill into ${cellContext.join(', ')}, ${formatValue(cell.value, cell.unit)}`}
+                        >
                           {formatValue(cell.value, cell.unit)}
                         </a>
                       </td>,
@@ -283,6 +316,172 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
         </div>
         <p className="chart-note">{pivot.totalNote}</p>
       </section>
+
+      {drill === null || openCell === undefined ? null : (
+        <section className="section focusable" id="section-drill" aria-label="Selected cell drill-down">
+          <nav className="drill-breadcrumb" aria-label="Drill breadcrumb">
+            <a className="finding-action" href={exploreCloseDrillHref(params)}>
+              &larr; Back to grid
+            </a>
+            <span aria-current="page">{drillPath.join(' › ')}</span>
+          </nav>
+
+          <div className="section-head">
+            <h2 className="section-title">{drillPath.join(' › ')}</h2>
+            <span className="section-note">
+              {entity(view.entityId).name} · {datasetLabel} · {openCell.ctx.scope.label}
+              {openComparison === undefined ? '' : ` · against ${openComparison.comparator.basis}`}
+              . {drill.note}
+            </span>
+          </div>
+
+          <div className="pane pane-scroll">
+            <table className="grid">
+              <caption>
+                {formatValue(openCell.value, openCell.unit)} ·{' '}
+                {openCell.consolidated ? 'consolidated' : 'combined, not consolidated'}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Level</th>
+                  <th scope="col" className="num">
+                    Value
+                  </th>
+                  <th scope="col" className="num">
+                    Share
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {drill.steps.map((step) => (
+                  <tr key={`${step.dimension}-${step.key}`}>
+                    <th scope="row">{step.label}</th>
+                    <td className={`num ${step.key === 'eliminations' ? 'muted-cell' : ''}`}>
+                      {formatValue(step.value, step.unit)}
+                    </td>
+                    <td className="num">
+                      {openCell.value === null || openCell.value === 0 || step.value === null
+                        ? '—'
+                        : formatValue(step.value / openCell.value, 'percent')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className={`chart-note ${drill.sums ? '' : 'warn-note'}`}>
+              {drill.sums
+                ? 'These parts sum to the cell exactly.'
+                : 'These parts do not sum to the cell, which is reported rather than hidden.'}
+            </p>
+          </div>
+
+          <details className="pane drill-evidence">
+            <summary className="drill-evidence-summary">
+              Technical evidence
+              <span>Formula, provenance and source rows</span>
+            </summary>
+
+            {provenance === null ? null : (
+              <div className="pane-scroll">
+                <table className="grid">
+                  <caption>Formula and provenance for this cell</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Input</th>
+                      <th scope="col" className="num">
+                        Stored value (minor units)
+                      </th>
+                      <th scope="col">Months</th>
+                      <th scope="col" className="num">
+                        Rows
+                      </th>
+                      <th scope="col">Vintages</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {provenance.computed.inputs.map((input) => {
+                      const evidence = provenance.inputs.get(input.accountId);
+                      return (
+                        <tr key={input.accountId}>
+                          <th scope="row">
+                            {input.label}
+                            <span className="row-note">{input.accountId}</span>
+                          </th>
+                          <td className="num">
+                            {input.value === null ? '—' : input.value.toLocaleString('en-GB')}
+                          </td>
+                          <td className="mono-cell">
+                            {(evidence?.monthsUsed ?? input.monthsUsed).join(', ')}
+                          </td>
+                          <td className="num">{evidence?.rowCount ?? input.rowCount}</td>
+                          <td className="mono-cell">
+                            {(evidence?.vintageIds ?? input.vintageIds).join(', ') || '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <p className="chart-note">
+                  <strong>{provenance.computed.formula}.</strong> Owned by{' '}
+                  {provenance.computed.owner}; definition {provenance.computed.status}. Current value{' '}
+                  {formatValue(provenance.computed.value, provenance.computed.unit)} from{' '}
+                  {provenance.vintageIds.length} contributing vintage
+                  {provenance.vintageIds.length === 1 ? '' : 's'}. Stored inputs are raw fact values
+                  in minor units; the computed result above carries the governed display unit.
+                </p>
+              </div>
+            )}
+
+            <div className="pane-scroll">
+              <table className="grid">
+                <caption>
+                  Source rows — {drill.rows.length} of them, from{' '}
+                  {drill.vintageIds.length === 1 ? 'one load' : `${drill.vintageIds.length} loads`}
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Account</th>
+                    <th scope="col">Month</th>
+                    <th scope="col">Segment</th>
+                    <th scope="col">Cost centre</th>
+                    <th scope="col" className="num">
+                      Amount
+                    </th>
+                    <th scope="col">Vintage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Capped, and the cap is stated. A drill that silently shows the first forty rows of
+                      four hundred is a drill that has stopped being evidence. */}
+                  {drill.rows.slice(0, 40).map((row, i) => (
+                    <tr key={i}>
+                      <th scope="row">{row.accountId}</th>
+                      <td>{row.month}</td>
+                      <td>{row.segmentId ?? '—'}</td>
+                      <td>{row.costCentreId ?? '—'}</td>
+                      <td className="num">{formatValue(row.amountMinor, 'currency')}</td>
+                      <td className="mono-cell">{row.vintageId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {drill.rows.length > 40 ? (
+                <p className="chart-note">
+                  Showing 40 of {drill.rows.length} rows. This is the demo&rsquo;s cap, not the
+                  data&rsquo;s — and the rows below the cut are the same shape as the ones above.
+                </p>
+              ) : null}
+            </div>
+
+            <p className="chart-note">
+              The rows terminate the drill spine. They are seeded and shaped like ledger lines; they
+              are not ledger lines, which is the accepted weakness this demo states rather than
+              implies. <a href={hrefFor('/app/controls', view)}>Controls</a> holds the lineage.
+            </p>
+          </details>
+        </section>
+      )}
 
       {requestedMeasure === undefined || citedComparison === undefined ? null : (
         <section
@@ -385,154 +584,6 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
           </table>
         </div>
       </section>
-
-      {drill === null || openCell === undefined ? null : (
-        <section className="section focusable" id="section-drill" aria-label="Drill">
-          <div className="section-head">
-            <h2 className="section-title">{measure(openCell.measureId).label}, one level down</h2>
-            <span className="section-note">{drill.note}</span>
-          </div>
-
-          {provenance === null ? null : (
-            <div className="pane pane-scroll">
-              <table className="grid">
-                <caption>Formula and provenance for this cell</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Input</th>
-                    <th scope="col" className="num">
-                      Stored value
-                    </th>
-                    <th scope="col">Months</th>
-                    <th scope="col" className="num">
-                      Rows
-                    </th>
-                    <th scope="col">Vintages</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {provenance.computed.inputs.map((input) => {
-                    const evidence = provenance.inputs.get(input.accountId);
-                    return (
-                      <tr key={input.accountId}>
-                        <th scope="row">
-                          {input.label}
-                          <span className="row-note">{input.accountId}</span>
-                        </th>
-                        <td className="num">
-                          {input.value === null ? '—' : input.value.toLocaleString('en-GB')}
-                        </td>
-                        <td className="mono-cell">
-                          {(evidence?.monthsUsed ?? input.monthsUsed).join(', ')}
-                        </td>
-                        <td className="num">{evidence?.rowCount ?? input.rowCount}</td>
-                        <td className="mono-cell">
-                          {(evidence?.vintageIds ?? input.vintageIds).join(', ') || '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <p className="chart-note">
-                <strong>{provenance.computed.formula}.</strong> Owned by{' '}
-                {provenance.computed.owner}; definition {provenance.computed.status}. Current value{' '}
-                {formatValue(provenance.computed.value, provenance.computed.unit)} from{' '}
-                {provenance.vintageIds.length} contributing vintage
-                {provenance.vintageIds.length === 1 ? '' : 's'}. Input values are the measure
-                engine&rsquo;s stored values; the computed result above carries the display unit.
-              </p>
-            </div>
-          )}
-
-          <div className="pane pane-scroll">
-            <table className="grid">
-              <caption>
-                {formatValue(openCell.value, openCell.unit)} ·{' '}
-                {openCell.consolidated ? 'consolidated' : 'combined, not consolidated'}
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Level</th>
-                  <th scope="col" className="num">
-                    Value
-                  </th>
-                  <th scope="col" className="num">
-                    Share
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {drill.steps.map((step) => (
-                  <tr key={`${step.dimension}-${step.key}`}>
-                    <th scope="row">{step.label}</th>
-                    <td className={`num ${step.key === 'eliminations' ? 'muted-cell' : ''}`}>
-                      {formatValue(step.value, step.unit)}
-                    </td>
-                    <td className="num">
-                      {openCell.value === null || openCell.value === 0 || step.value === null
-                        ? '—'
-                        : formatValue(step.value / openCell.value, 'percent')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className={`chart-note ${drill.sums ? '' : 'warn-note'}`}>
-              {drill.sums
-                ? 'These parts sum to the cell exactly.'
-                : 'These parts do not sum to the cell, which is reported rather than hidden.'}
-            </p>
-          </div>
-
-          <div className="pane pane-scroll">
-            <table className="grid">
-              <caption>
-                Source rows — {drill.rows.length} of them, from{' '}
-                {drill.vintageIds.length === 1 ? 'one load' : `${drill.vintageIds.length} loads`}
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Account</th>
-                  <th scope="col">Month</th>
-                  <th scope="col">Segment</th>
-                  <th scope="col">Cost centre</th>
-                  <th scope="col" className="num">
-                    Amount
-                  </th>
-                  <th scope="col">Vintage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* Capped, and the cap is stated. A drill that silently shows the first forty rows of
-                    four hundred is a drill that has stopped being evidence. */}
-                {drill.rows.slice(0, 40).map((row, i) => (
-                  <tr key={i}>
-                    <th scope="row">{row.accountId}</th>
-                    <td>{row.month}</td>
-                    <td>{row.segmentId ?? '—'}</td>
-                    <td>{row.costCentreId ?? '—'}</td>
-                    <td className="num">{formatValue(row.amountMinor, 'currency')}</td>
-                    <td className="mono-cell">{row.vintageId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {drill.rows.length > 40 ? (
-              <p className="chart-note">
-                Showing 40 of {drill.rows.length} rows. This is the demo&rsquo;s cap, not the
-                data&rsquo;s — and the rows below the cut are the same shape as the ones above.
-              </p>
-            ) : null}
-          </div>
-
-          <p className="chart-note">
-            The rows terminate the drill spine. They are seeded and shaped like ledger lines; they
-            are not ledger lines, which is the accepted weakness this demo states rather than
-            implies. <a href={hrefFor('/app/controls', view)}>Controls</a> holds the lineage.
-          </p>
-        </section>
-      )}
 
       {drill === null ? (
         <p className="chart-note">Choose any figure in the grid to drill it.</p>

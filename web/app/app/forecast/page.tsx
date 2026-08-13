@@ -1,4 +1,4 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { VERSIONS } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@kestrel/analysis';
 
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { directionClass, movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';

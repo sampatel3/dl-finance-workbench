@@ -1,8 +1,9 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { entity } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { controlsFor } from '../../../lib/controls';
 import { PERSONAS } from '../../../lib/permissions';
@@ -32,6 +33,18 @@ const JUMPS = [
   ['section-ai-log', 'AI log'],
   ['section-permissions', 'Permissions'],
 ] as const;
+
+/** Keep already-shared pre-focus URLs useful while every new link uses the supported section IDs. */
+const LEGACY_PANEL_FOCUS: Readonly<Record<string, string>> = {
+  mapping: 'section-mappings',
+  intercompany: 'section-checks',
+  close: 'section-close',
+  vintages: 'section-vintages',
+};
+
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 function readable(value: string): string {
   return value.replaceAll('_', ' ');
@@ -65,7 +78,15 @@ function Empty({ children }: { readonly children: React.ReactNode }) {
 export default async function Controls({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
-  const focus = typeof params.focus === 'string' ? params.focus : undefined;
+  const requestedFocus = first(params.focus);
+  const legacyPanel = first(params.panel);
+  const focus =
+    requestedFocus ??
+    (legacyPanel === undefined ? undefined : LEGACY_PANEL_FOCUS[legacyPanel]);
+  const selectedCheckId =
+    first(params.check) ?? (legacyPanel === 'intercompany' ? 'intercompany_trading' : undefined);
+  const selectedMappingSetId = first(params.set);
+  const selectedVintageId = first(params.vintage);
   const view = viewOf(params);
   const controls = controlsFor(view);
 
@@ -80,6 +101,12 @@ export default async function Controls({ searchParams }: { searchParams: Promise
     0,
   );
   const closeHold = controls.close.open[0];
+  const failedCheck = controls.checks?.find((check) => check.status === 'failed');
+  const focusHref = (section: string, exact?: Readonly<Record<string, string>>): string => {
+    const base = hrefFor('/app/controls', view);
+    const query = new URLSearchParams({ focus: section, ...exact });
+    return `${base}${base.includes('?') ? '&' : '?'}${query.toString()}`;
+  };
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
@@ -103,7 +130,7 @@ export default async function Controls({ searchParams }: { searchParams: Promise
           </span>
         </div>
         <div className="cards">
-          <div className="card">
+          <a className="card card-link" href={focusHref('section-close')}>
             <span className="card-k">Close readiness</span>
             <span className="card-v">
               {controls.close.closed}/{controls.close.total}
@@ -113,8 +140,14 @@ export default async function Controls({ searchParams }: { searchParams: Promise
                 ? 'Ready to close'
                 : `${closeHold?.entityName ?? 'One entity'} ${readable(closeHold?.state ?? 'open')}`}
             </span>
-          </div>
-          <div className="card">
+          </a>
+          <a
+            className="card card-link"
+            href={focusHref(
+              'section-checks',
+              failedCheck === undefined ? undefined : { check: failedCheck.id },
+            )}
+          >
             <span className="card-k">Named checks</span>
             <span className="card-v">
               {controls.checks === null ? 'Scoped' : `${passedChecks}/${controls.checks.length}`}
@@ -126,8 +159,14 @@ export default async function Controls({ searchParams }: { searchParams: Promise
                   ? 'All passed'
                   : `${failedChecks} blocking failure`}
             </span>
-          </div>
-          <div className="card">
+          </a>
+          <a
+            className="card card-link"
+            href={focusHref(
+              'section-mappings',
+              controls.mapping === null ? undefined : { set: controls.mapping.mappingSet.id },
+            )}
+          >
             <span className="card-k">Mapping exposure</span>
             <span className="card-v">
               {formatValue(controls.mapping?.amountAtStakeMinor ?? null, 'currency')}
@@ -136,15 +175,15 @@ export default async function Controls({ searchParams }: { searchParams: Promise
               {controls.mapping?.unmappedCount ?? 0} unmapped account
               {(controls.mapping?.unmappedCount ?? 0) === 1 ? '' : 's'} in scope
             </span>
-          </div>
-          <div className="card">
+          </a>
+          <a className="card card-link" href={focusHref('section-vintages')}>
             <span className="card-k">Load register</span>
             <span className="card-v">{controls.totalLoads}</span>
             <span className={`card-d ${loadExceptions > 0 ? 'neg' : ''}`}>
               {loadExceptions} exception{loadExceptions === 1 ? '' : 's'} · {restatements}{' '}
               restatement{restatements === 1 ? '' : 's'}
             </span>
-          </div>
+          </a>
         </div>
         <nav className="control-jumps" aria-label="Control register sections">
           {JUMPS.map(([id, label]) => (
@@ -244,7 +283,16 @@ export default async function Controls({ searchParams }: { searchParams: Promise
               </thead>
               <tbody>
                 {controls.recentLoads.map((load) => (
-                  <tr key={load.vintage.id} className={load.vintage.note ? 'row-warn' : ''}>
+                  <tr
+                    key={load.vintage.id}
+                    id={`control-vintage-${load.vintage.id}`}
+                    className={[
+                      load.vintage.note ? 'row-warn' : '',
+                      load.vintage.id === selectedVintageId ? 'row-active' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
                     <th scope="row">
                       <span className="mono-cell">{load.vintage.id}</span>
                       {load.vintage.note === undefined ? null : (
@@ -362,7 +410,16 @@ export default async function Controls({ searchParams }: { searchParams: Promise
               </thead>
               <tbody>
                 {controls.checks.map((check) => (
-                  <tr key={check.id} className={check.status === 'failed' ? 'row-warn' : ''}>
+                  <tr
+                    key={check.id}
+                    id={`control-check-${check.id}`}
+                    className={[
+                      check.status === 'failed' ? 'row-warn' : '',
+                      check.id === selectedCheckId ? 'row-active' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
                     <th scope="row">
                       {check.name}
                       <span className="row-note">{check.rule}</span>
@@ -474,7 +531,13 @@ export default async function Controls({ searchParams }: { searchParams: Promise
             </thead>
             <tbody>
               {controls.mappingVersions.map((mapping) => (
-                <tr key={mapping.mappingSet.id}>
+                <tr
+                  key={mapping.mappingSet.id}
+                  id={`control-mapping-${mapping.mappingSet.id}`}
+                  className={
+                    mapping.mappingSet.id === selectedMappingSetId ? 'row-active' : undefined
+                  }
+                >
                   <th scope="row">
                     v{mapping.mappingSet.version}
                     <span className="row-note mono-cell">{mapping.mappingSet.id}</span>

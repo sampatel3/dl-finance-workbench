@@ -1,4 +1,4 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { formatValue, measure } from '@kestrel/measures';
 import {
   BIAS_MATERIALITY,
@@ -10,6 +10,7 @@ import {
 } from '@kestrel/analysis';
 
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';

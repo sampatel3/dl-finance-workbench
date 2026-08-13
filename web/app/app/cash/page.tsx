@@ -1,10 +1,11 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { entity, tradingEntities } from '@kestrel/model';
 import { computeMeasure, formatValue } from '@kestrel/measures';
 import { MINIMUM_CASH, cashSensitivity, directForecast, indirectBridge } from '@kestrel/analysis';
 
 import { CashColumns } from '../../../components/CashColumns';
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';

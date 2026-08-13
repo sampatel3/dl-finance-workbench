@@ -1,18 +1,9 @@
 /**
- * The header selectors: period, month, entity, comparator, currency lens.
+ * The finance context: a readable summary first, with its URL-backed selectors in a native disclosure.
  *
- * Every one of them is a **link**, not a control. That is the load-bearing decision in this file and it
- * follows from the view living in the URL: a `<select>` needs client JavaScript to navigate, and the
- * moment a selection lives in component state the address bar and the screen can disagree. Links cannot
- * disagree — the href *is* the view, so a reader can copy it, a deck slide can carry it, and a tour step
- * can land on it.
- *
- * It also means the whole header works with JavaScript off, and that every selection is a real
- * navigation the browser's back button understands. A dropdown that changes the page without changing
- * history is the control readers complain about without being able to say why.
- *
- * The cost is honest: five rows of chips takes more width than five dropdowns. On this surface that is
- * affordable, and it makes the current view visible at a glance rather than collapsed behind a label.
+ * Every choice remains a **link**, not component state. The href *is* the view, so copying a URL, using
+ * the browser's back button, and opening a guided tour step all reproduce the same finance context. The
+ * disclosure changes only how much control furniture a reader meets before the figures.
  */
 
 import { entity, type CurrencyLens } from '@kestrel/model';
@@ -30,12 +21,12 @@ import {
   selectableEntities,
 } from '../lib/world';
 
-function Row({ label, children }: { readonly label: string; readonly children: React.ReactNode }) {
+function Group({ label, children }: { readonly label: string; readonly children: React.ReactNode }) {
   return (
-    <div className="sel-row">
-      <span className="sel-label">{label}</span>
+    <fieldset className="sel-row">
+      <legend className="sel-label">{label}</legend>
       <div className="sel-chips">{children}</div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -70,12 +61,13 @@ const COMPARATOR_LABELS: Readonly<Record<ComparatorId, string>> = {
   trend: 'Trend',
 };
 
-const LENS_LABELS: Readonly<Record<Exclude<CurrencyLens, 'functional'>, string>> = {
+const LENS_LABELS: Readonly<Record<CurrencyLens, string>> = {
   reported: 'Reported',
   constant: 'Constant currency',
+  functional: 'Functional currency',
 };
 
-const REPORT_LENSES = Object.keys(LENS_LABELS) as Exclude<CurrencyLens, 'functional'>[];
+const REPORT_LENSES = ['reported', 'constant'] as const satisfies readonly CurrencyLens[];
 
 export function Selectors({ path, view }: { readonly path: string; readonly view: View }) {
   /* `SELECTABLE_MONTHS` is newest-first, so "older" is the next index and "newer" the previous one.
@@ -83,9 +75,13 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
   const at = SELECTABLE_MONTHS.indexOf(view.through);
   const older = at === -1 ? undefined : SELECTABLE_MONTHS[at + 1];
   const newer = at <= 0 ? undefined : SELECTABLE_MONTHS[at - 1];
+  const comparator =
+    view.comparator.id === 'forecast'
+      ? view.version.label
+      : COMPARATOR_LABELS[view.comparator.id];
 
   return (
-    <div className="selectors">
+    <section className="context-shell" aria-label="Finance context">
       {view.deniedEntityId === undefined ? null : (
         <p className="banner banner-warn" role="status">
           Access refused for {view.principal.label}: {entity(view.deniedEntityId).name} is outside
@@ -93,121 +89,156 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
         </p>
       )}
 
-      <Row label="View as">
-        {PERSONAS.map((persona) => (
-          <Chip
-            key={persona.id}
-            href={hrefFor(path, view, { persona: persona.id })}
-            active={view.principal.id === persona.id}
-            title={`${persona.role}; ${entity(persona.grant.entityRootId).name}`}
-          >
-            {persona.label}
-          </Chip>
-        ))}
-      </Row>
+      <div className="context-bar">
+        <p className="context-current">
+          <span className="context-value">
+            <span className="visually-hidden">Role: </span>
+            {view.principal.label}
+          </span>
+          <span className="context-separator" aria-hidden>
+            ·
+          </span>
+          <span className="context-value">
+            <span className="visually-hidden">Period: </span>
+            {scopeLabel(view.periodKind, view.scope)}
+          </span>
+          <span className="context-separator" aria-hidden>
+            ·
+          </span>
+          <span className="context-value">
+            <span className="visually-hidden">Entity: </span>
+            {entity(view.entityId).name}
+          </span>
+          <span className="context-separator" aria-hidden>
+            ·
+          </span>
+          <span className="context-value">
+            <span className="visually-hidden">Comparator: </span>
+            vs {comparator}
+          </span>
+          <span className="context-separator" aria-hidden>
+            ·
+          </span>
+          <span className="context-value">
+            <span className="visually-hidden">Currency: </span>
+            {LENS_LABELS[view.lens]}
+          </span>
+        </p>
 
-      <Row label="Period">
-        {PERIOD_KINDS.map((kind: PeriodKind) => (
-          <Chip
-            key={kind}
-            href={hrefFor(path, view, { period: kind })}
-            active={view.periodKind === kind}
-          >
-            {PERIOD_LABELS[kind]}
-          </Chip>
-        ))}
-      </Row>
+        <details className="context-editor">
+          <summary className="context-edit-trigger">Edit context</summary>
+          <div className="selectors context-editor-body">
+            <Group label="Demo as">
+              {PERSONAS.map((persona) => (
+                <Chip
+                  key={persona.id}
+                  href={hrefFor(path, view, { persona: persona.id })}
+                  active={view.principal.id === persona.id}
+                  title={`${persona.role}; ${entity(persona.grant.entityRootId).name}`}
+                >
+                  {persona.label}
+                </Chip>
+              ))}
+            </Group>
 
-      {/* A stepper, not twelve chips.
+            <Group label="Period">
+              {PERIOD_KINDS.map((kind: PeriodKind) => (
+                <Chip
+                  key={kind}
+                  href={hrefFor(path, view, { period: kind })}
+                  active={view.periodKind === kind}
+                >
+                  {PERIOD_LABELS[kind]}
+                </Chip>
+              ))}
+            </Group>
 
-          Twelve month chips is the single widest thing on the page, and it pushed the whole control
-          block to four stacked rows — the controls were louder than the content they controlled, and a
-          reader met a wall of dates before a figure. A stepper is two links and a label, and it is also
-          how somebody actually moves through months: one at a time, in order.
+            {/* A stepper, not twelve chips. The ends are plain text rather than disabled links, because
+                a link that cannot be followed is a control that has to explain itself. */}
+            <fieldset className="sel-row">
+              <legend className="sel-label">Through</legend>
+              <div className="sel-step">
+                {older === undefined ? (
+                  <span className="step-end" aria-hidden>
+                    ←
+                  </span>
+                ) : (
+                  <a
+                    className="step-link"
+                    href={hrefFor(path, view, { month: older })}
+                    aria-label={`Back to ${monthLabel(older)}`}
+                  >
+                    ←
+                  </a>
+                )}
+                <span className="step-now">{scopeLabel(view.periodKind, view.scope)}</span>
+                {newer === undefined ? (
+                  <span className="step-end" aria-hidden>
+                    →
+                  </span>
+                ) : (
+                  <a
+                    className="step-link"
+                    href={hrefFor(path, view, { month: newer })}
+                    aria-label={`Forward to ${monthLabel(newer)}`}
+                  >
+                    →
+                  </a>
+                )}
+              </div>
+            </fieldset>
 
-          The ends are rendered as plain text rather than disabled links, because a link that cannot be
-          followed is a control that has to explain itself. */}
-      <div className="sel-row">
-        <span className="sel-label">Through</span>
-        <div className="sel-step">
-          {older === undefined ? (
-            <span className="step-end" aria-hidden>
-              ←
-            </span>
-          ) : (
-            <a
-              className="step-link"
-              href={hrefFor(path, view, { month: older })}
-              aria-label={`Back to ${monthLabel(older)}`}
-            >
-              ←
-            </a>
-          )}
-          <span className="step-now">{scopeLabel(view.periodKind, view.scope)}</span>
-          {newer === undefined ? (
-            <span className="step-end" aria-hidden>
-              →
-            </span>
-          ) : (
-            <a
-              className="step-link"
-              href={hrefFor(path, view, { month: newer })}
-              aria-label={`Forward to ${monthLabel(newer)}`}
-            >
-              →
-            </a>
-          )}
-        </div>
+            <Group label="Entity">
+              {selectableEntities(view.principal).map((e) => (
+                <Chip
+                  key={e.id}
+                  href={hrefFor(path, view, { entity: e.id })}
+                  active={view.entityId === e.id}
+                >
+                  {e.name}
+                </Chip>
+              ))}
+            </Group>
+
+            <Group label="Against">
+              {(Object.keys(COMPARATOR_LABELS) as ComparatorId[]).map((id) => (
+                <Chip
+                  key={id}
+                  href={hrefFor(path, view, { comparator: id })}
+                  active={view.comparator.id === id}
+                  /* The trend's limitation lives on the control that selects it, before a reader can
+                     draw a conclusion from a fitted expectation. */
+                  title={
+                    id === 'trend'
+                      ? 'A fitted expectation, not a plan anybody committed to — so nothing is measured as material against it and it cannot raise a board item.'
+                      : undefined
+                  }
+                >
+                  {COMPARATOR_LABELS[id]}
+                  {id === 'trend' ? <span className="chip-mark">fit</span> : null}
+                </Chip>
+              ))}
+            </Group>
+
+            <Group label="Currency">
+              {REPORT_LENSES.map((lens) => (
+                <Chip
+                  key={lens}
+                  href={hrefFor(path, view, { lens })}
+                  active={view.lens === lens}
+                  title={
+                    lens === 'constant'
+                      ? 'This period’s trading translated at the comparative period’s rates, so the movement excludes currency.'
+                      : undefined
+                  }
+                >
+                  {LENS_LABELS[lens]}
+                </Chip>
+              ))}
+            </Group>
+          </div>
+        </details>
       </div>
-
-      <Row label="Entity">
-        {selectableEntities(view.principal).map((e) => (
-          <Chip
-            key={e.id}
-            href={hrefFor(path, view, { entity: e.id })}
-            active={view.entityId === e.id}
-          >
-            {e.name}
-          </Chip>
-        ))}
-      </Row>
-
-      <Row label="Against">
-        {(Object.keys(COMPARATOR_LABELS) as ComparatorId[]).map((id) => (
-          <Chip
-            key={id}
-            href={hrefFor(path, view, { comparator: id })}
-            active={view.comparator.id === id}
-            /* The trend's own limitation, on the control that selects it rather than in a footnote a
-               reader meets after they have already drawn a conclusion from it. */
-            title={
-              id === 'trend'
-                ? 'A fitted expectation, not a plan anybody committed to — so nothing is measured as material against it and it cannot raise a board item.'
-                : undefined
-            }
-          >
-            {COMPARATOR_LABELS[id]}
-            {id === 'trend' ? <span className="chip-mark">fit</span> : null}
-          </Chip>
-        ))}
-      </Row>
-
-      <Row label="Currency">
-        {REPORT_LENSES.map((lens) => (
-          <Chip
-            key={lens}
-            href={hrefFor(path, view, { lens })}
-            active={view.lens === lens}
-            title={
-              lens === 'constant'
-                ? 'This period’s trading translated at the comparative period’s rates, so the movement excludes currency.'
-                : undefined
-            }
-          >
-            {LENS_LABELS[lens]}
-          </Chip>
-        ))}
-      </Row>
-    </div>
+    </section>
   );
 }

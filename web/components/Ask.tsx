@@ -103,6 +103,10 @@ export function Ask({
         ))}
       </div>
 
+      <span className="visually-hidden" role="status" aria-live="polite">
+        {pending ? 'Working on your question.' : reply === null ? '' : 'Answer ready.'}
+      </span>
+
       {reply === null ? null : (
         <div
           className={`answer${reply.kind === 'unavailable' ? ' unavailable' : ''}`}

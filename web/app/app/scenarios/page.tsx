@@ -1,9 +1,10 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { formatValue } from '@kestrel/measures';
 import { MINIMUM_CASH } from '@kestrel/analysis';
 
 import { CashColumns } from '../../../components/CashColumns';
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { directionClass, movement } from '../../../lib/format';
 import { LEVERS, LIBRARY, baseStep, runScenario, scenarioHref } from '../../../lib/scenario';

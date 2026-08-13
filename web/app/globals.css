@@ -46,7 +46,7 @@
   --text: #ffffff;   /* --dl-white, headlines */
   --label: #cecece;  /* --dl-body */
   --muted: #9d9d9d;  /* --dl-muted */
-  --faint: #6b6b6b;  /* --dl-faint */
+  --faint: #858585;  /* raised to AA for the 9.5–10.5px labels used throughout the workbench */
 
   /* ---- Amber: interactive only. Never a value, and never decorative. */
   --accent: #f2a900;         /* --dl-amber */
@@ -57,7 +57,7 @@
 
   /* ---- Direction. The brand's GO/NO-GO pair, used for favourable and adverse. */
   --pos: #2e9e63;   /* --dl-success */
-  --neg: #c04a3f;   /* --dl-danger */
+  --neg: #dc675b;   /* --dl-danger, raised to AA for small adverse variances */
   --warn: #c98c00;  /* --dl-warning */
 
   /* ---- Chart ink. Held as tokens rather than hex in JSX so a treatment can restate them.
@@ -125,6 +125,20 @@
 }
 
 * { box-sizing: border-box; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important;
+}
+
+.skip-link {
+  position: fixed; top: 8px; left: 8px; z-index: 100;
+  padding: 8px 12px; border-radius: var(--radius-md);
+  background: var(--accent); color: var(--accent-ink); font-weight: 600;
+  transform: translateY(-160%); text-decoration: none;
+}
+.skip-link:focus { transform: translateY(0); }
 
 html, body {
   margin: 0;
@@ -230,6 +244,7 @@ a:hover { opacity: 0.72; }
 .focusable.focused {
   outline: 2px solid var(--accent); outline-offset: 6px; border-radius: var(--radius);
 }
+.focusable:focus { outline: 2px solid var(--accent); outline-offset: 6px; }
 
 /* A group of cards, not a stack of boxes: one pane, hairlines between the cells. On a narrow
    screen it becomes one column and the hairlines turn to face the other way. */
@@ -473,6 +488,10 @@ a:hover { opacity: 0.72; }
 }
 .inner-surface-nav .nav-link { flex: none; }
 
+/* A horizontal navigation row needs to reveal that it continues. The inset fade is only a cue;
+   links remain ordinary focusable links and the active destination remains aria-current. */
+.inner-surface-nav, .masthead-nav { scrollbar-width: thin; }
+
 /* ------------------------------------------------------------------- selectors
 
    Links rather than dropdowns, so the address bar and the screen cannot disagree.
@@ -482,12 +501,39 @@ a:hover { opacity: 0.72; }
    controlled. Now they sit on one wrapping line under the masthead, small and quiet, with the
    active value the only thing carrying colour. */
 
-.selectors {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;
-  padding: 0 0 20px; margin-bottom: 28px;
-  border-bottom: 1px solid var(--border);
+.context-shell { margin-bottom: 28px; }
+.context-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px;
+  padding: 10px 0 14px; border-bottom: 1px solid var(--border);
 }
-.sel-row { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.context-current {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 7px; margin: 0;
+  min-width: 0; color: var(--label); font-size: 13px; line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.context-value:first-child { color: var(--text); font-weight: 600; }
+.context-separator { color: var(--faint); }
+.context-editor { position: relative; flex: none; min-width: 0; max-width: 100%; }
+.context-editor[open] { flex-basis: 100%; width: 100%; }
+.context-edit-trigger {
+  width: max-content; margin-left: auto;
+  cursor: pointer; list-style: none; padding: 6px 10px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  color: var(--accent); font-size: 12px; font-weight: 600;
+}
+.context-edit-trigger::-webkit-details-marker { display: none; }
+.context-edit-trigger::after { content: ' +'; font-family: var(--ff-mono); }
+.context-editor[open] .context-edit-trigger::after { content: ' −'; }
+.context-editor-body {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  width: 100%; min-width: 0; max-width: 100%;
+  margin: 10px 0 0; padding: 16px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+}
+.sel-row {
+  display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%;
+  margin: 0; padding: 0; border: 0; min-inline-size: 0;
+}
 .sel-label {
   font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: var(--ls-label);
   text-transform: uppercase; color: var(--faint); white-space: nowrap;
@@ -526,6 +572,9 @@ a:hover { opacity: 0.72; }
 
 .card-basis { color: var(--faint); }
 .card-link { text-decoration: none; color: inherit; }
+.card-link .card-k::after {
+  content: '›'; margin-left: 7px; color: var(--accent); font-size: 15px; line-height: 0;
+}
 .card-link:hover { opacity: 1; background: var(--surface-2); }
 .card-d.pos { color: var(--pos); }
 .card-d.neg { color: var(--neg); }
@@ -760,8 +809,47 @@ a:hover { opacity: 0.72; }
 
 /* A cell is a link, and looks like a figure until it is hovered. Underlining every cell in a grid of
    sixty turns the grid into a mesh. */
-.cell-link { color: inherit; text-decoration: none; }
+.cell-link {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px;
+  color: inherit; text-decoration: none; scroll-margin-top: 16px;
+}
+.cell-link::after { content: '›'; color: var(--accent); font-weight: 700; opacity: .78; }
 .cell-link:hover { opacity: 1; color: var(--accent); }
+.cell-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.cell-link[aria-current='true'], .cell-link.is-selected {
+  color: var(--accent); text-decoration: underline; text-underline-offset: 3px;
+}
+.cell-drillable { cursor: pointer; }
+.cell-selected { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
+.grid-pivot th:first-child, .grid-pivot td:first-child {
+  position: sticky; left: 0; z-index: 1; background: var(--surface);
+  box-shadow: 1px 0 0 var(--border-strong);
+}
+.grid-pivot thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
+.grid-pivot thead th:first-child { z-index: 3; }
+
+.drill-breadcrumb {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+  margin: 0 0 12px; color: var(--muted); font-size: 12px;
+}
+.drill-breadcrumb span[aria-current='page'] { color: var(--text); }
+.drill-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.drill-close {
+  display: inline-flex; padding: 6px 10px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); color: var(--accent); font-size: 12px; text-decoration: none;
+}
+.technical-evidence { margin-top: 16px; border-top: 1px solid var(--border); }
+.technical-evidence > summary { padding: 12px 0; cursor: pointer; color: var(--muted); }
+.drill-evidence { margin-top: 16px; }
+.drill-evidence-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  cursor: pointer; list-style: none; color: var(--accent); font-weight: 600;
+}
+.drill-evidence-summary::-webkit-details-marker { display: none; }
+.drill-evidence-summary::before { content: '+'; font-family: var(--ff-mono); }
+.drill-evidence[open] .drill-evidence-summary::before { content: '−'; }
+.drill-evidence-summary span { margin-left: auto; color: var(--faint); font-size: 11px; font-weight: 400; }
+.drill-evidence[open] .drill-evidence-summary { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 /* A refused total, not a missing one. The title attribute carries the reason. */
 .cell-none { color: var(--faint); cursor: help; }
 /* The point count under a horizon's error: present so a reader never trusts the least-supported
@@ -981,4 +1069,44 @@ a:hover { opacity: 0.72; }
 @media (max-width: 560px) {
   .control-lineage, .control-permission-grid { grid-template-columns: 1fr; }
   .control-lineage-later { box-shadow: inset 0 2px 0 var(--warn); }
+}
+
+@media (max-width: 700px) {
+  .product { padding-inline: 14px; padding-bottom: 92px; }
+  .masthead-nav {
+    flex-wrap: nowrap; width: 100%; margin-left: 0; overflow-x: auto;
+    padding-bottom: 6px; scroll-snap-type: x proximity;
+  }
+  .masthead-nav .nav-link { flex: none; scroll-snap-align: start; }
+  .inner-surface-nav { scroll-snap-type: x proximity; }
+  .inner-surface-nav .nav-link { scroll-snap-align: start; }
+  .context-bar { align-items: flex-start; }
+  .context-current { font-size: 12.5px; }
+  .context-editor-body { align-items: flex-start; flex-direction: column; overflow: hidden; }
+  .sel-row { align-items: flex-start; flex-direction: column; width: 100%; gap: 4px; }
+  .sel-chips {
+    flex-wrap: nowrap; width: 100%; max-width: 100%; overflow-x: auto; padding-bottom: 3px;
+    overscroll-behavior-inline: contain;
+  }
+  .chip-link { flex: none; }
+  .pane-scroll {
+    background:
+      linear-gradient(to right, var(--surface) 30%, transparent),
+      linear-gradient(to left, var(--surface) 30%, transparent) 100% 0,
+      linear-gradient(to right, rgba(0,0,0,.22), transparent),
+      linear-gradient(to left, rgba(0,0,0,.22), transparent) 100% 0;
+    background-repeat: no-repeat; background-size: 28px 100%, 28px 100%, 12px 100%, 12px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+}
+
+/* The latest demo-kit free mode correctly gives the product the whole viewport. Reserve a small
+   safe strip for its floating exit/treatment furniture on phones so it never obscures app content. */
+@media (max-width: 560px) {
+  .skin .tw-float {
+    right: 8px; bottom: max(8px, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 16px); padding: 4px; gap: 4px;
+  }
+  .skin .tw-exit { padding: 7px 10px; font-size: 11.5px; }
+  .skin .tw-full-frame { padding-bottom: calc(52px + env(safe-area-inset-bottom)); }
 }

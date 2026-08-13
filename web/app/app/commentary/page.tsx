@@ -1,14 +1,15 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import type {
   CommentaryAction,
   CommentaryItem,
   CommentaryState,
   PublishedCommentarySnapshot,
 } from '@kestrel/model';
-import { SEGMENTS, entity, seedCommentaryQueue } from '@kestrel/model';
-import { formatValue } from '@kestrel/measures';
+import { SEGMENTS, entity, seedCommentaryQueue, segment as segmentSpec } from '@kestrel/model';
+import { formatValue, measure } from '@kestrel/measures';
 
 import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import {
   COMMENTARY_STATES,
@@ -60,6 +61,8 @@ function StateChip({ state }: { readonly state: CommentaryState }) {
 }
 
 function Identity({ item }: { readonly item: CommentaryItem }) {
+  const segmentLabel =
+    item.anchor.segmentId === undefined ? undefined : segmentSpec(item.anchor.segmentId).label;
   return (
     <dl className="commentary-identity">
       <div>
@@ -75,9 +78,10 @@ function Identity({ item }: { readonly item: CommentaryItem }) {
         <dd>{item.versionId}</dd>
       </div>
       <div>
-        <dt>Anchor</dt>
+        <dt>Context</dt>
         <dd>
-          {item.anchor.measureId} · {entity(item.anchor.entityId).name}
+          {measure(item.anchor.measureId).label} · {entity(item.anchor.entityId).name}
+          {segmentLabel === undefined ? ' · All segments' : ` · ${segmentLabel}`}
         </dd>
       </div>
     </dl>

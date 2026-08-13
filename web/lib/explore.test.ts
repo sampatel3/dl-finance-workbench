@@ -9,6 +9,8 @@ import {
   ALL_EXPLORE_MEASURES,
   cellProvenance,
   exploreCsv,
+  exploreCloseDrillHref,
+  exploreDrillHref,
   exploreHref,
   exploreMeasures,
   exploreMonthsThrough,
@@ -54,6 +56,29 @@ describe('Explore axes are an unambiguous URL', () => {
     expect(url.searchParams.get('cols')).toBe('period');
     expect(url.searchParams.get('grain')).toBe('quarter');
     expect(url.searchParams.has('drill')).toBe(false);
+  });
+});
+
+describe('Explore drill navigation preserves context without leaving stale focus state', () => {
+  it('opens the selected cell at the visible drill section', () => {
+    const url = new URL(
+      exploreDrillHref({ period: 'quarter', view: 'inner', focus: 'section-axes' }, 2, 1),
+      'https://demo.invalid',
+    );
+    expect(url.searchParams.get('period')).toBe('quarter');
+    expect(url.searchParams.get('view')).toBe('inner');
+    expect(url.searchParams.get('drill')).toBe('2:1');
+    expect(url.searchParams.get('focus')).toBe('section-drill');
+  });
+
+  it('closes the selected cell and returns focus to the pivot', () => {
+    const url = new URL(
+      exploreCloseDrillHref({ period: 'quarter', drill: '2:1', focus: 'section-drill' }),
+      'https://demo.invalid',
+    );
+    expect(url.searchParams.get('period')).toBe('quarter');
+    expect(url.searchParams.has('drill')).toBe(false);
+    expect(url.searchParams.get('focus')).toBe('explore-cell-2-1');
   });
 });
 

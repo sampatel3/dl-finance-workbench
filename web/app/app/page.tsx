@@ -1,10 +1,11 @@
-import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { resolveView } from '@demo-kit/shell';
 import { closeCompleteness, entity } from '@kestrel/model';
 import { runDetectors } from '@kestrel/analysis';
 import { formatValue } from '@kestrel/measures';
 
 import { Ask } from '../../components/Ask';
 import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
 import { BoardPanel, CompletenessBanner, HeadlineCard } from '../../components/Figures';
 import { LineChart } from '../../components/LineChart';
 import { Selectors } from '../../components/Selectors';
@@ -46,6 +47,21 @@ import {
  */
 
 export const dynamic = 'force-dynamic';
+
+/** Headline cards open the exact analysis they name rather than a generic first section. */
+function headlineHref(view: ReturnType<typeof viewOf>, measureId: string): string {
+  const target =
+    measureId === 'cash'
+      ? { path: '/app/cash', focus: 'section-weekly' }
+      : measureId === 'gross_margin'
+        ? { path: '/app/performance', focus: 'section-margin' }
+        : measureId === 'ebitda'
+          ? { path: '/app/performance', focus: 'section-ebitda' }
+          : { path: '/app/performance', focus: 'section-bridge' };
+  const base = hrefFor(target.path, view);
+  const query = new URLSearchParams({ focus: target.focus, measure: measureId });
+  return `${base}${base.includes('?') ? '&' : '?'}${query.toString()}`;
+}
 
 export default async function Overview({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
@@ -134,7 +150,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             <HeadlineCard
               key={headline.measureId}
               headline={headline}
-              href={hrefFor('/app/performance', view)}
+              href={headlineHref(view, headline.measureId)}
             />
           ))}
         </div>
