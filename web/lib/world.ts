@@ -121,12 +121,19 @@ export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
   switch (kind) {
     case 'month':
       return monthScope(through);
-    case 'quarter':
-      return quarterScope(
-        fiscalYearOf(through, CALENDAR_YEAR),
-        fiscalQuarterOf(through, CALENDAR_YEAR),
-        CALENDAR_YEAR,
-      );
+    case 'quarter': {
+      const fiscalYear = fiscalYearOf(through, CALENDAR_YEAR);
+      const fiscalQuarter = fiscalQuarterOf(through, CALENDAR_YEAR);
+      const quarter = quarterScope(fiscalYear, fiscalQuarter, CALENDAR_YEAR);
+      // `Through` is a hard reporting boundary. An unfinished quarter is quarter-to-date; padding it
+      // with future months would both read data that has not closed and mislabel the resulting figure.
+      if (quarter.endMonth === through) return quarter;
+      return {
+        ...quarter,
+        endMonth: through,
+        label: `${quarter.label} through ${monthLabel(through)}`,
+      };
+    }
     case 'ytd':
       return ytdScope(through, CALENDAR_YEAR);
   }
@@ -142,8 +149,15 @@ export function scopeLabel(kind: PeriodKind, scope: PeriodScope): string {
   switch (kind) {
     case 'month':
       return monthLabel(scope.endMonth);
-    case 'quarter':
-      return `Q${fiscalQuarterOf(scope.endMonth, CALENDAR_YEAR)} ${fiscalYearOf(scope.endMonth, CALENDAR_YEAR)}`;
+    case 'quarter': {
+      const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
+      const fiscalQuarter = fiscalQuarterOf(scope.endMonth, CALENDAR_YEAR);
+      const quarter = quarterScope(fiscalYear, fiscalQuarter, CALENDAR_YEAR);
+      const label = `Q${fiscalQuarter} ${fiscalYear}`;
+      return scope.endMonth === quarter.endMonth
+        ? label
+        : `${label} through ${monthLabel(scope.endMonth)}`;
+    }
     case 'ytd':
       return `${monthLabel(scope.startMonth)} – ${monthLabel(scope.endMonth)}`;
   }
