@@ -1,68 +1,130 @@
 /**
- * The shot manifest — what `deck shoot` photographs, and what `deck aspects` stamps into
- * the deck. It belongs to the demo, not to the kit: which pages are worth showing is the one
- * thing a screenshot tool cannot work out for itself.
+ * Screenshot manifest for the executive narrative in public/deck.html.
  *
- * Run against a demo that is actually up:
- *
- *   pnpm dev                          # in another terminal
- *   pnpm deck:shoot                   # photograph the product
- *   pnpm deck:aspects                 # stamp each shot's true shape onto its frame
- *   pnpm deck:slides                  # render every slide to look at, and flag overflow
- *   pnpm deck:pdf                     # print it, one slide to one page
- *
- * **Use `pnpm dev`, not `pnpm start`, for this.** `shoot` writes the JPEGs into `public/`,
- * and `next start` reads that directory once at boot — so a production server started before
- * the shoot serves 404 for every image, `slides` renders a deck of broken frames, and
- * `aspects` has stamped correct ratios onto pictures nobody can see. The dev server reads
- * `public/` per request and has no such gap.
- *
- * With `DEMO_PASSCODE` set the demo is gated and every subcommand needs the cookie:
- * `GATE=1 pnpm deck:shoot`. Locally, with no passcode, there is no gate and no flag.
- *
- * Relative paths resolve against this file. Every shot declared here appears in the deck —
- * a manifest that photographs things no slide shows is a manifest nobody maintains.
+ * Every capture uses the same logical viewport as its live frame. Keeping the
+ * route and focus anchor in one place makes the still fallback reproduce the
+ * exact product state shown when the deck is connected to the running app.
  */
 
 export default {
   base: 'http://localhost:3000',
-
-  /* The sentinel, and it is not optional. Chrome's error page and the passcode gate both
-     answer a `body` selector, so without a marker that only the product renders, a dead port
-     or a moved route is photographed over a committed deck asset without a word. `#product`
-     is the id on the product page's <main>. */
   root: '#product',
-
   out: 'public/shots',
   deck: 'public/deck.html',
   deckUrl: 'http://localhost:3000/deck.html',
   pdf: '../docs/deck/demo.pdf',
-
-  /* Shooting a hosted demo means presenting the passcode cookie. Locally, with no
-     DEMO_PASSCODE set, there is no gate and this is unused. */
   gateCookie: 'demo_gate',
 
   shots: [
     {
-      /* Captured at roughly the width it is SHOWN at on the slide — about 1150px in a
-         1600px-wide deck. A 1400px capture displayed in a 700px column puts the app's 13px
-         type on the page at 6px, which is not type any more. */
-      name: 'series',
-      url: '/app?view=inner',
+      name: 'july-position',
+      url: '/app?view=inner&focus=section-headline',
       w: 1100,
-      h: 1000,
-      sel: '#section-series',
-      pad: 12,
-    },
-    {
-      /* The phone, at its true logical viewport — the same number the tour's device window
-         renders at, so a slide and the tour cannot disagree about what a phone shows. */
-      name: 'phone',
-      url: '/app?view=inner',
-      w: 402,
-      h: 781,
+      h: 540,
       sel: '#product',
       viewportOnly: true,
+      scrollTo: '#section-headline',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'revenue-bridge',
+      url: '/app/performance?view=inner&focus=section-bridge',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-bridge',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'source-drill',
+      url: '/app/explore?view=inner&focus=section-drill&rows=measure&cols=period&drill=0%3A5',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-drill',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'version-diff',
+      url: '/app/forecast?view=inner&focus=section-diff&version=v7&from=v6',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-diff',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'scenario-impact',
+      url: '/app/scenarios?view=inner&focus=section-effect&dsoDays=10',
+      w: 820,
+      h: 460,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-effect',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'cash-horizon',
+      url: '/app/cash?view=inner&focus=section-weekly',
+      w: 820,
+      h: 460,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-weekly',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'forecast-quality',
+      url: '/app/quality?view=inner&focus=section-bias&measure=subcontract_cost',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-bias',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'published-commentary',
+      url: '/app/commentary?view=inner&focus=section-commentary&state=published',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-commentary',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'controls-checks',
+      url: '/app/controls?view=inner&focus=section-checks',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-checks',
+      scrollPad: 14,
+      settle: 700,
+    },
+    {
+      name: 'permission-refusal',
+      url: '/app/controls?view=inner&focus=section-permissions&as=gulf-controller&entity=group',
+      w: 1100,
+      h: 540,
+      sel: '#product',
+      viewportOnly: true,
+      scrollTo: '#section-permissions',
+      scrollPad: 14,
+      settle: 700,
     },
   ],
 };

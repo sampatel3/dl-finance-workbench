@@ -1187,7 +1187,7 @@ interface EmitContext {
   readonly entityId: string;
   readonly scenario: Scenario;
   readonly versionId: string;
-  readonly vintageFor: (month: FiscalMonth) => string;
+  readonly vintageFor: (month: FiscalMonth, accountId: AccountCode) => string;
 }
 
 function emit(
@@ -1209,7 +1209,7 @@ function emit(
     versionId: ctx.versionId,
     costCentreId: options.costCentreId ?? null,
     segmentId: options.segmentId ?? null,
-    vintageId: ctx.vintageFor(month),
+    vintageId: ctx.vintageFor(month, accountId),
     amountMinor: cents(major),
     quantity: options.quantity ?? null,
   });
@@ -1237,7 +1237,7 @@ function emitMinor(
     versionId: ctx.versionId,
     costCentreId,
     segmentId,
-    vintageId: ctx.vintageFor(month),
+    vintageId: ctx.vintageFor(month, accountId),
     amountMinor,
     quantity: null,
   });
@@ -1326,12 +1326,63 @@ function vintageId(month: FiscalMonth): string {
   return `v-${month}-core`;
 }
 
+type SeedSourceId =
+  | 'sap-uk'
+  | 'fusion-gulf'
+  | 'd365-eu'
+  | 'netsuite-us'
+  | 'plan-anaplan'
+  | 'psa'
+  | 'crm'
+  | 'payroll'
+  | 'bank';
+
+function sourceVintageId(sourceId: SeedSourceId, month: FiscalMonth): string {
+  return sourceId === 'sap-uk' ? vintageId(month) : `v-${month}-${sourceId}`;
+}
+
+function glSourceFor(entityId: string): SeedSourceId {
+  switch (entityId) {
+    case 'manufacturing':
+    case 'services':
+      return 'sap-uk';
+    case 'gulf':
+      return 'fusion-gulf';
+    case 'europe':
+      return 'd365-eu';
+    case 'inc':
+      return 'netsuite-us';
+    default:
+      throw new Error(`No GL source for entity ${entityId}`);
+  }
+}
+
+/** The feed that owns a generated fact; this is also the source named by its immutable vintage. */
+function sourceForFact(
+  entityId: string,
+  scenario: Scenario,
+  accountId: AccountCode,
+): SeedSourceId {
+  if (scenario !== 'ACTUAL') return 'plan-anaplan';
+  if (accountId === 'pipeline_weighted' || accountId === 'pipeline_converted') return 'crm';
+  if (accountId === 'headcount') return 'payroll';
+  if (accountId === 'cash') return 'bank';
+  if (
+    accountId === 'chargeable_hours' ||
+    accountId === 'available_hours' ||
+    (accountId === 'subcontract_hours' && ['services', 'gulf', 'inc'].includes(entityId))
+  ) {
+    return 'psa';
+  }
+  return glSourceFor(entityId);
+}
+
 export const RESTATEMENT_VINTAGE = 'v-2026-07-restate-2026-06';
 
 function buildRegister(healthy: boolean): VintageRegister {
   const register = new VintageRegister();
 
-  const sources: readonly SourceSystem[] = [
+  const sources: readonly (SourceSystem & { readonly id: SeedSourceId })[] = [
     {
       id: 'sap-uk',
       name: 'SAP S/4HANA — UK ledgers',
@@ -1398,21 +1449,38 @@ function buildRegister(healthy: boolean): VintageRegister {
   ];
   for (const source of sources) register.addSource(source);
 
+  const loadedAtBySource: Readonly<Record<SeedSourceId, string>> = {
+    'fusion-gulf': '01:10:00',
+    'd365-eu': '01:20:00',
+    'netsuite-us': '01:30:00',
+    'plan-anaplan': '02:00:00',
+    psa: '02:10:00',
+    crm: '02:20:00',
+    payroll: '02:30:00',
+    bank: '02:40:00',
+    // This remains the final routine load in a monthly cut-off, so the established `core` vintage
+    // is also a cut-off that includes every earlier accepted source for the close.
+    'sap-uk': '03:12:00',
+  };
+
   for (const month of MONTHS) {
-    const isJuly = month === SEED_END;
-    register.addVintage({
-      id: vintageId(month),
-      sourceId: 'sap-uk',
-      fromMonth: month,
-      toMonth: month,
-      loadedAt: `${addMonths(month, 1)}-04T03:12:00Z`,
-      // PLANTED 7 — July's load is the one that brought two accounts nothing could map.
-      status: !healthy && isJuly ? 'accepted_with_exceptions' : 'accepted',
-      rowCount: 41_800 + Math.round(noise(`rows|${month}`) * 900),
-      ...(!healthy && isJuly
-        ? { note: 'Two ledger accounts arrived with no mapping. See Mappings.' }
-        : {}),
-    });
+    for (const source of sources) {
+      const isJulyCore = month === SEED_END && source.id === 'sap-uk';
+      const baseRows = source.id === 'sap-uk' ? 41_800 : source.feed === 'gl' ? 18_000 : 6_000;
+      register.addVintage({
+        id: sourceVintageId(source.id, month),
+        sourceId: source.id,
+        fromMonth: month,
+        toMonth: month,
+        loadedAt: `${addMonths(month, 1)}-04T${loadedAtBySource[source.id]}Z`,
+        // PLANTED 7 — July's UK GL load is the one that brought two accounts nothing could map.
+        status: !healthy && isJulyCore ? 'accepted_with_exceptions' : 'accepted',
+        rowCount: baseRows + Math.round(noise(`rows|${source.id}|${month}`) * 900),
+        ...(!healthy && isJulyCore
+          ? { note: 'Two ledger accounts arrived with no mapping. See Mappings.' }
+          : {}),
+      });
+    }
   }
 
   // PLANTED 11 — the restatement. It arrives after the load it corrects, which the register
@@ -1806,13 +1874,20 @@ export function buildWorld(options: WorldOptions): World {
     },
   });
 
-  const vintageFor = (month: FiscalMonth): string => vintageId(month);
   const facts: Fact[] = [];
 
   for (const e of tradingEntities()) {
     const s = spec(e.id);
+    const actualVintageFor = (month: FiscalMonth, accountId: AccountCode): string =>
+      sourceVintageId(sourceForFact(e.id, 'ACTUAL', accountId), month);
     generateEntity(
-      { facts, entityId: e.id, scenario: 'ACTUAL', versionId: ACTUAL_VERSION, vintageFor },
+      {
+        facts,
+        entityId: e.id,
+        scenario: 'ACTUAL',
+        versionId: ACTUAL_VERSION,
+        vintageFor: actualVintageFor,
+      },
       s,
       ACTUAL_ASSUMPTIONS,
       SEED_END,
@@ -1821,8 +1896,16 @@ export function buildWorld(options: WorldOptions): World {
       rates,
     );
     for (const version of VERSIONS) {
+      const planVintageFor = (month: FiscalMonth, accountId: AccountCode): string =>
+        sourceVintageId(sourceForFact(e.id, version.scenario, accountId), month);
       generateEntity(
-        { facts, entityId: e.id, scenario: version.scenario, versionId: version.id, vintageFor },
+        {
+          facts,
+          entityId: e.id,
+          scenario: version.scenario,
+          versionId: version.id,
+          vintageFor: planVintageFor,
+        },
         s,
         version.assumptions,
         version.actualsThrough,
@@ -1832,8 +1915,16 @@ export function buildWorld(options: WorldOptions): World {
       );
     }
     if (scenario !== undefined) {
+      const scenarioVintageFor = (month: FiscalMonth, accountId: AccountCode): string =>
+        sourceVintageId(sourceForFact(e.id, 'FORECAST', accountId), month);
       generateEntity(
-        { facts, entityId: e.id, scenario: 'FORECAST', versionId: scenario.id, vintageFor },
+        {
+          facts,
+          entityId: e.id,
+          scenario: 'FORECAST',
+          versionId: scenario.id,
+          vintageFor: scenarioVintageFor,
+        },
         s,
         scenario.assumptions,
         scenario.actualsThrough,

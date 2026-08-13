@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 import { SEED_END } from '@kestrel/model';
 import { measureIds } from '@kestrel/measures';
 
+import { principalById } from './permissions';
 import { SUGGESTIONS, SYSTEM, TOOLS, runTool } from './tools';
 
 const call = (name: string, input: Record<string, unknown> = {}) =>
@@ -74,6 +75,27 @@ describe('get_measure', () => {
     const out = await call('get_measure', { measure: 'revenue_but_better' });
     expect(out.content).toMatch(/No measure called/);
   });
+
+  it('refuses a group lookup for the Gulf controller instead of answering from Gulf', async () => {
+    const out = await runTool(
+      { id: 't', name: 'get_measure', input: { measure: 'revenue', entity: 'group' } },
+      { principal: principalById('gulf-controller') },
+    );
+
+    expect(out.content).toMatch(/Access refused/);
+    expect(out.content).toMatch(/cannot read group figures/);
+    expect(out.content).not.toMatch(/£12\.4m/);
+  });
+
+  it('defaults the Gulf controller to their own entity when no entity is requested', async () => {
+    const out = await runTool(
+      { id: 't', name: 'get_measure', input: { measure: 'revenue' } },
+      { principal: principalById('gulf-controller') },
+    );
+
+    expect(out.content).toMatch(/Kestrel Gulf Technical Services/);
+    expect(out.content).not.toMatch(/Kestrel Industrial Group plc/);
+  });
 });
 
 describe('compare_measures', () => {
@@ -115,6 +137,23 @@ describe('list_findings', () => {
     // entity alone has no restatement and no unmapped accounts, so some boards thin out.
     const out = await call('list_findings', { board: 'performance', entity: 'gulf' });
     expect(out.content.length).toBeGreaterThan(20);
+  });
+
+  it('never carries group-only control metadata into a Gulf finding response', async () => {
+    const out = await runTool(
+      { id: 't', name: 'list_findings', input: {} },
+      { principal: principalById('gulf-controller') },
+    );
+    const rendered = `${out.content} ${JSON.stringify(out.citations ?? [])}`;
+
+    expect(rendered).not.toMatch(/unmapped|intercompany|restat/i);
+    expect(rendered).not.toContain('Kestrel Inc');
+    expect(rendered).not.toContain('58420');
+    for (const citation of out.citations ?? []) {
+      if (citation.href === null) continue;
+      const url = new URL(citation.href, 'https://demo.invalid');
+      expect(url.searchParams.get('as')).toBe('gulf-controller');
+    }
   });
 });
 

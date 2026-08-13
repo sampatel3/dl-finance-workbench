@@ -7,10 +7,10 @@ import {
   TourWindow,
   productHref,
   resolveShellView,
-  resolveSkin,
 } from '@demo-kit/shell';
-import { SURFACE_NOTES, TOUR } from '../lib/tour';
+import { TOUR } from '../lib/tour';
 import { DEMO_NAME } from '../lib/demo';
+import { resolveWorkbenchSkin } from '../lib/skin';
 
 /**
  * The landing page is the demo shell, not the product.
@@ -32,26 +32,29 @@ export default async function Shell({
     step?: string;
     mode?: string;
     device?: string;
-    screen?: string;
     month?: string;
   }>;
 }) {
-  const view = resolveShellView(TOUR, await searchParams);
-  const skin = resolveSkin((await cookies()).get(SKIN_COOKIE)?.value);
+  const params = await searchParams;
+  const view = resolveShellView(TOUR, params);
+  const skin = resolveWorkbenchSkin((await cookies()).get(SKIN_COOKIE)?.value);
 
   return (
     <TourWindow
-      src={view.mode === 'free' ? productHref({ view: 'inner' }) : view.step.href}
+      src={
+        view.mode === 'free'
+          ? productHref({ view: 'inner', shell: 'free' })
+          : view.step.href
+      }
       title={DEMO_NAME}
       view={view}
       skin={skin}
       link={Link}
-      surfaceNotes={SURFACE_NOTES}
       notes={
         <>
           <TourNotes tour={TOUR} view={view} link={Link} />
-          {/* The treatment control is demo furniture, so it sits with the notes rather than
-              on the product, which carries none. */}
+          {/* The treatment control is demo furniture, so it sits with the guided notes. In
+              free view the current demo-kit owns the paired floating controls itself. */}
           <div className="skin-row">
             <span>Surface</span>
             <SkinToggle skin={skin} />

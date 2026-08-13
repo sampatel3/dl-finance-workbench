@@ -30,6 +30,7 @@ import type { ComparatorChoice, MeasureContext } from '@kestrel/measures';
 import { allEntityIds, formatValue } from '@kestrel/measures';
 
 import type { DetectorContext } from './detectors.ts';
+import { MINIMUM_CASH } from './cash.ts';
 import { DETECTORS, TRIAGE_CAP, detector, runDetectors, triage } from './detectors.ts';
 import { boardCoverage, boardIdFor, brief, priorityBoards } from './priority.ts';
 
@@ -131,11 +132,46 @@ describe('what a finding carries', () => {
       'open_vintages',
       'open_mapping',
     ];
+    const routeByDetector: Readonly<Record<string, string>> = {
+      revenue_ahead_of_forecast: '/app/performance',
+      segment_margin_behind_forecast: '/app/performance',
+      driver_above_assumption: '/app/forecast',
+      currency_distorts_growth: '/app/performance',
+      collections_slipping: '/app/scenarios',
+      cash_floor_breach: '/app/scenarios',
+      unmapped_accounts: '/app/controls',
+      intercompany_mismatch: '/app/controls',
+      forecast_bias: '/app/quality',
+      close_incomplete: '/app/controls',
+      restatement_in_load: '/app/controls',
+      pipeline_ahead_of_assumption: '/app/scenarios',
+    };
     for (const finding of run.findings) {
       expect(allowed).toContain(finding.action.kind);
-      expect(finding.action.href.startsWith('/')).toBe(true);
+      const url = new URL(finding.action.href, 'https://demo.invalid');
+      expect(url.pathname).toBe(routeByDetector[finding.detectorId]);
+      expect(url.pathname.startsWith('/app/')).toBe(true);
+      if (url.pathname !== '/app/controls') {
+        expect(url.searchParams.get('focus')).toMatch(/^section-/);
+        expect(url.searchParams.get('month')).toBe(SEED_END);
+      }
       expect(finding.action.owner.length).toBeGreaterThan(3);
     }
+  });
+
+  it('and its deep-link state is understood by the surface it opens', () => {
+    const byDetector = new Map(run.findings.map((finding) => [finding.detectorId, finding]));
+    const url = (id: string) =>
+      new URL(byDetector.get(id)?.action.href ?? '/', 'https://demo.invalid');
+
+    expect(url('segment_margin_behind_forecast').searchParams.get('segment')).toBeTruthy();
+    expect(url('driver_above_assumption').searchParams.get('driver')).toBe('subcontract_rate');
+    expect(url('forecast_bias').searchParams.get('measure')).toBeTruthy();
+    expect(url('collections_slipping').searchParams.get('dsoDays')).toBe('-10');
+    expect(url('cash_floor_breach').searchParams.get('dsoDays')).toBe('10');
+    // Pipeline conversion is not a governed scenario lever yet. The link says only what the current
+    // surface can honour rather than carrying the old ignored `scenario=pipeline` parameter.
+    expect(url('pipeline_ahead_of_assumption').searchParams.has('scenario')).toBe(false);
   });
 
   it('and a fingerprint that is stable across runs and independent of the values', () => {
@@ -232,6 +268,13 @@ describe('the findings the deck depends on', () => {
     const finding = byCondition(6)[0];
     expect(finding?.horizon).toBe('forward');
     expect(finding?.title).toMatch(/week 9/);
+    expect(finding?.title).toMatch(/£760k/);
+    expect(finding?.statement).toMatch(/low point.*week 10/i);
+    const weekNine = finding?.figures.find((figure) => figure.label === 'Week 9 closing');
+    const shortfall = finding?.figures.find((figure) => figure.label === 'Shortfall');
+    const low = finding?.figures.find((figure) => figure.label === 'Low point · week 10');
+    expect(weekNine?.value).toBe(MINIMUM_CASH.amountMinor - (shortfall?.value ?? 0));
+    expect(low?.value ?? 0).toBeLessThan(weekNine?.value ?? 0);
     expect(finding?.priority).toBe('high');
   });
 
@@ -292,6 +335,18 @@ describe('a finding is scoped to what it was asked about', () => {
     expect(gulf.findings.map((f) => f.detectorId)).not.toEqual(
       group.findings.map((f) => f.detectorId),
     );
+
+    const ids = gulf.findings.map((finding) => finding.detectorId);
+    expect(ids).not.toContain('unmapped_accounts');
+    expect(ids).not.toContain('intercompany_mismatch');
+    expect(ids).not.toContain('close_incomplete');
+    expect(ids).not.toContain('restatement_in_load');
+
+    const visibleText = JSON.stringify(gulf.findings);
+    expect(visibleText).not.toContain('58420');
+    expect(visibleText).not.toContain('61155');
+    expect(visibleText).not.toContain('Kestrel Inc');
+    expect(visibleText).not.toContain('v-restatement-2026-06');
   });
 });
 

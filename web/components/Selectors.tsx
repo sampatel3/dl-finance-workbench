@@ -15,9 +15,10 @@
  * affordable, and it makes the current view visible at a glance rather than collapsed behind a label.
  */
 
-import type { CurrencyLens } from '@kestrel/model';
+import { entity, type CurrencyLens } from '@kestrel/model';
 import type { ComparatorId } from '@kestrel/measures';
 
+import { PERSONAS } from '../lib/permissions';
 import type { PeriodKind, View } from '../lib/world';
 import {
   PERIOD_KINDS,
@@ -84,6 +85,26 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
 
   return (
     <div className="selectors">
+      {view.deniedEntityId === undefined ? null : (
+        <p className="banner banner-warn" role="status">
+          Access refused for {view.principal.label}: {entity(view.deniedEntityId).name} is outside
+          this persona&rsquo;s entity scope. Showing {entity(view.entityId).name} instead.
+        </p>
+      )}
+
+      <Row label="View as">
+        {PERSONAS.map((persona) => (
+          <Chip
+            key={persona.id}
+            href={hrefFor(path, view, { persona: persona.id })}
+            active={view.principal.id === persona.id}
+            title={`${persona.role}; ${entity(persona.grant.entityRootId).name}`}
+          >
+            {persona.label}
+          </Chip>
+        ))}
+      </Row>
+
       <Row label="Period">
         {PERIOD_KINDS.map((kind: PeriodKind) => (
           <Chip
@@ -139,7 +160,7 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
       </div>
 
       <Row label="Entity">
-        {selectableEntities().map((e) => (
+        {selectableEntities(view.principal).map((e) => (
           <Chip
             key={e.id}
             href={hrefFor(path, view, { entity: e.id })}

@@ -21,9 +21,11 @@
  *   is a property of a computed figure rather than a page that refetches, so expanding cannot change
  *   the context — the context *is* the URL, and expanding does not navigate.
  *
- * An unreadable parameter falls back to the default rather than throwing, and `fellBack` records that
- * it happened. A demo that 500s because somebody hand-edited a query string dies on stage; one that
- * silently shows June when the URL said `month=Jorbuary` is how a screenshot gets the wrong caption.
+ * An unreadable parameter falls back to a safe resolved value rather than throwing, and `fellBack`
+ * records that it happened. A demo that 500s because somebody hand-edited a query string dies on stage;
+ * one that silently shows June when the URL said `month=Jorbuary` is how a screenshot gets the wrong
+ * caption. An unknown explicit persona is the exception to an ordinary default: it receives the
+ * smallest seeded grant, never the opening Group CFO grant.
  */
 
 import { memoise } from '@demo-kit/data';
@@ -40,7 +42,6 @@ import {
   fiscalYearOf,
   monthScope,
   quarterScope,
-  subtree,
   tradingEntities,
   ytdScope,
 } from '@kestrel/model';
@@ -50,6 +51,13 @@ import type { Boards, Brief, DetectorContext } from '@kestrel/analysis';
 import { activeApprovedForecast, brief, priorityBoards } from '@kestrel/analysis';
 
 import { DEMO_SEED } from './demo';
+import type { PermissionScope, PersonaId, Principal } from './permissions';
+import {
+  DEFAULT_PERSONA_ID,
+  principalById,
+  resolvePermissionScope,
+  resolvePrincipal,
+} from './permissions';
 
 /** The world, built once per process. */
 export const world = memoise(() => buildWorld({ seed: DEMO_SEED }));
@@ -146,6 +154,11 @@ export function scopeLabel(kind: PeriodKind, scope: PeriodScope): string {
 // ---------------------------------------------------------------------------
 
 export interface View {
+  readonly principal: Principal;
+  /** The selected entity after the principal's subtree grant has been applied. */
+  readonly permission: PermissionScope;
+  /** Present when a known entity was requested but the principal may not read it. */
+  readonly deniedEntityId?: string;
   readonly periodKind: PeriodKind;
   readonly through: FiscalMonth;
   readonly scope: PeriodScope;
@@ -154,6 +167,10 @@ export interface View {
   readonly lens: CurrencyLens;
   /** The forecast version this view reads, and the one a `forecast` comparator compares against. */
   readonly version: VersionSpec;
+  /** The current demo-kit embedded product treatment, retained by every internal URL. */
+  readonly inner: boolean;
+  /** Free-mode inner views keep a compact product navigator while guided frames stay presentation-only. */
+  readonly surfaceNav: boolean;
   /** True where a parameter was unreadable and a default was used. Surfaced, never swallowed. */
   readonly fellBack: boolean;
 }
@@ -171,6 +188,10 @@ export function viewOf(params: Params = {}): View {
     fellBack = true;
     return value;
   };
+
+  const principalResolution = resolvePrincipal(first(params.as));
+  const principal = principalResolution.principal;
+  if (principalResolution.fellBack) fellBack = true;
 
   const periodRaw = first(params.period);
   const periodKind: PeriodKind = PERIOD_KINDS.includes(periodRaw as PeriodKind)
@@ -210,11 +231,28 @@ export function viewOf(params: Params = {}): View {
 
   const entityRaw = first(params.entity);
   const known = ['group', ...tradingEntities().map((e) => e.id)];
-  const entityId = known.includes(entityRaw ?? '')
+  const requestedEntityId: string = known.includes(entityRaw ?? '')
     ? (entityRaw as string)
     : entityRaw === undefined
-      ? 'group'
-      : fallback('group');
+      ? principal.grant.entityRootId
+      : fallback(principal.grant.entityRootId);
+
+  const requestedPermission = resolvePermissionScope(principal, requestedEntityId);
+  let entityId: string;
+  let permission: PermissionScope;
+  let deniedEntityId: string | undefined;
+  if (requestedPermission.allowed) {
+    entityId = requestedEntityId;
+    permission = requestedPermission.scope;
+  } else {
+    deniedEntityId = requestedEntityId;
+    entityId = fallback(principal.grant.entityRootId);
+    const ownPermission = resolvePermissionScope(principal);
+    if (!ownPermission.allowed) {
+      throw new Error(`The seeded principal ${principal.id} cannot resolve its own grant.`);
+    }
+    permission = ownPermission.scope;
+  }
 
   const lensRaw = first(params.lens);
   const lens: CurrencyLens =
@@ -224,7 +262,13 @@ export function viewOf(params: Params = {}): View {
         ? 'reported'
         : fallback<CurrencyLens>('reported');
 
+  const inner = first(params.view) === 'inner';
+  const surfaceNav = inner && first(params.shell) === 'free';
+
   return {
+    principal,
+    permission,
+    ...(deniedEntityId === undefined ? {} : { deniedEntityId }),
     periodKind,
     through,
     scope: scopeFor(periodKind, through),
@@ -232,6 +276,8 @@ export function viewOf(params: Params = {}): View {
     entityId,
     lens,
     version,
+    inner,
+    surfaceNav,
     fellBack,
   };
 }
@@ -253,9 +299,24 @@ export function contextOf(view: View): MeasureContext {
     scenario: 'ACTUAL',
     versionId: ACTUAL_VERSION,
     lens: view.lens,
-    entityIds: subtree(view.entityId),
+    entityIds: view.permission.entityIds,
+    ...view.permission.dimensionFilters,
     ...(view.lens === 'constant' ? { comparativeScope: priorYearOf(view.scope) } : {}),
   };
+}
+
+/**
+ * Resolve one entity row through the active principal before computing it.
+ *
+ * A page used to change only `view.entityId` and pass the object back to `contextOf`. Once the
+ * permission scope became the authority, that produced the principal's whole permitted total on
+ * every entity row. This helper changes the selected entity and its permission together, so a
+ * detail table is neither wider than the principal nor accidentally repeated.
+ */
+export function contextForEntity(view: View, entityId: string): MeasureContext {
+  const resolved = resolvePermissionScope(view.principal, entityId);
+  if (!resolved.allowed) throw new Error(resolved.refusal);
+  return contextOf({ ...view, entityId, permission: resolved.scope });
 }
 
 /** The same window a year earlier. Local so `contextOf` does not depend on import order. */
@@ -306,31 +367,68 @@ export function hrefFor(
     entity: string;
     lens: CurrencyLens;
     version: string;
+    persona: PersonaId;
   }> = {},
 ): string {
+  const personaId = changes.persona ?? view.principal.id;
+  const targetPrincipal = principalById(personaId);
+  const personaChanged = personaId !== view.principal.id;
   const merged = {
     period: changes.period ?? view.periodKind,
     month: changes.month ?? view.through,
     comparator: changes.comparator ?? view.comparator.id,
-    entity: changes.entity ?? view.entityId,
+    entity:
+      changes.entity ?? (personaChanged ? targetPrincipal.grant.entityRootId : view.entityId),
     lens: changes.lens ?? view.lens,
     version: changes.version ?? view.version.id,
   };
   const params = new URLSearchParams();
+  if (personaId !== DEFAULT_PERSONA_ID) params.set('as', personaId);
   if (merged.period !== 'month') params.set('period', merged.period);
   if (merged.month !== LATEST_MONTH) params.set('month', merged.month);
   if (merged.comparator !== 'forecast') params.set('comparator', merged.comparator);
-  if (merged.entity !== 'group') params.set('entity', merged.entity);
+  if (merged.entity !== targetPrincipal.grant.entityRootId) params.set('entity', merged.entity);
   if (merged.lens !== 'reported') params.set('lens', merged.lens);
   if (merged.version !== activeApprovedForecast().id) params.set('version', merged.version);
+  if (view.inner) params.set('view', 'inner');
+  if (view.surfaceNav) params.set('shell', 'free');
   const query = params.toString();
   return query === '' ? path : `${path}?${query}`;
 }
 
+/**
+ * Resolve an engine-owned action through the active view.
+ *
+ * The action may add a focus, comparator or a permitted entity drill, but it cannot replace the
+ * principal or escape the demo-kit's embedded treatment. This keeps one click from silently changing
+ * either who is looking or the shell the product is running inside.
+ */
+export function hrefForTarget(target: string, view: View): string {
+  const origin = 'https://finance-workbench.invalid';
+  const requested = new URL(target, origin);
+  const resolved = new URL(hrefFor(requested.pathname, view), origin);
+
+  for (const [key, value] of requested.searchParams) {
+    if (key === 'as' || key === 'view' || key === 'shell') continue;
+    if (key === 'entity' && !resolvePermissionScope(view.principal, value).allowed) continue;
+    resolved.searchParams.set(key, value);
+  }
+  if (view.principal.id === DEFAULT_PERSONA_ID) resolved.searchParams.delete('as');
+  else resolved.searchParams.set('as', view.principal.id);
+  if (view.inner) resolved.searchParams.set('view', 'inner');
+  else resolved.searchParams.delete('view');
+  if (view.surfaceNav) resolved.searchParams.set('shell', 'free');
+  else resolved.searchParams.delete('shell');
+
+  return `${resolved.pathname}${resolved.search}${requested.hash}`;
+}
+
 /** The entities a selector offers, group first. */
-export function selectableEntities(): readonly { readonly id: string; readonly name: string }[] {
+export function selectableEntities(
+  principal: Principal = principalById(DEFAULT_PERSONA_ID),
+): readonly { readonly id: string; readonly name: string }[] {
   return [
     { id: 'group', name: entity('group').name },
     ...tradingEntities().map((e) => ({ id: e.id, name: e.name })),
-  ];
+  ].filter((entry) => resolvePermissionScope(principal, entry.id).allowed);
 }

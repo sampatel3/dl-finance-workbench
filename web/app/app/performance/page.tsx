@@ -1,5 +1,5 @@
 import { FocusOnLoad, resolveView } from '@demo-kit/shell';
-import { SEGMENTS, entity, segment as segmentSpec, tradingEntities } from '@kestrel/model';
+import { SEGMENTS, entity, segment as segmentSpec } from '@kestrel/model';
 import { compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
 import { buildBridge, directForecast, grossProfitBridge, principalDriver } from '@kestrel/analysis';
 
@@ -9,7 +9,14 @@ import { Selectors } from '../../../components/Selectors';
 import { Waterfall } from '../../../components/Waterfall';
 import { directionClass, movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
-import { contextOf, hrefFor, scopeLabel, viewOf } from '../../../lib/world';
+import {
+  contextForEntity,
+  contextOf,
+  hrefFor,
+  scopeLabel,
+  selectableEntities,
+  viewOf,
+} from '../../../lib/world';
 
 /**
  * Performance — the surface a variance is explained on.
@@ -33,12 +40,14 @@ function Row({
   ctx,
   comparator,
   href,
+  active = false,
 }: {
   readonly label: string;
   readonly measureId: string;
   readonly ctx: ReturnType<typeof contextOf>;
   readonly comparator: Parameters<typeof compareMeasure>[2];
   readonly href?: string;
+  readonly active?: boolean;
 }) {
   const c = compareMeasure(measureId, ctx, comparator);
   const money =
@@ -46,7 +55,7 @@ function Row({
       ? null
       : c.current.value - c.comparativeValue;
   return (
-    <tr>
+    <tr className={active ? 'row-active' : ''}>
       <th scope="row">{href === undefined ? label : <a href={href}>{label}</a>}</th>
       <td className="num">{formatValue(c.current.value, c.current.unit)}</td>
       <td className="num">{formatValue(c.comparativeValue, c.current.unit)}</td>
@@ -62,6 +71,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
+  const selectedSegment = typeof params.segment === 'string' ? params.segment : undefined;
 
   const view = viewOf(params);
   const ctx = contextOf(view);
@@ -83,7 +93,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
 
-      {inner ? null : <Masthead path="/app/performance" view={view} />}
+      <Masthead path="/app/performance" view={view} />
 
       <Selectors path="/app/performance" view={view} />
 
@@ -170,19 +180,12 @@ export default async function Performance({ searchParams }: { searchParams: Prom
               </tr>
             </thead>
             <tbody>
-              <Row
-                label={entity('group').name}
-                measureId="revenue"
-                ctx={contextOf({ ...view, entityId: 'group' })}
-                comparator={view.comparator}
-                href={hrefFor('/app/performance', view, { entity: 'group' })}
-              />
-              {tradingEntities().map((e) => (
+              {selectableEntities(view.principal).map((e) => (
                 <Row
                   key={e.id}
                   label={e.name}
                   measureId="revenue"
-                  ctx={contextOf({ ...view, entityId: e.id })}
+                  ctx={contextForEntity(view, e.id)}
                   comparator={view.comparator}
                   href={hrefFor('/app/performance', view, { entity: e.id })}
                 />
@@ -219,6 +222,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
                   measureId="gross_margin"
                   ctx={{ ...ctx, segmentId: spec.code }}
                   comparator={view.comparator}
+                  active={selectedSegment === spec.code}
                 />
               ))}
             </tbody>

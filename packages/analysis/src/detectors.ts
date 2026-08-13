@@ -48,7 +48,7 @@ import {
   monthScope,
   priorYearScope,
   segment as segmentSpec,
-  subtree,
+  tradingEntities,
 } from '@kestrel/model';
 import type { World } from '@kestrel/model';
 import type {
@@ -73,6 +73,13 @@ import { readDriver } from './drivers.ts';
 import { activeApprovedForecast, forecastInForce } from './forecast.ts';
 import { MINIMUM_CASH, directForecast } from './cash.ts';
 import { SCORED_MEASURES, detectBias } from './quality.ts';
+
+/** Global controls are only meaningful when the context can read the whole unfiltered group. */
+function hasUnfilteredGroupScope(ctx: MeasureContext): boolean {
+  if (ctx.segmentId !== undefined || ctx.costCentreId !== undefined) return false;
+  const visible = new Set(ctx.entityIds);
+  return tradingEntities().every((candidate) => visible.has(candidate.id));
+}
 
 // ---------------------------------------------------------------------------
 // What a finding is
@@ -288,7 +295,10 @@ const revenueAheadOfForecast: DetectorDefinition = {
         action: {
           kind: 'expand_commentary',
           label: 'Open the revenue bridge',
-          href: `/performance?measure=revenue&comparator=${choice.id}${choice.versionId === undefined ? '' : `&version=${choice.versionId}`}`,
+          href:
+            `/app/performance?focus=section-bridge&month=${dctx.ctx.scope.endMonth}` +
+            `&comparator=${choice.id}` +
+            (choice.versionId === undefined ? '' : `&version=${choice.versionId}`),
           owner: 'Commercial Director',
         },
         fingerprint: fingerprint(revenueAheadOfForecast.id, dctx),
@@ -354,7 +364,9 @@ const segmentMarginBehindForecast: DetectorDefinition = {
         action: {
           kind: 'expand_commentary',
           label: `Open ${spec.label} margin`,
-          href: `/performance?measure=gross_margin&segment=${spec.code}&comparator=${choice.id}`,
+          href:
+            `/app/performance?focus=section-levels&month=${dctx.ctx.scope.endMonth}` +
+            `&segment=${spec.code}&comparator=${choice.id}`,
           owner: 'Operations Director',
         },
         fingerprint: fingerprint(segmentMarginBehindForecast.id, dctx, [spec.code]),
@@ -465,7 +477,9 @@ const driverAboveAssumption: DetectorDefinition = {
         action: {
           kind: 'open_forecast_drivers',
           label: 'Open the subcontract rate assumption',
-          href: `/forecast?driver=subcontract_rate&version=${forecast.id}`,
+          href:
+            `/app/forecast?focus=section-drivers&month=${dctx.ctx.scope.endMonth}` +
+            `&driver=subcontract_rate&version=${forecast.id}`,
           owner: 'Operations Director',
         },
         fingerprint: fingerprint(driverAboveAssumption.id, dctx, ['subcontract_rate']),
@@ -537,7 +551,9 @@ const currencyDistortsGrowth: DetectorDefinition = {
         action: {
           kind: 'expand_commentary',
           label: 'Open revenue at constant currency',
-          href: '/performance?measure=revenue&lens=constant',
+          href:
+            `/app/performance?focus=section-bridge&month=${dctx.ctx.scope.endMonth}` +
+            '&comparator=prior_year&lens=constant',
           owner: 'Group Treasurer',
         },
         fingerprint: fingerprint(currencyDistortsGrowth.id, dctx),
@@ -624,7 +640,9 @@ const collectionsSlipping: DetectorDefinition = {
         action: {
           kind: 'run_scenario',
           label: 'Model the collections recovery',
-          href: `/cash?driver=dso&entity=${entityId}`,
+          href:
+            `/app/scenarios?focus=section-levers&month=${dctx.ctx.scope.endMonth}` +
+            `&entity=${entityId}&dsoDays=-10`,
           owner: 'Group Treasurer',
         },
         fingerprint: fingerprint(collectionsSlipping.id, dctx, [entityId]),
@@ -657,12 +675,15 @@ const cashFloorBreach: DetectorDefinition = {
     return [
       {
         detectorId: cashFloorBreach.id,
-        title: `Cash dips to ${formatValue(forecast.low.amount, 'currency')} in week ${breach.index}`,
+        title:
+          `Cash breaches the floor by ${formatValue(breach.shortfall, 'currency')} ` +
+          `in week ${breach.index}`,
         statement:
-          `The 13-week forecast closes week ${breach.index} at ` +
-          `${formatValue(forecast.low.amount, 'currency')}, ` +
+          `The 13-week forecast first breaches the floor in week ${breach.index}, closing at ` +
+          `${formatValue(week?.closing ?? null, 'currency')}, ` +
           `${formatValue(breach.shortfall, 'currency')} under the ` +
           `${formatValue(MINIMUM_CASH.amountMinor, 'currency')} floor set in ${MINIMUM_CASH.owner}. ` +
+          `Its low point is ${formatValue(forecast.low.amount, 'currency')} in week ${forecast.low.index}. ` +
           `It recovers by the end of the horizon, so this is a week to fund rather than a solvency ` +
           `question — the dividend and a supplier run land together.`,
         direction: 'adverse',
@@ -672,9 +693,14 @@ const cashFloorBreach: DetectorDefinition = {
         ),
         figures: [
           { label: 'Opening cash', value: forecast.opening, unit: 'currency' },
-          { label: `Week ${breach.index} closing`, value: forecast.low.amount, unit: 'currency' },
+          { label: `Week ${breach.index} closing`, value: week?.closing ?? null, unit: 'currency' },
           { label: 'Board floor', value: MINIMUM_CASH.amountMinor, unit: 'currency' },
           { label: 'Shortfall', value: breach.shortfall, unit: 'currency' },
+          {
+            label: `Low point · week ${forecast.low.index}`,
+            value: forecast.low.amount,
+            unit: 'currency',
+          },
           {
             label: `Week ${breach.index} payments`,
             value: week?.payments ?? null,
@@ -688,8 +714,10 @@ const cashFloorBreach: DetectorDefinition = {
         ],
         action: {
           kind: 'run_scenario',
-          label: 'Model the week',
-          href: `/cash?week=${breach.index}`,
+          label: 'Stress the cash floor',
+          href:
+            `/app/scenarios?focus=section-headroom&month=${dctx.ctx.scope.endMonth}` +
+            '&dsoDays=10',
           owner: 'Group Treasurer',
         },
         fingerprint: fingerprint(cashFloorBreach.id, dctx),
@@ -712,19 +740,24 @@ const unmappedAccounts: DetectorDefinition = {
   question: 'Is anything in the ledger not reaching the reported figures?',
   run: (dctx) => {
     const set = mappingSetFor(dctx.world.mappingSets, dctx.ctx.scope.endMonth);
-    if (set === undefined || set.unmapped.length === 0) return [];
+    if (set === undefined || dctx.ctx.segmentId !== undefined || dctx.ctx.costCentreId !== undefined) {
+      return [];
+    }
+    const visibleEntities = new Set(dctx.ctx.entityIds);
+    const unmapped = set.unmapped.filter((account) => visibleEntities.has(account.entityId));
+    if (unmapped.length === 0) return [];
 
-    const total = set.unmapped.reduce((sum, u) => sum + u.amountMinor, 0);
+    const total = unmapped.reduce((sum, u) => sum + u.amountMinor, 0);
     if (Math.abs(total) < POLICY.thresholds.pl.absoluteMinor) return [];
 
     return [
       {
         detectorId: unmappedAccounts.id,
-        title: `${set.unmapped.length} unmapped accounts, ${formatValue(total, 'currency')} at stake`,
+        title: `${unmapped.length} unmapped accounts, ${formatValue(total, 'currency')} at stake`,
         statement:
-          `${set.unmapped.length} ledger accounts appeared in the load with nothing in mapping set ` +
+          `${unmapped.length} ledger accounts appeared in the load with nothing in mapping set ` +
           `${set.id} to place them, carrying ${formatValue(total, 'currency')}: ` +
-          set.unmapped.map((u) => `${u.sourceCode} ${u.sourceLabel}`).join(', ') +
+          unmapped.map((u) => `${u.sourceCode} ${u.sourceLabel}`).join(', ') +
           `. Until they are mapped that value is outside the reported profit and loss, so the figures ` +
           `are complete against the mapping and not against the ledger — which is the difference this ` +
           `line exists to show.`,
@@ -732,9 +765,9 @@ const unmappedAccounts: DetectorDefinition = {
         horizon: 'current',
         priority: priorityFromMultiple(Math.abs(total) / POLICY.thresholds.pl.absoluteMinor),
         figures: [
-          { label: 'Accounts unmapped', value: set.unmapped.length, unit: 'count' },
+          { label: 'Accounts unmapped', value: unmapped.length, unit: 'count' },
           { label: 'Value at stake', value: total, unit: 'currency' },
-          ...set.unmapped.map((u) => ({
+          ...unmapped.map((u) => ({
             label: `${u.sourceCode} ${u.sourceLabel}`,
             value: u.amountMinor,
             unit: 'currency' as Unit,
@@ -743,7 +776,7 @@ const unmappedAccounts: DetectorDefinition = {
         action: {
           kind: 'open_mapping',
           label: 'Open the mapping set',
-          href: `/controls?panel=mapping&set=${set.id}`,
+          href: `/app/controls?panel=mapping&set=${set.id}`,
           owner: set.owner,
         },
         fingerprint: fingerprint(unmappedAccounts.id, dctx, [set.id]),
@@ -765,6 +798,7 @@ const intercompanyMismatch: DetectorDefinition = {
   plantedCondition: 8,
   question: 'Do both sides of every intercompany transaction agree?',
   run: (dctx) => {
+    if (!hasUnfilteredGroupScope(dctx.ctx)) return [];
     const c = consolidate({
       store: dctx.ctx.store,
       rates: dctx.ctx.rates,
@@ -772,7 +806,7 @@ const intercompanyMismatch: DetectorDefinition = {
       scenario: dctx.ctx.scenario,
       versionId: dctx.ctx.versionId,
       lens: dctx.ctx.lens,
-      entityIds: subtree('group'),
+      entityIds: dctx.ctx.entityIds,
     });
     const trading = c.unreconciled.trading;
     if (Math.abs(trading) <= IC_MATERIALITY_MINOR) return [];
@@ -797,7 +831,7 @@ const intercompanyMismatch: DetectorDefinition = {
         action: {
           kind: 'open_reconciliation',
           label: 'Open the intercompany reconciliation',
-          href: `/controls?panel=intercompany&month=${dctx.ctx.scope.endMonth}`,
+          href: `/app/controls?panel=intercompany&month=${dctx.ctx.scope.endMonth}`,
           owner: 'Group Financial Controller',
         },
         fingerprint: fingerprint(intercompanyMismatch.id, dctx),
@@ -855,7 +889,9 @@ const forecastBias: DetectorDefinition = {
         action: {
           kind: 'open_forecast_drivers',
           label: 'Open forecast quality',
-          href: `/forecast?panel=quality&measure=${measureId}`,
+          href:
+            `/app/quality?focus=section-bias&month=${dctx.ctx.scope.endMonth}` +
+            `&measure=${measureId}`,
           owner: 'Group FP&A',
         },
         fingerprint: fingerprint(forecastBias.id, dctx, [measureId]),
@@ -879,15 +915,20 @@ const closeIncomplete: DetectorDefinition = {
   plantedCondition: 10,
   question: 'Is the figure on the front page final?',
   run: (dctx) => {
+    if (dctx.ctx.segmentId !== undefined || dctx.ctx.costCentreId !== undefined) return [];
     const month = dctx.ctx.scope.endMonth;
-    const completeness = closeCompleteness(dctx.world.closePositions, month);
+    const visibleEntities = new Set(dctx.ctx.entityIds);
+    const completeness = closeCompleteness(
+      dctx.world.closePositions.filter((position) => visibleEntities.has(position.entityId)),
+      month,
+    );
     if (completeness.open.length === 0) return [];
 
     const names = completeness.open.map((p) => entity(p.entityId).name).join(', ');
     const openRevenue = completeness.open.reduce((sum, p) => {
       const value = computeMeasure('revenue', {
         ...dctx.ctx,
-        entityIds: subtree(p.entityId),
+        entityIds: [p.entityId],
       }).value;
       return sum + (value ?? 0);
     }, 0);
@@ -898,7 +939,8 @@ const closeIncomplete: DetectorDefinition = {
         title: `${completeness.open.length} of ${completeness.total} ledgers not closed`,
         statement:
           `${names} has submitted ${month} and not closed it, so ` +
-          `${formatValue(openRevenue, 'currency')} of group revenue may still move. The group figure is ` +
+          `${formatValue(openRevenue, 'currency')} of revenue in the selected scope may still move. ` +
+          `The selected-scope figure is ` +
           `not wrong; it is not final, and nothing in the figure itself says so — which is why this is a ` +
           `board item rather than a footnote.` +
           (completeness.open[0]?.note === undefined ? '' : ` ${completeness.open[0].note}`),
@@ -907,13 +949,13 @@ const closeIncomplete: DetectorDefinition = {
         priority: 'medium',
         figures: [
           { label: 'Ledgers closed', value: completeness.closed, unit: 'count' },
-          { label: 'Ledgers in the group', value: completeness.total, unit: 'count' },
+          { label: 'Ledgers in selected scope', value: completeness.total, unit: 'count' },
           { label: 'Revenue not yet closed', value: openRevenue, unit: 'currency' },
         ],
         action: {
           kind: 'open_close',
           label: 'Open close readiness',
-          href: `/controls?panel=close&month=${month}`,
+          href: `/app/controls?panel=close&month=${month}`,
           owner: completeness.open[0]?.owner ?? 'Group Financial Controller',
         },
         fingerprint: fingerprint(
@@ -942,6 +984,9 @@ const restatementInLoad: DetectorDefinition = {
   plantedCondition: 11,
   question: 'Has anything I already reported changed since I reported it?',
   run: (dctx) => {
+    /* The seeded vintage register records the load, not an entity-attributed restatement relation. Until
+       that relation exists, exposing it below full-group scope would disclose global close metadata. */
+    if (!hasUnfilteredGroupScope(dctx.ctx)) return [];
     const restatements = dctx.world.register
       .restatements()
       .filter((v) => v.toMonth <= dctx.ctx.scope.endMonth);
@@ -984,7 +1029,7 @@ const restatementInLoad: DetectorDefinition = {
         action: {
           kind: 'open_vintages',
           label: 'Open the load register',
-          href: `/controls?panel=vintages&vintage=${vintage.id}`,
+          href: `/app/controls?panel=vintages&vintage=${vintage.id}`,
           owner: 'Group Financial Controller',
         },
         fingerprint: fingerprint(restatementInLoad.id, dctx, [vintage.id]),
@@ -1051,8 +1096,11 @@ const pipelineAheadOfAssumption: DetectorDefinition = {
         ],
         action: {
           kind: 'run_scenario',
-          label: 'Model the conversion holding',
-          href: `/forecast?scenario=pipeline&version=${forecast.id}`,
+          label: 'Open scenario levers',
+          /* Pipeline conversion is a draft observed measure, not one of the bounded scenario levers.
+             Land on the real scenario surface without smuggling an ignored `scenario=pipeline` claim
+             into the URL. A future governed pipeline lever can make this link more specific. */
+          href: `/app/scenarios?focus=section-levers&month=${dctx.ctx.scope.endMonth}`,
           owner: 'Sales Director',
         },
         fingerprint: fingerprint(pipelineAheadOfAssumption.id, dctx, ['pipeline_conversion']),

@@ -8,7 +8,7 @@ import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
 import { movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
-import { contextOf, viewOf } from '../../../lib/world';
+import { contextForEntity, contextOf, viewOf } from '../../../lib/world';
 
 /**
  * Cash — the surface a treasurer reads.
@@ -36,13 +36,17 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
   const ctx = contextOf(view);
 
   const forecast = directForecast(ctx);
+  const breachClosing =
+    forecast.breach === undefined
+      ? null
+      : (forecast.weeks[forecast.breach.index - 1]?.closing ?? null);
   const bridge = indirectBridge(ctx);
   const sensitivity = cashSensitivity(ctx, SENSITIVITY);
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      {inner ? null : <Masthead path="/app/cash" view={view} />}
+      <Masthead path="/app/cash" view={view} />
       <Selectors path="/app/cash" view={view} />
 
       <section
@@ -69,12 +73,13 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
         ) : (
           <p className="narration">
             <strong>
-              Week {forecast.breach.index} closes at {formatValue(forecast.low.amount, 'currency')}
+              Week {forecast.breach.index} closes at {formatValue(breachClosing, 'currency')}
             </strong>
             , {formatValue(forecast.breach.shortfall, 'currency')} under the{' '}
             {formatValue(MINIMUM_CASH.amountMinor, 'currency')} floor set in {MINIMUM_CASH.owner}.
-            It recovers by the end of the horizon, so this is a week to fund rather than a solvency
-            question — the dividend and a supplier run land together.
+            Its low point is {formatValue(forecast.low.amount, 'currency')} in week{' '}
+            {forecast.low.index}. It recovers by the end of the horizon, so this is a week to fund
+            rather than a solvency question — the dividend and a supplier run land together.
           </p>
         )}
       </section>
@@ -235,8 +240,10 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
               </tr>
             </thead>
             <tbody>
-              {tradingEntities().map((e) => {
-                const inner = { ...ctx, entityIds: [e.id] };
+              {tradingEntities()
+                .filter((e) => view.permission.entityIds.includes(e.id))
+                .map((e) => {
+                const inner = contextForEntity(view, e.id);
                 return (
                   <tr key={e.id}>
                     <th scope="row">{entity(e.id).name}</th>

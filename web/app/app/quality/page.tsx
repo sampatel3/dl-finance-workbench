@@ -49,18 +49,21 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
   const params = await searchParams;
   const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
+  const selectedMeasure = typeof params.measure === 'string' ? params.measure : undefined;
 
   const view = viewOf(params);
   const ctx = contextOf(view);
 
   const reports = SCORED_MEASURES.map((id) => qualityReport(id, ctx));
-  const cash = scoreCashForecast([...LOCKED], [...ACTUAL]);
+  /* The locked-versus-actual weekly history is seeded at group scope. Do not relabel those rows as an
+     entity score when a narrower persona is active; absence is safer than leaking a group series. */
+  const cash = view.entityId === 'group' ? scoreCashForecast([...LOCKED], [...ACTUAL]) : null;
   const forecast = directForecast(ctx);
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      {inner ? null : <Masthead path="/app/quality" view={view} />}
+      <Masthead path="/app/quality" view={view} />
       <Selectors path="/app/quality" view={view} />
 
       <section className="section focusable" id="section-bias" aria-label="Bias">
@@ -92,7 +95,15 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
             </thead>
             <tbody>
               {reports.map((report) => (
-                <tr key={report.measureId} className={report.bias.biased ? 'row-warn' : ''}>
+                <tr
+                  key={report.measureId}
+                  className={[
+                    report.bias.biased ? 'row-warn' : '',
+                    selectedMeasure === report.measureId ? 'row-active' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
                   <th scope="row">{report.label}</th>
                   <td className={`num ${report.bias.biased ? 'neg' : ''}`}>
                     {movement(report.bias.meanSignedError, 'percent')}
@@ -224,6 +235,13 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
         </div>
       </section>
 
+      {cash === null ? (
+        <section className="section" aria-label="Weekly cash score unavailable">
+          <p className="banner">
+            The locked weekly score is held at group scope and is not available in this entity view.
+          </p>
+        </section>
+      ) : (
       <section
         className="section focusable"
         id="section-weekly-score"
@@ -272,6 +290,7 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
           ) : null}
         </div>
       </section>
+      )}
 
       <section className="section focusable" id="section-scored" aria-label="What is scored">
         <div className="section-head">

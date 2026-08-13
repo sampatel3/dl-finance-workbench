@@ -41,7 +41,22 @@ import {
 } from '@kestrel/measures';
 import { buildBridge, principalDriver, runDetectors } from '@kestrel/analysis';
 
-import { LATEST_MONTH, contextOf, detectorContextOf, monthLabel, viewOf } from './world';
+import type { Principal } from './permissions';
+import {
+  DEFAULT_PERSONA_ID,
+  principalById,
+  resolveDimensionScope,
+  resolvePermissionScope,
+} from './permissions';
+import {
+  LATEST_MONTH,
+  contextOf,
+  detectorContextOf,
+  hrefFor,
+  hrefForTarget,
+  monthLabel,
+  viewOf,
+} from './world';
 
 const MEASURE_IDS = measureIds();
 const ENTITY_IDS = ['group', ...tradingEntities().map((e) => e.id)];
@@ -51,7 +66,7 @@ export const TOOLS: readonly ToolSpec[] = [
   {
     name: 'get_measure',
     description:
-      'One measure for one period, for the group or one entity, optionally sliced to a segment. Returns the value, what it is made of, and who owns the definition. Use this for any "what was X" question.',
+      'One measure for one period, for the signed-in principal’s permitted root or one entity beneath it, optionally sliced to a segment. Returns the value, what it is made of, and who owns the definition. Use this for any "what was X" question.',
     input_schema: {
       type: 'object',
       properties: {
@@ -60,7 +75,11 @@ export const TOOLS: readonly ToolSpec[] = [
           type: 'string',
           description: `A month, e.g. "${LATEST_MONTH}". Defaults to the latest closed month.`,
         },
-        entity: { type: 'string', enum: ENTITY_IDS, description: 'Defaults to the whole group.' },
+        entity: {
+          type: 'string',
+          enum: ENTITY_IDS,
+          description: 'Defaults to the signed-in principal’s permitted entity root.',
+        },
         segment: {
           type: 'string',
           enum: [...SEGMENT_CODES],
@@ -160,39 +179,59 @@ export const SYSTEM = [
   'Two to four sentences. British English. No preamble.',
 ].join('\n');
 
+/** Bind the model's words to the same principal the tools enforce. */
+export function systemFor(principal: Principal): string {
+  return [
+    SYSTEM,
+    `You are answering as ${principal.label}.`,
+    'The tools enforce this principal’s entity and dimension scope. If a tool refuses access, repeat',
+    'that refusal plainly and do not retry the question against a different or broader entity.',
+  ].join('\n');
+}
+
 function readString(input: Record<string, unknown>, key: string): string {
   const value = input[key];
   return typeof value === 'string' ? value : '';
 }
 
-/** The view a tool call resolves against, so a tool reads exactly what a page would. */
-function viewFor(input: Record<string, unknown>) {
+/** The view a tool call resolves against, so a tool reads exactly what that principal's page would. */
+function viewFor(input: Record<string, unknown>, principal: Principal) {
   const month = readString(input, 'month');
   const entityId = readString(input, 'entity');
   return viewOf({
+    as: principal.id,
     ...(MONTHS.includes(month) ? { month } : {}),
     ...(ENTITY_IDS.includes(entityId) ? { entity: entityId } : {}),
   });
 }
 
-const focusHref = (section: string): string => `/app?focus=${section}`;
+function focusHref(section: string, view: ReturnType<typeof viewOf>): string {
+  const base = hrefFor('/app', view);
+  return `${base}${base.includes('?') ? '&' : '?'}focus=${encodeURIComponent(section)}`;
+}
 
-function getMeasure(input: Record<string, unknown>): ToolOutcome {
+function getMeasure(input: Record<string, unknown>, principal: Principal): ToolOutcome {
   const id = readString(input, 'measure');
   if (!MEASURE_IDS.includes(id)) {
     return { content: `No measure called "${id}".` };
   }
-  const view = viewFor(input);
-  const segment = readString(input, 'segment');
+  const view = viewFor(input, principal);
+  const requestedSegment = readString(input, 'segment');
+  const dimensions = resolveDimensionScope(
+    view.permission,
+    SEGMENT_CODES.includes(requestedSegment as (typeof SEGMENT_CODES)[number])
+      ? { segmentId: requestedSegment as (typeof SEGMENT_CODES)[number] }
+      : {},
+  );
+  if (!dimensions.allowed) return { content: dimensions.refusal };
+  const segment = dimensions.filters.segmentId;
   const ctx = {
     ...contextOf(view),
-    ...(SEGMENT_CODES.includes(segment as (typeof SEGMENT_CODES)[number])
-      ? { segmentId: segment as (typeof SEGMENT_CODES)[number] }
-      : {}),
+    ...dimensions.filters,
   };
   const value = computeMeasure(id, ctx);
   const where = entity(view.entityId).name;
-  const slice = segment === '' ? '' : ` for the ${segment} segment`;
+  const slice = segment === undefined ? '' : ` for the ${segment} segment`;
 
   return {
     content:
@@ -204,13 +243,13 @@ function getMeasure(input: Record<string, unknown>): ToolOutcome {
       {
         label: `${value.label}, ${monthLabel(view.scope.endMonth)}`,
         value: formatValue(value.value, value.unit),
-        href: focusHref('section-headline'),
+        href: focusHref('section-headline', view),
       },
     ],
   };
 }
 
-function compareMeasures(input: Record<string, unknown>): ToolOutcome {
+function compareMeasures(input: Record<string, unknown>, principal: Principal): ToolOutcome {
   const id = readString(input, 'measure');
   const against = readString(input, 'against');
   if (!MEASURE_IDS.includes(id)) return { content: `No measure called "${id}".` };
@@ -218,13 +257,18 @@ function compareMeasures(input: Record<string, unknown>): ToolOutcome {
     return { content: `No comparator called "${against}". They are ${COMPARATORS.join(', ')}.` };
   }
 
-  const view = viewFor(input);
-  const segment = readString(input, 'segment');
+  const view = viewFor(input, principal);
+  const requestedSegment = readString(input, 'segment');
+  const dimensions = resolveDimensionScope(
+    view.permission,
+    SEGMENT_CODES.includes(requestedSegment as (typeof SEGMENT_CODES)[number])
+      ? { segmentId: requestedSegment as (typeof SEGMENT_CODES)[number] }
+      : {},
+  );
+  if (!dimensions.allowed) return { content: dimensions.refusal };
   const ctx = {
     ...contextOf(view),
-    ...(SEGMENT_CODES.includes(segment as (typeof SEGMENT_CODES)[number])
-      ? { segmentId: segment as (typeof SEGMENT_CODES)[number] }
-      : {}),
+    ...dimensions.filters,
   };
   const choice =
     against === 'forecast'
@@ -257,14 +301,14 @@ function compareMeasures(input: Record<string, unknown>): ToolOutcome {
       {
         label: `${c.current.label} vs ${c.comparator.label}`,
         value: formatValue(c.current.value, c.current.unit),
-        href: focusHref('section-headline'),
+        href: focusHref('section-headline', view),
       },
     ],
   };
 }
 
-function listFindings(input: Record<string, unknown>): ToolOutcome {
-  const view = viewFor(input);
+function listFindings(input: Record<string, unknown>, principal: Principal): ToolOutcome {
+  const view = viewFor(input, principal);
   const board = readString(input, 'board');
   const run = runDetectors(detectorContextOf(view));
   const wanted =
@@ -297,12 +341,12 @@ function listFindings(input: Record<string, unknown>): ToolOutcome {
     citations: wanted.slice(0, 4).map((f) => ({
       label: f.title,
       value: f.priority,
-      href: f.action.href,
+      href: hrefForTarget(f.action.href, view),
     })),
   };
 }
 
-function explainVariance(input: Record<string, unknown>): ToolOutcome {
+function explainVariance(input: Record<string, unknown>, principal: Principal): ToolOutcome {
   const id = readString(input, 'measure');
   if (id !== 'revenue' && id !== 'cost_of_sales') {
     return {
@@ -312,7 +356,7 @@ function explainVariance(input: Record<string, unknown>): ToolOutcome {
     };
   }
   const against = readString(input, 'against');
-  const view = viewFor(input);
+  const view = viewFor(input, principal);
   const choice =
     against === 'forecast'
       ? { id: 'forecast' as const, versionId: view.version.id }
@@ -324,7 +368,7 @@ function explainVariance(input: Record<string, unknown>): ToolOutcome {
           };
 
   const bridge = buildBridge({ measureId: id, ctx: contextOf(view), comparator: choice });
-  const principal = principalDriver(bridge);
+  const mainDriver = principalDriver(bridge);
   const bars = bridge.bars
     .filter((b) => b.kind !== 'opening' && b.kind !== 'closing')
     .map(
@@ -336,9 +380,9 @@ function explainVariance(input: Record<string, unknown>): ToolOutcome {
       `${bridge.label} moved from ${formatValue(bridge.from, 'currency')} to ` +
       `${formatValue(bridge.to, 'currency')} against ${bridge.comparator.basis}. ` +
       `The decomposition is: ${bars.join(', ')}. ` +
-      (principal === undefined
+      (mainDriver === undefined
         ? ''
-        : `The largest single component is ${principal.label.toLowerCase()} at ${formatValue(Math.abs(principal.value), 'currency')}. `) +
+        : `The largest single component is ${mainDriver.label.toLowerCase()} at ${formatValue(Math.abs(mainDriver.value), 'currency')}. `) +
       (bridge.sums
         ? 'These sum to the movement exactly.'
         : 'These do not sum to the movement, so the decomposition is incomplete.'),
@@ -346,18 +390,18 @@ function explainVariance(input: Record<string, unknown>): ToolOutcome {
       {
         label: `${bridge.label} bridge`,
         value: formatValue(bridge.to - bridge.from, 'currency'),
-        href: '/app/performance',
+        href: hrefFor('/app/performance', view),
       },
     ],
   };
 }
 
-function describeMeasure(input: Record<string, unknown>): ToolOutcome {
+function describeMeasure(input: Record<string, unknown>, principal: Principal): ToolOutcome {
   const id = readString(input, 'measure');
   const definition = MEASURES.find((m) => m.id === id);
   if (definition === undefined) return { content: `No measure called "${id}".` };
 
-  const view = viewOf({});
+  const view = viewOf({ as: principal.id });
   const value = computeMeasure(id, contextOf(view));
   const accounts = value.inputs.map((i) => i.accountId).join(', ');
 
@@ -369,24 +413,39 @@ function describeMeasure(input: Record<string, unknown>): ToolOutcome {
       `It reads these accounts: ${accounts}.` +
       (definition.note === undefined ? '' : ` ${definition.note}`),
     citations: [
-      { label: definition.label, value: definition.formula, href: focusHref('section-headline') },
+      {
+        label: definition.label,
+        value: definition.formula,
+        href: focusHref('section-headline', view),
+      },
     ],
   };
 }
 
+export interface ToolAccess {
+  readonly principal?: Principal;
+}
+
 /** The one entry point `ask` calls. An unknown name is a named answer, never a throw. */
-export async function runTool(call: ToolCall): Promise<ToolOutcome> {
+export async function runTool(call: ToolCall, access: ToolAccess = {}): Promise<ToolOutcome> {
+  const principal = access.principal ?? principalById(DEFAULT_PERSONA_ID);
+  const requestedEntityId = readString(call.input, 'entity');
+  if (ENTITY_IDS.includes(requestedEntityId)) {
+    const permission = resolvePermissionScope(principal, requestedEntityId);
+    if (!permission.allowed) return { content: permission.refusal };
+  }
+
   switch (call.name) {
     case 'get_measure':
-      return getMeasure(call.input);
+      return getMeasure(call.input, principal);
     case 'compare_measures':
-      return compareMeasures(call.input);
+      return compareMeasures(call.input, principal);
     case 'list_findings':
-      return listFindings(call.input);
+      return listFindings(call.input, principal);
     case 'explain_variance':
-      return explainVariance(call.input);
+      return explainVariance(call.input, principal);
     case 'describe_measure':
-      return describeMeasure(call.input);
+      return describeMeasure(call.input, principal);
     default:
       return { content: `No tool called "${call.name}".` };
   }

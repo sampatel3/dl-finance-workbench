@@ -1,10 +1,12 @@
 # dl-finance-workbench — build plan
 
-**This is a promise, not a record.** It is written before the work, which makes it the weaker kind
-of document. What converts it: every wave lands as a PR whose description says where reality
-differed from this plan, and the last wave rewrites these documents to match what was actually
-built — filling the "Defects found and fixed" section of the demo's own `02-verification.md`, which
-is empty until then. An empty findings section means verification has not happened.
+**This began as a promise and is now a record through Wave 6.** Waves 0–6 are implemented in the
+repository; Wave 7 has the expanded guided tour, current free-view shell and twelve-slide deck source,
+with all ten product shots regenerated, aspect and overflow checks passing, and a visually reviewed
+twelve-page tagged PDF committed. GitHub Actions, provisioning and deployment were not
+run as part of the 13 August continuation and remain explicitly unverified. The historical wave
+descriptions below are retained because they explain the intended boundaries; each continuation
+section records what actually landed.
 
 Source citations use `kit: <path>` for demo-kit and `ceo: <path>` for the ceo-dashboard reference.
 Nothing is copied from `ceo:` — it is read for its mechanisms and its standard, and every
@@ -32,6 +34,10 @@ a visitor does is written to any system of record. It does not connect to a real
 with its statuses, vintages and validation results in the seed, which is what makes the Controls
 surface honest rather than decorative.
 
+The modelled register contains deterministic monthly histories for all nine configured feeds, plus
+the June restatement. Facts carry the vintage of the feed that supplied them: entity GLs, PSA, CRM,
+payroll and bank for actuals, and Anaplan for forecast and budget.
+
 ## The tier, and the one thing it costs
 
 **Memory tier**, with scenario state carried in the URL.
@@ -43,15 +49,14 @@ The visitor gets a scenario that is shareable as a link, reproducible on any mac
 screenshotable; the demo gets no database, no migrations, no Railway bill, one CI path, and no
 possibility of two prospects treading on each other.
 
-**The cost, stated.** Two things genuinely need persistence and will not have it: a scenario the
-visitor *saves* under a name, and an approval the visitor *makes*. Both are handled honestly rather
-than faked. The seed ships a scenario library and a commentary queue already spread across every
-state of the approval machine — draft, in review, approved, published, rejected-with-reason — so
-the state machine is real data that can be read and drilled. A visitor's own approval is a
-client-side act, visibly labelled as not persisted, in the same spirit as the reference demo's task
-tray (`ceo: components/Tasks.tsx`). If a client conversation later requires a visitor's saved
-scenario to survive a reload, that is the trigger to re-scaffold on the postgres tier — recorded as
-a decision with its cost in [`01-decisions.md`](01-decisions.md) §1, not discovered mid-build.
+**The cost, stated.** Two things genuinely need persistence and do not have it: a scenario saved
+under a visitor-defined name, and a workflow transition made by that visitor. Both are handled
+honestly. A scenario is the URL itself, and the seeded library is a list of reproducible links. The
+commentary queue spans draft, in review, approved, published and rejected-with-reason, so the state
+machine and its evidence can be read and drilled; role-appropriate actions are labelled preview-only
+and perform no mutation. If a client conversation requires saved names or live approvals to survive
+a reload, that is the trigger to move to the postgres tier — recorded as a decision with its cost in
+[`01-decisions.md`](01-decisions.md) §1, not discovered mid-build.
 
 ## The world
 
@@ -117,7 +122,7 @@ reason and was found by reviewing the revision against this plan.
 | 3 | Subcontract blended rate above the forecast **in force at the time** for three consecutive months, spanning two versions | Driver attribution, and the run-rate-versus-timing split |
 | 4 | EUR weakened over the comparative period | Reported versus constant currency, and FX as a bridge bar |
 | 5 | Days sales outstanding at Kestrel Gulf up 9 days over three months | Working capital as a driver, and the P&L-to-cash path |
-| 6 | The 13-week forecast dips to £2.1m in week 9, under a £2.5m board floor | The cash surface, the floor breach, and the scenario that makes it worse |
+| 6 | The 13-week forecast first breaches the £2.5m board floor at £1.7m in week 9, reaches a £1.3m low in week 10, then recovers | The cash surface, the floor breach, and the scenario that makes it worse |
 | 7 | Two new GL accounts in the July load are unmapped, £212k at stake | The unmapped-account gap that F5 says every real pilot hits |
 | 8 | An intercompany mismatch of £48k between Gulf and Manufacturing | A named reconciliation check that **fails**, rather than a green tick |
 | 9 | Forecast versions v4, v5 and v6 each under-called the cost to serve, and by less each time | Forecast bias — a same-direction miss three vintages running, and the amplification into EBITDA that makes it findable |
@@ -195,10 +200,15 @@ subtree and a set of dimension filters. Everything downstream honours it, **incl
 question asked as the Gulf controller is answered from the Gulf slice or refused, because a chat
 that reaches past the permission model is the way around the permission model. The product header
 shows who you are; the *switcher* is demo furniture and lives in the shell's notes column.
+An absent persona keeps the intended executive demo default; an explicit unknown persona fails
+closed to the least-privileged seeded grant. Finding, scenario and selector links carry the resolved
+persona, period, comparator, currency lens and inner/full view rather than trusting overrides in a
+raw target URL.
 
 ## Ground rules for every wave
 
-- One branch, one PR into `main`, the demo's own CI green before merge.
+- The original delivery target was one branch and one PR per wave. The continuation work is being
+  verified locally on `codex/continue-build`; no GitHub Actions or merge claim is made here.
 - A wave owns the paths listed under **Owns** and may not touch another wave's paths.
 - A **Gate** is a command and its expected result. If it cannot be checked mechanically, the wave
   is not done — except where the gate explicitly says it is checked by looking, which some are and
@@ -387,6 +397,22 @@ deck tooling agree on the sentinel.
 
 **Owns** `web/app/app/{explore,forecast,quality,scenarios,cash}` · **After** wave 4
 
+**Continuation record — implemented.** The governed pivot and drill live in
+`packages/analysis/src/pivot.ts`; `web/lib/explore.ts` gives the page and CSV endpoint one URL
+contract; `/app/explore` renders the grid, formula/input provenance and source rows; and
+`/api/v1/explore` exports that same resolved view with comparator, definitions and vintage ids.
+Repeated dimensions are canonicalised at the URL boundary and refused by the engine. A group drill
+names the intercompany elimination so its entity rows tie exactly to the displayed cell. Drill and
+formula provenance select one terminal row grain rather than mixing aggregate and child rows;
+partial quarters stop at the selected through-month; and a forbidden explicit export scope returns
+403 instead of a CSV for a substituted entity.
+
+The Forecast, Quality and Cash surfaces render the already-built analysis engines. Scenarios are
+implemented in `web/lib/scenario.ts` and `/app/scenarios`: bounded URL assumptions re-run the same
+world generator at the approved forecast's actuals cut-off, then compare P&L, working capital, cash
+and low-point headroom plan-to-plan. The seeded scenario library is a set of shareable links; it is
+not a persistence claim.
+
 - **Explore**: measures down, periods across, any dimension on either axis; version, scenario,
   currency lens and persona as selectors; variance columns generated; drill from any cell down the
   aggregation path to source rows with their vintage; a formula inspector on every measure; export
@@ -411,8 +437,27 @@ indirect bridge predicts; export opens in a spreadsheet with its vintage in the 
 
 ## Wave 6 — the governance surfaces
 
-**Owns** `web/app/app/{commentary,controls}`, `web/lib/permissions` · **After** wave 4 *(parallel
-with wave 5)*
+**Owns** `web/app/app/{commentary,controls}`, `web/lib/{permissions,commentary,controls}.ts`,
+`packages/model/src/{sources,mappings,checks,approvals,ai-log}.ts` · **After** wave 4 *(parallel with
+wave 5)*
+
+**Continuation record — implemented.** `packages/model/src/{sources,mappings,checks,approvals,ai-log}.ts`
+project governance records from the existing seeded world rather than duplicating finance facts.
+`web/lib/controls.ts` applies the resolved entity grant before `/app/controls` receives load,
+mapping, close, reconciliation, lineage or AI-audit metadata. The July projection shows Kestrel Inc
+submitted but not closed, two unmapped accounts with £212k at stake, and the £48k intercompany check
+failing with both sides named. A Gulf-scoped reader gets Gulf records and a named refusal instead of
+a sliced group reconciliation presented under the same control name.
+
+`packages/model/src/approvals.ts` enforces the commentary state machine and pins publication to the
+approved vintage. `web/lib/commentary.ts` builds the code-written evidence chain from governed
+measures, drivers and source rows, filters the queue by permission and carries the prior published
+item forward. `/app/commentary` shows role-aware workflow affordances as **preview only**; the memory
+tier does not mutate or persist a visitor's transition. Permission resolution in
+`web/lib/permissions.ts` is shared by view construction, selectors, detail contexts and Ask tools.
+Detector control metadata is scoped too, so a narrow grant cannot recover group mapping,
+intercompany, close or restatement facts through a finding. Commentary wording is tested against
+the same comparison object its evidence panel renders.
 
 - **Commentary**: drafts anchored to the figure each explains, at **two levels** — a Board-ready
   headline and a code-written detail chain of movement → drivers with amounts → accounts and
@@ -438,24 +483,38 @@ chat refuses a group question in words rather than answering it from a slice it 
 intercompany check names both sides and the amount; the unmapped-account panel's total equals the
 gap between the mapped P&L and the trial balance; a published commentary item cites a vintage, and
 changing the as-at month does not change the published item; the AI log has a row for every
-narrated brief in the committed generated file.
+model-authored seeded commentary item.
 
-## Wave 7 — presentation, and ship
+## Wave 7 — presentation and ship *(partial; deployment not run)*
 
 **Owns** `web/lib/tour.ts`, `web/public/deck.html`, `web/deck.config.mjs`, `docs/` · **After**
 waves 5 and 6
+
+**Continuation record — partial.** `web/lib/tour.ts` now contains ten evidence-led steps covering
+the position, bridge, source drill, pivot, forecast diff, scenario, cash, quality, permissions and
+controls, plus an opening overview. The opening step switches the shell to the phone itself.
+`web/app/page.tsx` consumes the current demo-kit `TourWindow` and `resolveShellView` directly: guided
+mode keeps its frame and notes, while the kit's free mode hands the viewport to the product.
+
+The product-specific deck is twelve slides with ten product shots spanning the position, bridge,
+source drill, forecast, scenario, cash, quality, commentary, controls and permission refusal. All
+shots were regenerated from the current app; origin lint, aspect sync and slide overflow checks pass;
+`docs/deck/demo.pdf` is a visually reviewed, tagged twelve-page PDF. The
+deployment portion of this wave — GitHub Actions, provisioning, deploy and live `/api/health`
+verification — is outside this continuation and **not completed**.
 
 - **The tour**, ten steps, one rule: nothing in it may promise a capability the app does not have.
   Draft order — the position; what changed and the bridge; drill it to source; the analyst pivot;
   the drivers and the version diff since v6; the scenario, moving cash; the 13-week forecast and the
   floor; does the forecast deserve trust (quality); who you are, and what you cannot see
   (permissions); can I explain it (controls, close, the failing check, the unmapped accounts). Plus
-  surface notes so the notes column keeps up with a visitor who has wandered off the script, and a
-  phone step that switches the device rather than asking the visitor to find the control.
+  an opening `TourOverview`; free mode uses the kit's full-viewport product view rather than a
+  route-matched notes column. The first step switches the device to a phone rather than asking the
+  visitor to find the control.
 - **The deck**, twelve slides in the kit's single self-contained format, screenshots captured from
   the running app rather than taken by hand, aspect-stamped, overflow-checked, exported to a
   committed PDF with one slide to one page.
-- **Provision and deploy**: `demo provision`, then the migrate-free memory-tier deploy, then
+- **Provision and deploy** *(pending)*: `demo provision`, then the migrate-free memory-tier deploy, then
   **verify** — poll `/api/health` until it reports the exact commit, or fail. A deploy is not done
   because a CLI said SUCCESS.
 - **The documentation pass**: convert this plan into a record in the demo's own `docs/plan/`,
@@ -463,11 +522,12 @@ waves 5 and 6
   drifted traceability row, and fold anything learned back into
   [`00-source-review.md`](../review/00-source-review.md) if the build proved a finding wrong.
 
-**Gate.** The live URL redirects to `/gate` without the cookie and renders the tour with it;
-`/api/health` `.commit` equals the demo repo's `main` HEAD; the committed deck PDF's page count
-equals its slide count; every tour step's `href` lands on what the step describes, walked by a
-person; at least one demo-kit fix has propagated through `demo update`, visible as a
-submodule-pointer commit; and the demo's `02-verification.md` findings section is **not empty**.
+**Gate status.** The ten-step tour, `TourOverview`, non-empty findings ledger, demo-kit update to
+`660c16c`, ten regenerated product shots, twelve overflow-free slides and twelve-page tagged PDF are
+present locally. The deck was visually checked from rendered PDF pages. Every tour step's `href` was
+walked in-browser and landed on its named region without a runtime error; Free mode was also verified
+at full viewport with its floating theme and return controls. The live URL redirect to `/gate` and the
+deployed `/api/health` commit check require an authorised deployment and were not run.
 
 ---
 
@@ -489,7 +549,11 @@ other and both depend on wave 4 for the design system and the shell.
   unmapped accounts, all in the seed — because a demo that dials a customer's SAP is not a demo.
   §4.2 of the product definition is the design; the demo shows its output.
 - **Persisted visitor state.** The tier's cost, stated above: saved scenarios and visitor
-  approvals are seeded or client-side and labelled as such.
+  approvals are represented by seeded records. Scenario changes survive in a shared URL; workflow
+  actions are read-only previews and do not change even browser-local state.
+- **A verified hosted release.** Workflow files inherited from the scaffold are present, but GitHub
+  Actions, provisioning, deployment, live gate behaviour and commit-health polling were not exercised
+  by the continuation build. They remain work, not evidence.
 - **Write-back to a planning system.** Phase 3 in the product definition, and out of the demo
   entirely — the demo's whole claim is that it changes nothing in anyone's system of record.
 - **A configurable model.** No dimension designer, no formula builder, no report designer. The

@@ -53,7 +53,7 @@ export function briefKey(month: FiscalMonth): string {
 
 export interface BriefRecord {
   readonly title: string;
-  readonly month: string;
+  readonly month: FiscalMonth;
   /** The deterministic figures behind the prose, pinned by the freshness test. */
   readonly figures: Readonly<Record<string, number | null>>;
   /** The sentence code wrote, which is also what ships when the model is not available. */
@@ -89,18 +89,12 @@ const SYSTEM = [
  * that says nothing. If nothing fired it says so plainly: an empty month is a real answer, and the healthy
  * twin is a world in which every month is one.
  *
- * ## It quotes the detector, and briefly could not
+ * ## The evidence can say "forecast"; narrated prose names the version
  *
- * The kit's claims validator treated "forecast" as predictive language and would not allow it to be
- * echoed. In this domain the word is a *noun* — it names the comparator a variance is measured against —
- * so a detector saying "margin 404bps behind forecast" was saying the only correct thing, and prose
- * repeating it was rejected. Including this fallback, which then failed the check that exists to guard it.
- *
- * The workaround was to compose a sentence from the finding's figures and avoid the word. That worked
- * until the word turned up in a figure *label* and a detector id, at which point it was clear the product
- * was being made less accurate to satisfy a validator. Fixed upstream instead: the pattern is now
- * echoable, exactly as superlatives already were, so a model may repeat what code wrote and still cannot
- * invent "revenue will reach £14m". Recorded in the verification log as finding 30.
+ * In Finance, "forecast" is usually a comparator noun; in an unconstrained sentence it can also make a
+ * prediction. The detector and evidence line retain the precise domain language. Narrated headline/body
+ * copy names the governed version instead, which keeps the model boundary unambiguous without weakening
+ * the product vocabulary. The distinction is pinned by the generated-file validation test.
  */
 function findingSentence(month: FiscalMonth): string {
   const brief = briefFor(viewOf({ month }));
@@ -275,6 +269,9 @@ export interface BuildOptions {
  * what the fallback exists for.
  */
 export const NARRATED_MONTHS: readonly FiscalMonth[] = [LATEST_MONTH];
+
+/** Stored with every overview narration audit row so a prompt change is visible in Controls. */
+export const NARRATION_PROMPT_VERSION = 'overview-commentary-v1';
 
 /** The pack behind a committed brief, so a test can run the kit's validators over the prose that shipped. */
 export function packFor(month: FiscalMonth): NarrationPack {

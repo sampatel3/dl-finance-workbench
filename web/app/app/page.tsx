@@ -52,7 +52,11 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const headlines = headlinesFor(ctx, view.comparator);
   const brief = briefFor(view);
 
-  const completeness = closeCompleteness(world().closePositions, view.scope.endMonth);
+  const visibleEntities = new Set(view.permission.entityIds);
+  const completeness = closeCompleteness(
+    world().closePositions.filter((position) => visibleEntities.has(position.entityId)),
+    view.scope.endMonth,
+  );
   const openNames = completeness.open.map((p) => entity(p.entityId).name);
 
   /* Twelve months of revenue against the same month a year earlier. Read through the measure layer once
@@ -67,13 +71,16 @@ export default async function Overview({ searchParams }: { searchParams: Promise
     };
   });
 
-  const narration = NARRATION[`overview:${view.scope.endMonth}`];
+  /* The committed narration is a group brief. A narrower principal gets the scoped figures and findings
+     above, never prose whose numbers were generated from rows they cannot read. */
+  const narration =
+    view.entityId === 'group' ? NARRATION[`overview:${view.scope.endMonth}`] : undefined;
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
 
-      {inner ? null : <Masthead path="/app" view={view} />}
+      <Masthead path="/app" view={view} />
 
       <Selectors path="/app" view={view} />
 
@@ -133,6 +140,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
               title={board.title}
               question={board.question}
               findings={board.triage.kept}
+              view={view}
               emptyNote={board.emptyNote}
               note={board.triage.note}
             />
@@ -175,7 +183,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
           </span>
         </div>
         <div className="pane">
-          <Ask suggestions={SUGGESTIONS} />
+          <Ask suggestions={SUGGESTIONS} principalId={view.principal.id} />
         </div>
       </section>
     </main>

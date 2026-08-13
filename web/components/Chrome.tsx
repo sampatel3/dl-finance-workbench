@@ -30,6 +30,27 @@ export const SURFACES = [
 ] as const;
 
 export function Masthead({ path, view }: { readonly path: string; readonly view: View }) {
+  if (view.inner) {
+    if (!view.surfaceNav) return null;
+    return (
+      <nav className="inner-surface-nav" aria-label="Surfaces">
+        {SURFACES.map((surface) => {
+          const active = surface.path === path;
+          return (
+            <a
+              key={surface.path}
+              className={`nav-link${active ? ' is-active' : ''}`}
+              href={hrefFor(surface.path, view)}
+              {...(active ? { 'aria-current': 'page' as const } : {})}
+            >
+              {surface.label}
+            </a>
+          );
+        })}
+      </nav>
+    );
+  }
+
   return (
     <header className="masthead">
       <span className="masthead-mark" aria-hidden>
@@ -38,7 +59,9 @@ export function Masthead({ path, view }: { readonly path: string; readonly view:
       <span className="masthead-id">
         <span className="masthead-name">{DEMO_NAME}</span>
         <br />
-        <span className="masthead-sub">{entity(view.entityId).name}</span>
+        <span className="masthead-sub">
+          {view.principal.label} · {entity(view.entityId).name}
+        </span>
       </span>
       <nav className="masthead-nav" aria-label="Surfaces">
         {SURFACES.map((surface) => {

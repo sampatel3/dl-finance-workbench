@@ -1,6 +1,7 @@
 import { ask } from '@demo-kit/llm';
 import { liveClient } from '../../../lib/anthropic';
-import { SUGGESTIONS, SYSTEM, TOOLS, runTool } from '../../../lib/tools';
+import { resolvePrincipal } from '../../../lib/permissions';
+import { SUGGESTIONS, TOOLS, runTool, systemFor } from '../../../lib/tools';
 
 /**
  * The chat route: one question, one grounded answer, or one named reason there is not one.
@@ -31,6 +32,14 @@ export async function POST(request: Request) {
     typeof body.question === 'string'
       ? body.question.trim()
       : '';
+  const personaRaw =
+    typeof body === 'object' &&
+    body !== null &&
+    'as' in body &&
+    typeof body.as === 'string'
+      ? body.as
+      : undefined;
+  const { principal } = resolvePrincipal(personaRaw);
 
   if (question === '') {
     return Response.json({ error: 'A question is required.' }, { status: 400 });
@@ -39,9 +48,9 @@ export async function POST(request: Request) {
   const client = await liveClient();
   const reply = await ask({
     question,
-    system: SYSTEM,
+    system: systemFor(principal),
     tools: TOOLS,
-    runTool,
+    runTool: (call) => runTool(call, { principal }),
     suggestions: SUGGESTIONS,
     ...(client === undefined ? {} : { client }),
   });

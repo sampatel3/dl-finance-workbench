@@ -1,12 +1,20 @@
 import { FocusOnLoad, resolveView } from '@demo-kit/shell';
 import { formatValue, measure } from '@kestrel/measures';
-import type { Dimension } from '@kestrel/analysis';
-import { DIMENSIONS, DIMENSION_LABELS, buildPivot, drillCell } from '@kestrel/analysis';
+import { DIMENSIONS, DIMENSION_LABELS, drillCell } from '@kestrel/analysis';
 
 import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
+import {
+  EXPLORE_MEASURES,
+  cellProvenance,
+  exploreDrillHref,
+  exploreExportHref,
+  exploreHref,
+  exploreState,
+} from '../../../lib/explore';
+import { directionClass, movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
-import { ALL_MONTHS, contextOf, hrefFor, viewOf } from '../../../lib/world';
+import { hrefFor } from '../../../lib/world';
 
 /**
  * Explore — the analyst's pivot.
@@ -32,64 +40,13 @@ import { ALL_MONTHS, contextOf, hrefFor, viewOf } from '../../../lib/world';
 
 export const dynamic = 'force-dynamic';
 
-const DEFAULT_MEASURES = [
-  'revenue',
-  'gross_profit',
-  'gross_margin',
-  'ebitda',
-  'cash',
-  'dso',
-] as const;
-
-/** Read an axis from the URL: a comma-separated list of dimensions, filtered to the ones that exist. */
-function axis(raw: string | string[] | undefined, fallback: readonly Dimension[]): Dimension[] {
-  const text = Array.isArray(raw) ? raw[0] : raw;
-  if (text === undefined) return [...fallback];
-  const parsed = text
-    .split(',')
-    .map((part) => part.trim())
-    .filter((part): part is Dimension => DIMENSIONS.includes(part as Dimension));
-  return parsed.length === 0 ? [...fallback] : parsed;
-}
-
-function axisHref(path: string, params: Params, key: string, value: string): string {
-  const next = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (k === 'drill') continue; // a new axis invalidates a cell reference
-    const single = Array.isArray(v) ? v[0] : v;
-    if (single !== undefined) next.set(k, single);
-  }
-  next.set(key, value);
-  return `${path}?${next.toString()}`;
-}
-
 export default async function Explore({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
 
-  const view = viewOf(params);
-  const ctx = contextOf(view);
-
-  const rows = axis(params.rows, ['measure']);
-  const columns = axis(params.cols, ['period']);
-  const grain =
-    (Array.isArray(params.grain) ? params.grain[0] : params.grain) === 'quarter'
-      ? ('quarter' as const)
-      : ('month' as const);
-
-  /* Six months rather than the whole window: a grid of forty-three columns is a grid nobody reads, and
-     an analyst who wants more can change the period grain. */
-  const months = ALL_MONTHS.slice(-6);
-
-  const pivot = buildPivot({
-    ctx,
-    rows,
-    columns,
-    measureIds: [...DEFAULT_MEASURES],
-    months,
-    periodGrain: grain,
-  });
+  const state = exploreState(params);
+  const { view, rows, columns, grain, pivot, comparisons } = state;
 
   /* `?drill=<rowIndex>:<colIndex>`. Indices rather than a key, because a cell's identity is its
      position in the grid the URL already describes — encoding the whole slice again would let the two
@@ -103,14 +60,13 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
       ? pivot.rows[rowIndex]?.cells[colIndex]
       : undefined;
   const drill = openCell === undefined ? null : drillCell(openCell);
-
-  const drillHref = (r: number, c: number): string =>
-    axisHref('/app/explore', params, 'drill', `${r}:${c}`);
+  const provenance =
+    openCell === undefined ? null : cellProvenance(openCell.measureId, openCell.ctx);
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      {inner ? null : <Masthead path="/app/explore" view={view} />}
+      <Masthead path="/app/explore" view={view} />
       <Selectors path="/app/explore" view={view} />
 
       <section className="section focusable" id="section-axes" aria-label="Axes">
@@ -131,14 +87,16 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                 <a
                   key={d}
                   className={`chip-link${rows.includes(d) ? ' is-active' : ''}`}
-                  href={axisHref('/app/explore', params, 'rows', d)}
+                  href={exploreHref(params, 'rows', d)}
+                  aria-current={rows.includes(d) ? 'true' : undefined}
                 >
                   {DIMENSION_LABELS[d]}
                 </a>
               ))}
               <a
-                className="chip-link"
-                href={axisHref('/app/explore', params, 'rows', 'entity,segment')}
+                className={`chip-link${rows.join(',') === 'entity,segment' ? ' is-active' : ''}`}
+                href={exploreHref(params, 'rows', 'entity,segment')}
+                aria-current={rows.join(',') === 'entity,segment' ? 'true' : undefined}
               >
                 Entity › Segment
               </a>
@@ -151,7 +109,8 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                 <a
                   key={d}
                   className={`chip-link${columns.includes(d) ? ' is-active' : ''}`}
-                  href={axisHref('/app/explore', params, 'cols', d)}
+                  href={exploreHref(params, 'cols', d)}
+                  aria-current={columns.includes(d) ? 'true' : undefined}
                 >
                   {DIMENSION_LABELS[d]}
                 </a>
@@ -165,7 +124,8 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                 <a
                   key={g}
                   className={`chip-link${grain === g ? ' is-active' : ''}`}
-                  href={axisHref('/app/explore', params, 'grain', g)}
+                  href={exploreHref(params, 'grain', g)}
+                  aria-current={grain === g ? 'true' : undefined}
                 >
                   {g === 'month' ? 'Month' : 'Quarter'}
                 </a>
@@ -174,16 +134,40 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
           </div>
         </div>
 
+        {state.normalised ? (
+          <p className="banner banner-warn">
+            A dimension can appear once, on one axis. The repeated dimension in this address was
+            removed before the grid was computed.
+          </p>
+        ) : null}
+
+        <p className="chart-note">
+          <a className="finding-action" href={exploreExportHref(params)}>
+            Export this view as CSV
+          </a>{' '}
+          — values, comparator, formula context and contributing load vintages travel with it.
+        </p>
+
         <div className="pane pane-scroll">
           <table className="grid grid-pivot">
             <thead>
               <tr>
                 <th scope="col">{rows.map((d) => DIMENSION_LABELS[d]).join(' › ')}</th>
-                {pivot.columnPaths.map((path, i) => (
-                  <th key={i} scope="col" className="num">
-                    {path.map((m) => m.label).join(' · ')}
-                  </th>
-                ))}
+                {pivot.columnPaths.flatMap((path, i) => {
+                  const label = path.map((m) => m.label).join(' · ') || 'Value';
+                  const comparison = comparisons[0]?.[i];
+                  return [
+                    <th key={`${i}-actual`} scope="col" className="num">
+                      {label} · Actual
+                    </th>,
+                    <th key={`${i}-comparative`} scope="col" className="num">
+                      {label} · {comparison?.comparator.label ?? view.comparator.id}
+                    </th>,
+                    <th key={`${i}-variance`} scope="col" className="num">
+                      {label} · Variance
+                    </th>,
+                  ];
+                })}
                 <th scope="col" className="num">
                   Window
                 </th>
@@ -193,13 +177,28 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
               {pivot.rows.map((row, r) => (
                 <tr key={r}>
                   <th scope="row">{row.path.map((m) => m.label).join(' › ')}</th>
-                  {row.cells.map((cell, c) => (
-                    <td key={c} className="num">
-                      <a className="cell-link" href={drillHref(r, c)}>
-                        {formatValue(cell.value, cell.unit)}
-                      </a>
-                    </td>
-                  ))}
+                  {row.cells.flatMap((cell, c) => {
+                    const comparison = comparisons[r]?.[c];
+                    return [
+                      <td key={`${c}-actual`} className="num">
+                        <a className="cell-link" href={exploreDrillHref(params, r, c)}>
+                          {formatValue(cell.value, cell.unit)}
+                        </a>
+                      </td>,
+                      <td key={`${c}-comparative`} className="num muted-cell">
+                        {formatValue(comparison?.comparativeValue ?? null, cell.unit)}
+                      </td>,
+                      <td
+                        key={`${c}-variance`}
+                        className={`num ${directionClass(comparison?.favourable ?? null)}`}
+                      >
+                        {movement(
+                          comparison?.movement ?? null,
+                          comparison?.movementUnit ?? cell.unit,
+                        )}
+                      </td>,
+                    ];
+                  })}
                   <td className="num total">
                     {row.total === null ? (
                       <span className="cell-none" title={pivot.totalNote}>
@@ -217,6 +216,41 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
         <p className="chart-note">{pivot.totalNote}</p>
       </section>
 
+      <section className="section focusable" id="section-formulas" aria-label="Formula inspector">
+        <div className="section-head">
+          <h2 className="section-title">Formula inspector</h2>
+          <span className="section-note">
+            The definitions below are the same catalogue entries that compute the grid and ground Ask.
+            Open any actual cell for the accounts, rows and vintages used in that calculation.
+          </span>
+        </div>
+        <div className="pane pane-scroll">
+          <table className="grid">
+            <thead>
+              <tr>
+                <th scope="col">Measure</th>
+                <th scope="col">Formula</th>
+                <th scope="col">Owner</th>
+                <th scope="col">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {EXPLORE_MEASURES.map((id) => {
+                const definition = measure(id);
+                return (
+                  <tr key={id} className={openCell?.measureId === id ? 'row-active' : ''}>
+                    <th scope="row">{definition.label}</th>
+                    <td>{definition.formula}</td>
+                    <td>{definition.owner}</td>
+                    <td>{definition.status}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {drill === null || openCell === undefined ? null : (
         <section className="section focusable" id="section-drill" aria-label="Drill">
           <div className="section-head">
@@ -224,7 +258,59 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             <span className="section-note">{drill.note}</span>
           </div>
 
-          <div className="pane">
+          {provenance === null ? null : (
+            <div className="pane pane-scroll">
+              <table className="grid">
+                <caption>Formula and provenance for this cell</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col" className="num">
+                      Stored value
+                    </th>
+                    <th scope="col">Months</th>
+                    <th scope="col" className="num">
+                      Rows
+                    </th>
+                    <th scope="col">Vintages</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {provenance.computed.inputs.map((input) => {
+                    const evidence = provenance.inputs.get(input.accountId);
+                    return (
+                      <tr key={input.accountId}>
+                        <th scope="row">
+                          {input.label}
+                          <span className="row-note">{input.accountId}</span>
+                        </th>
+                        <td className="num">
+                          {input.value === null ? '—' : input.value.toLocaleString('en-GB')}
+                        </td>
+                        <td className="mono-cell">
+                          {(evidence?.monthsUsed ?? input.monthsUsed).join(', ')}
+                        </td>
+                        <td className="num">{evidence?.rowCount ?? input.rowCount}</td>
+                        <td className="mono-cell">
+                          {(evidence?.vintageIds ?? input.vintageIds).join(', ') || '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="chart-note">
+                <strong>{provenance.computed.formula}.</strong> Owned by{' '}
+                {provenance.computed.owner}; definition {provenance.computed.status}. Current value{' '}
+                {formatValue(provenance.computed.value, provenance.computed.unit)} from{' '}
+                {provenance.vintageIds.length} contributing vintage
+                {provenance.vintageIds.length === 1 ? '' : 's'}. Input values are the measure
+                engine&rsquo;s stored values; the computed result above carries the display unit.
+              </p>
+            </div>
+          )}
+
+          <div className="pane pane-scroll">
             <table className="grid">
               <caption>
                 {formatValue(openCell.value, openCell.unit)} ·{' '}
@@ -264,7 +350,7 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             </p>
           </div>
 
-          <div className="pane">
+          <div className="pane pane-scroll">
             <table className="grid">
               <caption>
                 Source rows — {drill.rows.length} of them, from{' '}

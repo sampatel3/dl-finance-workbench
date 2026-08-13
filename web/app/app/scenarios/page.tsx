@@ -43,7 +43,7 @@ export default async function Scenarios({ searchParams }: { searchParams: Promis
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      {inner ? null : <Masthead path="/app/scenarios" view={view} />}
+      <Masthead path="/app/scenarios" view={view} />
       <Selectors path="/app/scenarios" view={view} />
 
       <section className="section focusable" id="section-levers" aria-label="Assumptions">

@@ -123,22 +123,42 @@ function periodMembers(months: readonly FiscalMonth[], grain: 'month' | 'quarter
       narrow: (ctx) => ({ ...ctx, scope: monthScope(month) }),
     }));
   }
-  /* Distinct quarters covered by the months given, in order. A quarter member's scope is the whole
-     quarter rather than the months present in it — a partial quarter reported as a quarter is the
-     kind of figure somebody puts in a board pack. */
-  const seen = new Map<string, PeriodScope>();
+  /* Distinct quarters covered by the months given, in order. The supplied month window is an upper
+     bound: a through-May view must never reach into June simply because May belongs to Q2. Incomplete
+     quarters are labelled with their exact covered range so a partial period cannot masquerade as a
+     completed quarter. */
+  const seen = new Map<string, { readonly full: PeriodScope; readonly months: FiscalMonth[] }>();
   for (const month of months) {
     const fy = fiscalYearOf(month, CALENDAR_YEAR);
     const q = fiscalQuarterOf(month, CALENDAR_YEAR);
     const key = `${fy}-Q${q}`;
-    if (!seen.has(key)) seen.set(key, quarterScope(fy, q, CALENDAR_YEAR));
+    const existing = seen.get(key);
+    if (existing === undefined) {
+      seen.set(key, { full: quarterScope(fy, q, CALENDAR_YEAR), months: [month] });
+    } else {
+      existing.months.push(month);
+    }
   }
-  return [...seen.entries()].map(([key, scope]) => ({
-    dimension: 'period' as const,
-    key,
-    label: key,
-    narrow: (ctx) => ({ ...ctx, scope }),
-  }));
+  return [...seen.entries()].map(([key, covered]) => {
+    const startMonth = covered.months[0] as FiscalMonth;
+    const endMonth = covered.months[covered.months.length - 1] as FiscalMonth;
+    const complete =
+      startMonth === covered.full.startMonth && endMonth === covered.full.endMonth;
+    const scope: PeriodScope = complete
+      ? covered.full
+      : {
+          type: covered.months.length === 1 ? 'MONTH' : 'YTD',
+          startMonth,
+          endMonth,
+          label: `${key} · ${startMonth}–${endMonth}`,
+        };
+    return {
+      dimension: 'period' as const,
+      key,
+      label: complete ? key : scope.label,
+      narrow: (ctx: MeasureContext) => ({ ...ctx, scope }),
+    };
+  });
 }
 
 function entityMembers(ctx: MeasureContext): Member[] {
@@ -229,6 +249,29 @@ export interface Pivot {
   readonly totalNote: string;
 }
 
+/**
+ * Refuse an ambiguous axis before a cell is computed.
+ *
+ * Narrowing a context is not commutative for every dimension: an entity member replaces the entity
+ * slice, for example. Letting `entity` appear on both axes would therefore render several labelled rows
+ * whose cells were all overwritten by the column member. The figures would be valid measurements and
+ * attached to the wrong labels — a more dangerous failure than throwing. The web surface normalises a
+ * hand-edited URL; this guard protects every other caller of the engine.
+ */
+function assertDistinctAxes(rows: readonly Dimension[], columns: readonly Dimension[]): void {
+  const seen = new Set<Dimension>();
+  const repeated = [...rows, ...columns].filter((dimension) => {
+    if (seen.has(dimension)) return true;
+    seen.add(dimension);
+    return false;
+  });
+  if (repeated.length > 0) {
+    throw new Error(
+      `A pivot dimension may appear once, on one axis: ${[...new Set(repeated)].join(', ')}`,
+    );
+  }
+}
+
 /** Which measure a path selects, or the request's first, when `measure` is not on an axis. */
 function measureFor(
   paths: readonly Member[][],
@@ -253,6 +296,7 @@ function totalIsMeaningful(measureId: string): boolean {
 }
 
 export function buildPivot(request: PivotRequest): Pivot {
+  assertDistinctAxes(request.rows, request.columns);
   const rowPaths = cross(request.rows, request);
   const columnPaths = cross(request.columns, request);
   const fallbackMeasure = request.measureIds[0] ?? 'revenue';
@@ -294,7 +338,7 @@ export function buildPivot(request: PivotRequest): Pivot {
     });
 
     /* Recomputed, never summed. See the header. */
-    const total = totalIsMeaningful(measureId)
+    const total = !request.columns.includes('measure') && totalIsMeaningful(measureId)
       ? (() => {
           const ctx = { ...rowCtx, scope: unionScope };
           const value = computeMeasure(measureId, ctx);
@@ -317,8 +361,8 @@ export function buildPivot(request: PivotRequest): Pivot {
     rows,
     totalNote:
       'Totals are recomputed over the whole window, never added across the cells — a balance is its ' +
-      'closing month and a ratio is not the sum of ratios. A row whose measure is a percentage has no ' +
-      'total for that reason.',
+      'closing month and a ratio is not the sum of ratios. A row whose measure is a percentage, or ' +
+      'whose columns contain different measures, has no total for that reason.',
   };
 }
 
@@ -444,16 +488,13 @@ export function drillCell(cell: Cell): Drill {
     note = 'This is the finest level the grain holds. Below it are the rows themselves.';
   }
 
-  /* The rows behind the figure, from the same query that produced it — so they are the cell rather
-     than a second reading of it. Every account the measure read, in the order it read them.
- *
-     The dimension keys are **omitted** rather than passed as null, and the distinction is the one the
-     fact grain is built on: an omitted dimension matches every value and sums across them, while `null`
-     matches only the aggregate row. Revenue is emitted per segment with no aggregate row of its own, so
-     the first version of this — which passed `ctx.segmentId ?? null` — asked for a row that does not
-     exist and drilled to nothing. Loudly wrong rather than quietly, which is the grain's whole point,
-     and it still took a test to see. */
+  /* The rows behind the figure, from the same grain selection that produced it. At the aggregate
+     level most accounts live on a null/null row, while revenue and cost of sales deliberately live
+     only on segment rows. Omitting both keys for every account would select aggregate *and* child rows
+     and silently double-count the evidence. A sliced measure follows readAccount's rule: constrain
+     the requested segment, and use the aggregate cost-centre row until a cost centre is selected. */
   const computed = computeMeasure(cell.measureId, ctx);
+  const segmentedAccounts: ReadonlySet<AccountCode> = new Set(['revenue', 'cost_of_sales']);
   const rows: Fact[] = [];
   const vintages = new Set<string>();
   for (const input of computed.inputs) {
@@ -464,10 +505,19 @@ export function drillCell(cell: Cell): Drill {
         scope: ctx.scope,
         scenario: ctx.scenario,
         versionId: ctx.versionId,
-        ...(ctx.segmentId === undefined ? {} : { segmentId: ctx.segmentId as SegmentCode }),
-        ...(ctx.costCentreId === undefined
-          ? {}
-          : { costCentreId: ctx.costCentreId as CostCentreCode }),
+        ...(ctx.segmentId === undefined && ctx.costCentreId === undefined
+          ? {
+              costCentreId: null,
+              ...(segmentedAccounts.has(input.accountId as AccountCode)
+                ? {}
+                : { segmentId: null }),
+            }
+          : {
+              ...(ctx.segmentId === undefined
+                ? {}
+                : { segmentId: ctx.segmentId as SegmentCode }),
+              costCentreId: (ctx.costCentreId ?? null) as CostCentreCode | null,
+            }),
         ...(ctx.asOfVintage === undefined ? {} : { asOfVintage: ctx.asOfVintage }),
       });
       rows.push(...result.rows);

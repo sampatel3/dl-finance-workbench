@@ -5,6 +5,7 @@ import { SKIN_COOKIE } from '@demo-kit/shell';
 import './globals.css';
 import '@demo-kit/shell/shell.css';
 import { DEMO_DESCRIPTION, DEMO_NAME } from '../lib/demo';
+import { resolveWorkbenchSkin } from '../lib/skin';
 
 /**
  * The root layout: the fonts, and the one place the treatment is decided.
@@ -74,7 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const raw = (await cookies()).get(SKIN_COOKIE)?.value;
   /* Only an explicit `light` gets the paper treatment. Anything else — unset, `dark`, or a value
      somebody hand-edited — is the product. */
-  const paper = raw === 'light';
+  const paper = resolveWorkbenchSkin(raw) === 'light';
   const fonts = `${display.variable} ${body.variable} ${mono.variable}`;
 
   return (

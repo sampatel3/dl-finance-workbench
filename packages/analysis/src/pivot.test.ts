@@ -14,12 +14,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ACTUAL_VERSION,
-  CALENDAR_YEAR,
   MONTHS,
   SEED_END,
   buildWorld,
   monthScope,
-  quarterScope,
   subtree,
 } from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
@@ -161,6 +159,32 @@ describe('three dimensions on an axis', () => {
   });
 });
 
+describe('a dimension has one unambiguous home', () => {
+  it('refuses the same dimension on both axes before computing a labelled lie', () => {
+    expect(() =>
+      buildPivot({
+        ctx: ctx(),
+        rows: ['entity'],
+        columns: ['entity', 'period'],
+        measureIds: ['revenue'],
+        months: ['2026-07'],
+      }),
+    ).toThrow(/may appear once.*entity/);
+  });
+
+  it('and refuses a repeated dimension within one axis', () => {
+    expect(() =>
+      buildPivot({
+        ctx: ctx(),
+        rows: ['segment', 'segment'],
+        columns: ['period'],
+        measureIds: ['revenue'],
+        months: ['2026-07'],
+      }),
+    ).toThrow(/may appear once.*segment/);
+  });
+});
+
 describe('the entity axis shows only what the context can see', () => {
   it('so a single-entity view lists one entity, not five', () => {
     // The leak this prevents: a controller scoped to one entity being shown the group by being shown
@@ -177,22 +201,36 @@ describe('the entity axis shows only what the context can see', () => {
 });
 
 describe('the quarter grain', () => {
-  it('reports whole quarters rather than the months present in them', () => {
-    // A partial quarter reported as a quarter is the kind of figure that ends up in a board pack. The
-    // member's scope is the quarter; only the columns offered are derived from the months given.
+  it('never reaches beyond the selected through-month', () => {
+    // A through-May view must not read June merely because May belongs to Q2. The partial range is
+    // explicit in the label and the context stops at the last month supplied.
     const pivot = buildPivot({
       ctx: ctx(),
       rows: ['measure'],
       columns: ['period'],
       measureIds: ['revenue'],
-      months: ['2026-05', '2026-06'],
+      months: ['2026-04', '2026-05'],
       periodGrain: 'quarter',
     });
     expect(pivot.columnPaths).toHaveLength(1);
     const cell = pivot.rows[0]?.cells[0];
-    expect(cell?.value).toBe(
-      computeMeasure('revenue', ctx({ scope: quarterScope(2026, 2, CALENDAR_YEAR) })).value,
-    );
+    expect(cell).toBeDefined();
+    if (cell === undefined) return;
+    expect(cell.ctx.scope.endMonth).toBe('2026-05');
+    expect(pivot.columnPaths[0]?.[0]?.label).toMatch(/2026-04–2026-05/);
+    expect(cell.value).toBe(computeMeasure('revenue', ctx({ scope: cell.ctx.scope })).value);
+  });
+
+  it('uses the canonical quarter label when all three months are present', () => {
+    const pivot = buildPivot({
+      ctx: ctx(),
+      rows: ['measure'],
+      columns: ['period'],
+      measureIds: ['revenue'],
+      months: ['2026-04', '2026-05', '2026-06'],
+      periodGrain: 'quarter',
+    });
+    expect(pivot.columnPaths[0]?.[0]?.label).toBe('2026-Q2');
   });
 });
 
@@ -254,6 +292,25 @@ describe('the drill terminates in rows', () => {
     expect(revenueRows.reduce((t, r) => t + r.amountMinor, 0)).toBeGreaterThan(0);
   });
 
+  it('does not mix aggregate and child rows for a non-segmented account', () => {
+    const staffPivot = buildPivot({
+      ctx: ctx({ entityIds: subtree('manufacturing') }),
+      rows: ['measure'],
+      columns: ['period'],
+      measureIds: ['staff_cost'],
+      months: [SEED_END],
+    });
+    const staffCell = staffPivot.rows[0]?.cells[0];
+    expect(staffCell).toBeDefined();
+    if (staffCell === undefined) return;
+    const drill = drillCell(staffCell);
+    const staffRows = drill.rows.filter((row) => row.accountId === 'staff_cost');
+    expect(staffRows).toHaveLength(1);
+    expect(staffRows[0]?.segmentId).toBeNull();
+    expect(staffRows[0]?.costCentreId).toBeNull();
+    expect(staffRows.reduce((sum, row) => sum + row.amountMinor, 0)).toBe(staffCell.value);
+  });
+
   it('and an entity cell breaks into segments, saying they may not reach the total', () => {
     if (cell === undefined) return;
     const entityCell = { ...cell, ctx: { ...cell.ctx, entityIds: subtree('services') } };
@@ -276,6 +333,20 @@ describe('the drill terminates in rows', () => {
     const drill = drillCell(finest);
     expect(drill.steps).toEqual([]);
     expect(drill.note).toMatch(/finest level/);
+  });
+});
+
+describe('totals across different measures', () => {
+  it('refuse to label the fallback revenue measure as the total for every measure column', () => {
+    const pivot = buildPivot({
+      ctx: ctx(),
+      rows: ['entity'],
+      columns: ['measure'],
+      measureIds: ['revenue', 'cash', 'ebitda'],
+      months: [SEED_END],
+    });
+    expect(pivot.rows.every((row) => row.total === null)).toBe(true);
+    expect(pivot.totalNote).toMatch(/columns contain different measures/);
   });
 });
 

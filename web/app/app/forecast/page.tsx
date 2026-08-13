@@ -45,6 +45,7 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
   const params = await searchParams;
   const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
+  const selectedDriver = typeof params.driver === 'string' ? params.driver : undefined;
 
   const view = viewOf(params);
   const ctx = contextOf(view);
@@ -73,7 +74,7 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      {inner ? null : <Masthead path="/app/forecast" view={view} />}
+      <Masthead path="/app/forecast" view={view} />
       <Selectors path="/app/forecast" view={view} />
 
       <section className="section focusable" id="section-versions" aria-label="Versions">
@@ -263,7 +264,7 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
                     ? null
                     : actual.value - assumed.value;
                 return (
-                  <tr key={driver.id}>
+                  <tr key={driver.id} className={selectedDriver === driver.id ? 'row-active' : ''}>
                     <th scope="row">
                       {driver.label}
                       {driver.note === undefined ? null : (

@@ -23,7 +23,7 @@ import { entity } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
 import { headlinesFor } from '../../../../lib/headline';
-import { boardsFor, contextOf, scopeLabel, viewOf } from '../../../../lib/world';
+import { boardsFor, contextOf, hrefForTarget, scopeLabel, viewOf } from '../../../../lib/world';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +31,18 @@ export async function GET(request: Request): Promise<NextResponse> {
   const url = new URL(request.url);
   const params = Object.fromEntries(url.searchParams.entries());
   const view = viewOf(params);
+  if (view.deniedEntityId !== undefined) {
+    return NextResponse.json(
+      {
+        error:
+          `Access refused for ${view.principal.label}: ` +
+          `${entity(view.deniedEntityId).name} is outside this persona's entity scope.`,
+        principal: view.principal.id,
+        requestedEntity: view.deniedEntityId,
+      },
+      { status: 403 },
+    );
+  }
   const ctx = contextOf(view);
   const headlines = headlinesFor(ctx, view.comparator);
   const boards = boardsFor(view);
@@ -43,6 +55,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       window: { from: view.scope.startMonth, to: view.scope.endMonth },
       label: scopeLabel(view.periodKind, view.scope),
       entity: { id: view.entityId, name: entity(view.entityId).name },
+      principal: { id: view.principal.id, label: view.principal.label },
       lens: view.lens,
       comparator: { id: view.comparator.id, basis: boards.comparator.basis },
       forecastVersion: {
@@ -90,7 +103,7 @@ export async function GET(request: Request): Promise<NextResponse> {
           formatted: formatValue(figure.value, figure.unit),
           unit: figure.unit,
         })),
-        action: f.action,
+        action: { ...f.action, href: hrefForTarget(f.action.href, view) },
         ...(f.caveat === undefined ? {} : { caveat: f.caveat }),
         ...(f.materiality === undefined ? {} : { materiality: f.materiality }),
       })),

@@ -1,11 +1,13 @@
 # Verification
 
-This document is written in the future tense, as a commitment: it says what will be checked and how,
-before most of it has run. Its convention comes from demo-kit, which inherited it from the demo
-before that, and with it comes the rule that gives the last section its teeth — findings are listed
-because **a verification note with no findings did not verify anything**. The findings section at the
-foot is therefore short today and grows with every wave. If the build closes with it empty, the build
-did not verify anything and is not closed.
+This document began as a commitment and now records local verification through Waves 5 and 6, plus
+the expanded Wave 7 tour. The product-specific deck's origin lint, ten-shot capture, aspect sync,
+twelve-slide render/overflow checks and twelve-page tagged PDF now pass; its rendered PDF pages were
+also visually reviewed. GitHub Actions, provisioning,
+deployment and live health polling were outside the
+13 August continuation, so the live-release invariants below remain requirements rather than passed
+checks. A finding is listed with the mechanism that exposed it; an empty findings section would mean
+verification had not happened.
 
 ## The invariants
 
@@ -27,7 +29,7 @@ The properties every other claim in this repo rests on. Each is stated as someth
 | Expanding a commentary headline leaves the period, version and comparator byte-identical. | `FW-AI-004`'s acceptance criterion, and the reason drill is a property of a computed figure rather than a page that refetches. |
 | As the Gulf business-unit controller, no group figure is reachable on any surface **and** the chat refuses a group question. | Row-level access that stops at the page is not access control; a chat that reaches past it *is* the way around it. |
 | Passcode unset ⇒ no gate; passcode set ⇒ every route and every `public/` asset gated, except the exact-match PWA exemptions. | Both directions have bitten before: under-gating leaks the demo, over-gating broke the manifest on every page load. Inherited from the kit along with its test. |
-| A deploy is not done until `/api/health` reports the exact commit that was deployed. | A CLI reporting SUCCESS for a stale build is a recorded burn, not a hypothetical. |
+| A deploy is not done until `/api/health` reports the exact commit that was deployed. **Pending: no continuation deploy was run.** | A CLI reporting SUCCESS for a stale build is a recorded burn, not a hypothetical. |
 | The deck captures nothing until the sentinel renders; no slide overflows; the PDF has one page per slide. | Deck assets reach client-facing documents unreviewed. The sentinel is what stops a Chrome error page shipping as a slide. |
 
 ## The gates
@@ -38,8 +40,9 @@ The properties every other claim in this repo rests on. Each is stated as someth
 | Tests | `pnpm -r test` | exit 0 |
 | Build | `pnpm --filter web build` | exit 0 |
 | Determinism | `git grep -nE 'Math\.random\|Date\.now\|new Date\(\)' packages web/lib` | no matches |
-| Deck | `pnpm deck:slides` | no slide overflows |
-| Health | `curl <url>/api/health` | `.commit` equals the deployed SHA |
+| Deck stills and slides *(passed locally)* | `pnpm --filter web deck:shoot` · `pnpm --filter web deck:aspects` · `pnpm --filter web deck:slides` | captures complete; aspects agree; no slide overflows |
+| Deck PDF *(passed locally)* | `pnpm --filter web deck:pdf` · `pdfinfo docs/deck/demo.pdf` | tagged PDF; 12 pages for 12 slides; visually reviewed from rendered pages |
+| Health *(pending)* | `curl <url>/api/health` | `.commit` equals the deployed SHA; not run in the continuation |
 
 ## How each wave proves itself
 
@@ -52,9 +55,9 @@ Gates in full are in [`00-build-plan.md`](00-build-plan.md); this is the index.
 | 2 measures | Golden measures at four scopes and two currencies; the five comparators; denominators asserted individually; polarity on a rising cost; `null` never `0` |
 | 3 analysis | Every bridge sums; the v6→v7 diff round-trips; the cash floor breach at week 9; bias across v4/v5/v6 and absent on the twin; four non-empty boards with exactly one home per finding |
 | 4 executive | Freshness test keyless; the four PRD questions answered with citations; a forecast question refused in words; a fabricated numeral rejected; `deck shoot` writes JPEGs |
-| 5 analyst | A three-dimension pivot totals to the same measure computed directly; drill sums to its cell; any view's URL reproduces it in a clean browser |
-| 6 governance | Headline expansion leaves the URL parameters identical; the intercompany check fails by name; the unmapped total closes the gap to the trial balance; the Gulf controller's refusal |
-| 7 ship | Live URL 307s to `/gate`; `/api/health` `.commit` equals `main`; deck PDF pages equal slides; every tour step's `href` lands on what it describes |
+| 5 analyst | `packages/analysis/src/pivot.test.ts` proves computed cells, recomputed totals, multi-dimension Cartesian axes and a group drill whose named elimination ties exactly; `web/lib/explore.test.ts` proves canonical URL axes, the selected month window and CSV provenance; scenario implementation uses a plan-to-plan context at the approved cut-off, while `cash.test.ts` proves the collection-days-to-cash mechanism |
+| 6 governance | `packages/model/src/governance.test.ts`, `web/lib/permissions.test.ts`, `web/lib/commentary.test.ts` and `web/lib/controls.test.ts` prove the state machine, pinned vintage, evidence sums, £48k named failure, £212k mapping exposure, July close state and Gulf refusal |
+| 7 presentation / ship | Ten tour steps, an opening `TourOverview`, the current kit's guided/free shell path, twelve deck slides and ten regenerated product shots are implemented. Every guided tour URL was walked in-browser and landed on its named region without a runtime error; Free mode fills the viewport and retains its floating theme/return controls without surface notes. Origin lint, aspect sync, render/overflow checks and the visually reviewed twelve-page tagged PDF pass. GitHub Actions, provisioning, deployment, gate redirect and live commit-health checks remain outside this local build |
 
 ## Accepted weaknesses
 
@@ -65,9 +68,10 @@ a weakness nobody wrote down is a surprise.
   users. Inherited from demo-kit deliberately: a demo has a passcode, not accounts.
 - **The attempt limiter is per-instance memory**, so serverless fan-out weakens it. Inherited with the
   same acknowledgement the kit makes.
-- **Nothing a visitor does persists.** A saved scenario and a visitor's approval do not survive a
-  reload; the seed carries a scenario library and a commentary queue across every approval state
-  instead, and a visitor's own approval is labelled as not persisted. The cost of the tier, argued in
+- **Workflow changes do not persist.** A scenario is reproducible because its assumptions are in the
+  URL, but it cannot be saved under a visitor-defined name. The commentary queue is seeded across
+  every state; role-appropriate actions render as preview affordances and perform no mutation. This
+  is stated beside the controls rather than simulated in browser state. The tier choice is argued in
   [`01-decisions.md`](01-decisions.md) §1.
 - **Ingestion is modelled, not real.** Sources, loads, vintages, validation results and unmapped
   accounts are seeded. The demo dials no customer system, and the Controls surface says so.
@@ -99,25 +103,27 @@ Named now, because a verification note that lists only what it covers is adverti
   stripping are proven on today's pinned Next and Node 24. A future minor of either can break the
   no-build-step workspace in ways only an upgrade attempt reveals.
 
-## What is verified by looking
+## What must be verified by looking
 
 Some checks have no assertion and are still real. The kit's convention legitimises this explicitly and
 points at the tooling that makes looking cheap.
 
-- The tour, walked step by step, each `href` landing on what its note describes.
-- Deck slides: `deck slides` flags overflow mechanically, then a person looks at each frame for
-  hierarchy, crop and legibility at displayed width.
+- The tour was walked step by step in-browser; every `href` landed on what its note describes without a runtime error. Free mode also filled the 1280 × 720 viewport, preserved its floating theme and return controls, omitted surface notes and kept navigation inside the product.
+- Deck origin lint, ten-shot capture, aspect sync, twelve-slide render/overflow and twelve-page PDF
+  checks pass. The tagged PDF was also rendered and inspected page by page for hierarchy, crop and
+  legibility.
 - Any UI change: `deck page <name> <url>`.
 - Whether the four priority boards read as a *scan*. The point of the surface is that an executive
   sees the shape of the month without reading it. No test can tell you whether they do.
 - Whether the whole thing feels like a product or like a scaffold. Closing the build requires a person
   to say so.
 
-## Defects found and fixed
+## Verification findings
 
-Each entry names what found it — which gate, which command, which pair of eyes — and what fixed it.
+Each entry names what found it — which gate, which command, which pair of eyes — and its resolution
+status. A pending row is a blocker, not evidence that the finding has been fixed.
 
-| # | Found by | Defect | Fix |
+| # | Found by | Defect | Resolution / status |
 | --- | --- | --- | --- |
 | 1 | Reviewing the revised PRD against the plan | The seed's eleven planted conditions covered adverse, favourable and risk and contained **no opportunity** — so `FW-DASH-001`'s Opportunities board would have rendered empty on the demo's own world, which is the one board a demo cannot afford to have empty. | Condition 12 added: CRM pipeline conversion running above assumption, worth roughly £0.8m of full-year revenue, carrying a *run scenario* action. The wave-3 gate now asserts all four boards are non-empty, so the class of defect cannot recur silently. |
 | 2 | Running `demo new` for real | The build machine's default Node is 22. The kit requires 24 and its no-build-step mechanism depends on Node 24's type stripping, so the scaffold would have failed at install with an error about neither. | Node 24 installed before scaffolding, and `.nvmrc` committed in wave 0 so the next machine is told rather than surprised. |
@@ -154,14 +160,30 @@ Each entry names what found it — which gate, which command, which pair of eyes
 
 | 28 | Replacing the template's `lib/format.ts` | The scaffold used an ASCII hyphen for negatives and gave a reason: that the chat's grounding check "reads numerals with an ASCII pattern, and a prettier character would hand it a positive number where the tool returned a negative one". **That is not what the check does.** Its pattern is `/\d[\d,]*(?:\.\d+)?/g`, which must *start* at a digit, so neither `-` nor `−` is ever captured and the sign plays no part in grounding at all. | The measure layer's typographic minus stands, and `lib/format.ts` became a thin re-export so there is exactly **one** formatter for the page, the charts, the deck and the tool results. Keeping a second one to satisfy a constraint that does not exist would have been the real defect. The genuine limitation is the opposite and is now stated where it matters: because grounding compares *unsigned* numerals it cannot catch a direction error, which is why the Ask tools return the movement already worded rather than leaving the model a sign to interpret. |
 | 29 | `narration.test.ts` — "claims nothing the pack does not support" | **Every currency figure the product displays would have been rejected as fabricated.** The kit builds its numeral allow-list by offering a currency value divided by a thousand, a million and a billion — because a writer says "12.4 million" for 12,393,220. The measure layer holds money in **minor** units, so revenue is 1,239,322,000, whose variants are 1,239,322 and 1,239.32 and 1.24. `£12.4m` — the figure on the front page — grounds against none of them. The narration would have fallen back on every build, looking like a model that could not be trusted with numbers. | A conversion at the seam: `fact()` divides currency and rate values by 100 before handing them to the allow-list, and narrows the unit through a `switch` so a new unit in the measure layer fails the typecheck here rather than silently widening what the model may say. Minor units are right for the model layer — integer arithmetic is why the balance sheet reconciles to the penny — and wrong at this boundary. Recorded because both layers were correct and the *seam* was not, which is the class of defect no unit test on either side can find. |
-| 30 | The same test, second failure | **A demo-kit defect, and the deterministic fallback failed the check that exists to guard it.** The claims validator treats `forecast` as predictive language and, unlike superlatives, did not allow it to be *echoed* from code-written text. In this domain the word is a **noun** — it names the comparator a variance is measured against, the label on the selector, the version an approval pins — so a detector saying "margin 404bps behind forecast" was saying the only correct thing, and any prose repeating it was rejected. | Fixed upstream on the demo-kit branch: `echoable: true` on that pattern, exactly as superlatives already work, with a test asserting a model may repeat "behind forecast" where code wrote it and still cannot invent "deposits will fall further". The pin was moved and the demo picked it up. **The workaround is what proved it was the wrong rule**: composing the sentence from the finding's figures to avoid the word worked until the word turned up in a figure *label* and then a detector *id*, at which point the product was being made less accurate to satisfy a validator. A rule that rejects a domain's own vocabulary is not over-rejection; it is a wrong rule, and it gets switched off. |
-| 31 | Writing a test for the Ask tools | My own test grepped the tool definitions for `predict|project|future` to assert nothing projects — and failed, because a segment is called `projects` and a comparator is called `forecast`. A test that reads *vocabulary* rather than *behaviour* fails on the product's own nouns. | Rewritten to assert the behaviour: a month beyond the last closed one is not a readable parameter, so it falls back and says which period it answered for. Recorded next to finding 30 because it is the same mistake from the other side — twice in one wave, a check confused a word with the thing the word names. |
+| 30 | The same test, second failure | **A demo-kit limitation, and the deterministic fallback failed the check that exists to guard it.** The claims validator treats `forecast` as predictive language even where it is a finance noun naming a comparator. A finance-only kit branch briefly made that word echoable, but it is not on the current upstream shell line. | The repository now pins demo-kit `660c16c` for the official auto-fullscreen free mode and `TourOverview`, choosing current shell behaviour over the finance-only validator branch. The committed narration keeps the explicit version wording (“measured against version v6”) and its claims tests remain the guard. The limitation is therefore contained, not claimed as fixed upstream. |
+| 31 | Writing a test for the Ask tools | My own test grepped the tool definitions for `predict\|project\|future` to assert nothing projects — and failed, because a segment is called `projects` and a comparator is called `forecast`. A test that reads *vocabulary* rather than *behaviour* fails on the product's own nouns. | Rewritten to assert the behaviour: a month beyond the last closed one is not a readable parameter, so it falls back and says which period it answered for. Recorded next to finding 30 because it is the same mistake from the other side — twice in one wave, a check confused a word with the thing the word names. |
 | 32 | Smoke-testing the Performance surface | The FX bar was absent from the revenue bridge, which looked like a defect and is not: the `forecast` comparator reads the *same window*, so both sides translate at the same rates and the translation difference is genuinely zero. It appears against prior period and prior year, where the windows differ. | No fix. Recorded because "a bar is missing" and "a bar is correctly zero" are indistinguishable on a chart that drops empty bars, and the next person to look will reach the same wrong conclusion. Verified by rendering both comparators and comparing the bar lists. |
-
-*Waves 5–7 append here as they land.*
+| 33 | `pivot.test.ts`, putting entity on both axes | A repeated dimension produced valid figures under ambiguous labels because the later member overwrote the earlier slice. Typechecking could not distinguish that from a legitimate Cartesian product. | The pivot engine now refuses a dimension repeated within or across axes. The web URL resolver canonicalises a hand-edited address, gives the reader's latest axis choice precedence and removes an open drill whose coordinates no longer identify the same cell. |
+| 34 | Drilling group revenue and summing the displayed parts | Five entity rows overstated the group by the eliminated intercompany trade. The first drill showed valid entity figures and left the reader to discover that they did not add to the cell. | Group drill adds a named negative `Intercompany eliminated` step. The parts now tie exactly to the cell, and the test asserts identity rather than tolerance. |
+| 35 | The row-terminating drill test | Revenue drilled to no rows because segmented accounts have no `segmentId: null` aggregate row; passing null asked for a row that correctly does not exist. | The query omits the segment dimension for segmented accounts, which means “all segment rows”. Tests require non-empty source rows, their immutable vintage ids and the real segment keys. |
+| 36 | Moving only collection days in a scenario | The scenario world used July actuals while the approved comparison projected July. A ten-day collections change appeared to move revenue and gross margin because the surface was comparing an actual with a forecast and labelling the whole variance an assumption effect. | The scenario uses the approved forecast's own `actualsThrough` cut-off and both sides are forecast versions. A collections-only scenario now moves working capital and cash without inventing a P&L movement. |
+| 37 | Adding the entity axis and Controls metadata | A single-entity grant could still be leaked by listing the group's entities on an axis, or by exposing group mapping counts, reconciliations, commentary provenance and AI rows on an otherwise scoped page. Governance metadata is data too. | Axis members are derived from the resolved context. `web/lib/controls.ts` scopes every projection before JSX receives it, withholds global mapping coverage and group checks at narrower scope, and returns a named refusal instead of a sliced substitute. |
+| 38 | Re-reading the Wave 7 tour after Waves 5 and 6 landed | The five-step tour still skipped Explore, forecast versions, scenarios, cash, quality, permissions and Controls, while its older demo-kit pin lacked the current full-viewport free mode. Both made implemented work effectively undiscoverable. | The tour now has ten evidence-led stops and an opening `TourOverview`; its first stop requests the phone device. `web/app/page.tsx` uses demo-kit `660c16c`'s `TourWindow` and `resolveShellView` directly, so guided mode keeps the frame and notes while free mode uses the kit's official full viewport. |
+| 39 | Documentation reconciliation against the filesystem | Traceability named five paths that do not exist (`versions.ts`, `variance.ts`, `triage.ts`, `scenario.ts` in analysis, and `evidence.ts`) and described visitor approvals as client-side mutations. A path that cannot be opened is not traceability. | Rows now point to `seed.ts`, `bridge.ts`, `priority.ts`, `web/lib/scenario.ts` and `web/lib/commentary.ts`; approval wording now matches the read-only preview actually rendered. |
+| 40 | Permission review across scoped findings and Ask | Detector contexts restricted measure computation by entity but still read global mapping, intercompany, close and restatement metadata. A Gulf-scoped result could therefore disclose group control facts even when its figures were scoped correctly. | Control detectors now run only at an authorised scope. Analysis and Ask tests assert that Gulf output contains none of the four group-only findings, entity names, amounts, restatement ids or citations. |
+| 41 | Tying Explore detail rows back to an opened cell | Drill and provenance queries could return both dimensioned source rows and null-dimension aggregate rows for the same account. Displaying both double-counted evidence, so the visible rows did not prove that they tied to the displayed cell. | Both paths now select one terminal grain. Pivot and Explore tests assert that a non-segmented account's visible provenance row count equals the row count recorded by its computed input. |
+| 42 | Comparing source claims with the seeded vintage register | Every actual vintage was registered as `sap-uk`, including rows for non-UK entities, while the other configured sources had no history. The immutable ids existed, but the multi-source lineage story was false. | The seed now registers all nine feeds for every month, plus the June restatement. Actual facts use their entity GL, PSA, CRM, payroll or bank vintage; forecast and budget facts use Anaplan. Model governance tests assert both the total history and representative fact-to-source mappings. |
+| 43 | Reading cash commentary beside its displayed comparator | Approved commentary claimed the cash outlook was above the policy floor, while its supporting evidence was a monthly actual-versus-forecast comparison in which closing cash was below forecast. The sentence and the governed object answered different questions. | The approved wording now describes closing cash below forecast. A commentary test reads the same comparison object and asserts both the sentence polarity and numeric direction. |
+| 44 | Hand-editing the `as` query parameter | An unknown explicit persona id fell back to the group executive, turning malformed or hostile input into the broadest seeded grant. | Absence still uses the intended executive demo default; an explicit unknown id now fails closed to the least-privileged Gulf controller and sets `fellBack`, asserted in `permissions.test.ts`. |
+| 45 | Following finding and scenario links from a scoped inner view | Raw action targets dropped or overrode persona, entity, through-month, comparator, currency lens and `view=inner`. An ordinary click could therefore widen scope or make the demo chrome jump. | `hrefForTarget` and `scenarioHref` reapply the resolved view, discard an unauthorised entity override and preserve `as`, month, comparator, lens and inner mode. Adversarial link tests cover both paths. |
+| 46 | Opening a May view at quarter grain | Quarter grouping snapped May to the full April–June scope and read a month beyond the selected through-month. | Partial quarters now use exactly the supplied months and print their covered range; the full quarter label is used only when all three months are present. Pivot and Explore tests assert the cell scope ends in May. |
+| 47 | Reading a pivot whose rows use different measures | The last column was labelled as a revenue window even though each row's total could be margin, cash, days or another unit. | The shared heading is now the neutral `Window`; each row formats its recomputed total using that row's own measure unit, and non-additive totals remain refused with the engine's note. |
+| 48 | Reconciling the cash-breach card with the weekly curve | The card paired the week-10 low point with the week-9 shortfall, so its amount and named week described different points on the forecast. | The title and shortfall now use week 9; the statement names the lower week-10 point separately. Detector tests reconcile week-9 closing to floor minus shortfall and assert week 10 is lower. |
+| 49 | Requesting an unauthorised entity from `/api/v1/explore` | The page clamped a Gulf controller's forbidden group request to Gulf, but the CSV endpoint returned that substitute with HTTP 200. A caller could mistake a different scope for the requested export. | The export endpoint now returns JSON 403 with principal and requested scope, never a silently substituted CSV; the adversarial route test asserts both status and absence of export content. |
 
 ## Live smoke
 
-*Empty until wave 7.* The transcript of the run that proved it — provision, deploy, verify, and the
-health document the live URL returned — pasted rather than summarised, because a summary of a
-transcript is a claim and the transcript is the evidence.
+**Not run in the continuation.** GitHub Actions, provision, deploy, gate redirect and live health
+polling were explicitly out of scope. No live URL or commit-verification claim should be inferred
+from local typecheck, tests or build output. When deployment is authorised, paste the provision,
+deploy and `/api/health` transcript here rather than summarising it.

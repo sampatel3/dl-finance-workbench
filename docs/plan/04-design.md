@@ -89,17 +89,56 @@ cannot be followed is a control that has to explain itself.
 Every selector remains a **link** rather than a `<select>`. The view lives in the URL, so a control
 that needs client JavaScript to navigate is a control that can disagree with the address bar.
 
+### 7. Dense evidence uses disclosure, not smaller type
+
+Waves 5 and 6 added tables with very different reading depths: an executive scans a control-room
+summary, an analyst opens one pivot cell, and a controller may inspect nine monthly source histories
+plus a restatement. Those
+surfaces use the same hierarchy rather than shrinking everything to fit: headline cards first,
+section headings and one-sentence notes next, then horizontally scrollable tables. Source lineage,
+commentary evidence and reconciliation sides are disclosed beneath the selected object instead of
+rendered as another dashboard beside it.
+
+This is also why the Explore drill is opened by a cell coordinate in the URL and Commentary uses a
+native disclosure control. The reader can link to the evidence without turning every row into an
+always-open wall of metadata.
+
+### 8. Status colour never replaces status words
+
+The governance surfaces add accepted, exception, submitted, failed, draft, approved, published and
+rejected states. Each is printed in words; green, amber and red only reinforce it. A reconciliation
+failure then shows the rule, both named sides, the difference and its threshold. This follows the
+brand's restrained colour system and avoids creating a second semantics where a coloured dot is
+expected to explain a finance control.
+
+At restricted scope, unavailable group controls are withheld with a written refusal rather than
+greyed out. A disabled group total still reveals that the object exists and invites a reader to infer
+its shape; the product's permission model treats metadata as data.
+
+### 9. The shell separates guided evidence from free use
+
+The ten-step tour keeps the device frame and notes because the sequence is part of the presentation.
+Free view hands the full viewport to the product immediately. The current demo-kit pin (`660c16c`)
+provides the official auto-fullscreen free mode and `TourOverview`; `web/app/page.tsx` uses the kit's
+`TourWindow` and `resolveShellView` directly instead of maintaining a product-local shell fork.
+
+The opening step switches to a phone itself. A step about responsive behaviour should present the
+responsive viewport, not ask the visitor to operate the shell while they are still learning the
+product.
+
+The product deck extends the same evidence hierarchy rather than inventing a presentation-only
+language: ten regenerated app shots support twelve slides. Origin lint, aspect sync, overflow checks
+and the visually reviewed twelve-page tagged PDF verify that extension against the current build.
+
 ## Accepted weaknesses
 
-- **The brand's licensed family is unverified.** `colors_and_type.css` flags it: Inter Tight, Inter and
-  JetBrains Mono are Google Fonts stand-ins for the live stack. Swap when the real family is known.
+- **The brand's licensed family is unverified.** Inter Tight, Inter and JetBrains Mono are stand-ins
+  loaded through `next/font` in `web/app/layout.tsx`. Swap them when the licensed family is known.
 - **The bridge's axis is truncated.** Documented in `web/components/Waterfall.tsx` and disclosed on the
   chart itself, with the floor labelled and the terminals drawn as level markers rather than columns. A
   zero-based axis made every contribution a two-pixel sliver; a truncated one with columns made two
   figures 5% apart look like a tripling. Markers on a labelled truncated axis is the honest third
   option, and it is still a chart a reader has to read the floor label to interpret.
-- **The logo is type, not the asset.** `assets/logo_white.png` is the relaunch lockup and the mark here
-  is a 30px amber `DL` square. A demo's mark should be type per the kit's own convention, and the real
-  lockup is wider than the masthead's first column. Worth revisiting with the vector original.
-- **Only two surfaces are styled.** Waves 5–7 add the analyst, governance and controls surfaces, and
-  each will need components this stylesheet does not yet have.
+- **The logo is type, not the production asset.** The mark is a 30px amber `DL` square. A demo's mark
+  should be type per the kit convention, and a production lockup would require the vector original
+  and a masthead layout decision.

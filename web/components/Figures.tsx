@@ -16,6 +16,8 @@ import { formatValue } from '@kestrel/measures';
 
 import type { Headline } from '../lib/headline';
 import { directionClass, movement } from '../lib/format';
+import type { View } from '../lib/world';
+import { hrefForTarget } from '../lib/world';
 
 /** One of the four headline figures, with its comparative and what it is compared against. */
 export function HeadlineCard({
@@ -54,7 +56,13 @@ export function HeadlineCard({
  * was allowed to say are the same list. The action is a link the engine named, not a button this
  * component invented — a surface cannot offer a capability the engine does not express.
  */
-export function FindingCard({ finding }: { readonly finding: Finding }) {
+export function FindingCard({
+  finding,
+  view,
+}: {
+  readonly finding: Finding;
+  readonly view: View;
+}) {
   return (
     <article className={`finding finding-${finding.priority}`}>
       <header className="finding-head">
@@ -76,7 +84,7 @@ export function FindingCard({ finding }: { readonly finding: Finding }) {
       {finding.caveat === undefined ? null : <p className="finding-caveat">{finding.caveat}</p>}
 
       <footer className="finding-foot">
-        <a className="finding-action" href={finding.action.href}>
+        <a className="finding-action" href={hrefForTarget(finding.action.href, view)}>
           {finding.action.label}
         </a>
         <span className="finding-owner">{finding.action.owner}</span>
@@ -100,12 +108,14 @@ export function BoardPanel({
   title,
   question,
   findings,
+  view,
   emptyNote,
   note,
 }: {
   readonly title: string;
   readonly question: string;
   readonly findings: readonly Finding[];
+  readonly view: View;
   readonly emptyNote: string;
   readonly note?: string;
 }) {
@@ -120,7 +130,7 @@ export function BoardPanel({
       ) : (
         <div className="board-items">
           {findings.map((finding) => (
-            <FindingCard key={finding.fingerprint} finding={finding} />
+            <FindingCard key={finding.fingerprint} finding={finding} view={view} />
           ))}
         </div>
       )}

@@ -68,6 +68,12 @@ describe('the 13-week direct forecast', () => {
     expect(forecast.breach).toBeDefined();
     expect(forecast.breach?.index).toBe(9);
     expect(forecast.breach?.shortfall ?? 0).toBeGreaterThan(0);
+    const firstBreach = forecast.weeks[(forecast.breach?.index ?? 0) - 1];
+    expect(firstBreach?.closing).toBe(
+      MINIMUM_CASH.amountMinor - (forecast.breach?.shortfall ?? 0),
+    );
+    expect(forecast.low.index).toBe(10);
+    expect(forecast.low.amount).toBeLessThan(firstBreach?.closing ?? 0);
     expect(forecast.low.amount).toBeLessThan(MINIMUM_CASH.amountMinor);
   });
 

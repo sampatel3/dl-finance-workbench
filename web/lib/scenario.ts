@@ -22,14 +22,14 @@
 
 import { memoise } from '@demo-kit/data';
 import type { AssumptionSet } from '@kestrel/model';
-import { buildWorld, subtree } from '@kestrel/model';
+import { buildWorld } from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
 import { computeMeasure } from '@kestrel/measures';
 import type { DirectForecast } from '@kestrel/analysis';
 import { MINIMUM_CASH, activeApprovedForecast, directForecast, version } from '@kestrel/analysis';
 
 import { DEMO_SEED } from './demo';
-import type { Params, View } from './world';
+import { hrefFor, type Params, type View } from './world';
 
 /** The scenario version's id. One name, so a URL never has to carry it. */
 export const SCENARIO_ID = 'scenario';
@@ -197,7 +197,8 @@ export function runScenario(view: View, params: Params): ScenarioResult {
   const shared = {
     scope: view.scope,
     lens: view.lens,
-    entityIds: subtree(view.entityId),
+    entityIds: view.permission.entityIds,
+    ...view.permission.dimensionFilters,
   };
   /* Both sides read a FORECAST version, so the comparison is plan against plan. Reading the scenario
      against actuals would report the difference between a projection and a record as though an
@@ -294,18 +295,35 @@ export function scenarioHref(
   params: Params,
   changes: Readonly<Record<string, string>>,
 ): string {
-  const next = new URLSearchParams();
-  /* Carry the view's own parameters, drop any lever the change replaces. */
+  const canonical = new URL(
+    hrefFor('/app/scenarios', view),
+    'https://finance-workbench.invalid',
+  );
+  const next = canonical.searchParams;
+  const viewKeys = new Set([
+    'as',
+    'period',
+    'month',
+    'comparator',
+    'entity',
+    'lens',
+    'version',
+    'view',
+    'shell',
+  ]);
+  /* Carry page-local state, while the resolved view remains authoritative for permission and finance
+     scope. Drop any lever the change replaces. */
   for (const [key, value] of Object.entries(params)) {
     const single = Array.isArray(value) ? value[0] : value;
     if (single === undefined) continue;
+    if (viewKeys.has(key)) continue;
     if (key in changes) continue;
     next.set(key, single);
   }
   for (const [key, value] of Object.entries(changes)) {
+    if (viewKeys.has(key)) continue;
     if (value !== '') next.set(key, value);
   }
-  void view;
   const query = next.toString();
   return query === '' ? '/app/scenarios' : `/app/scenarios?${query}`;
 }
