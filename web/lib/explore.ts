@@ -8,13 +8,14 @@
 
 import type { Dimension, Pivot } from '@kestrel/analysis';
 import { DIMENSIONS, buildPivot } from '@kestrel/analysis';
-import type { AccountCode, FiscalMonth } from '@kestrel/model';
-import { entity } from '@kestrel/model';
-import type { MeasureValue, MeasureWithComparison } from '@kestrel/measures';
-import { compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
+import type { AccountCode, FiscalMonth, SegmentCode } from '@kestrel/model';
+import { SEGMENTS, entity } from '@kestrel/model';
+import type { MeasureContext, MeasureValue, MeasureWithComparison } from '@kestrel/measures';
+import { compareMeasure, computeMeasure, formatValue, measureIds } from '@kestrel/measures';
 
 import type { Params, View } from './world';
 import { ALL_MONTHS, contextOf, viewOf } from './world';
+import { resolveDimensionScope } from './permissions';
 
 export const EXPLORE_MEASURES = [
   'revenue',
@@ -25,6 +26,8 @@ export const EXPLORE_MEASURES = [
   'dso',
 ] as const;
 
+export const ALL_EXPLORE_MEASURES: readonly string[] = measureIds();
+
 export interface ExploreAxes {
   readonly rows: readonly Dimension[];
   readonly columns: readonly Dimension[];
@@ -34,17 +37,33 @@ export interface ExploreAxes {
 
 export interface ExploreState extends ExploreAxes {
   readonly view: View;
+  /** The exact governed slice used by both the grid and cited-measure evidence. */
+  readonly ctx: MeasureContext;
+  readonly segmentId?: SegmentCode;
+  readonly dimensionRefusal?: string;
   readonly grain: 'month' | 'quarter';
   readonly months: readonly FiscalMonth[];
+  /** The governed measures selected for the grid; the URL may narrow the default set. */
+  readonly measures: readonly string[];
   readonly pivot: Pivot;
   readonly comparisons: readonly (readonly MeasureWithComparison[])[];
+}
+
+export function exploreMeasures(raw: string | string[] | undefined): string[] {
+  const requested = first(raw)
+    ?.split(',')
+    .map((part) => part.trim())
+    .filter((id) => ALL_EXPLORE_MEASURES.includes(id));
+  return requested === undefined || requested.length === 0
+    ? [...EXPLORE_MEASURES]
+    : distinct(requested);
 }
 
 const first = (value: string | string[] | undefined): string | undefined =>
   Array.isArray(value) ? value[0] : value;
 
-function distinct(dimensions: readonly Dimension[]): Dimension[] {
-  return dimensions.filter((dimension, index) => dimensions.indexOf(dimension) === index);
+function distinct<T>(values: readonly T[]): T[] {
+  return values.filter((value, index) => values.indexOf(value) === index);
 }
 
 /** Parse one axis, dropping unknown and repeated dimensions before applying its default. */
@@ -117,22 +136,42 @@ export function exploreMonthsThrough(
 
 /** Resolve one URL into the exact grid shared by the page and the export route. */
 export function exploreState(params: Params): ExploreState {
-  const view = viewOf(params);
+  const view = viewOf(params, { allowDataScenario: true });
   const axes = normaliseExploreAxes(params);
   const grain = first(params.grain) === 'quarter' ? 'quarter' : 'month';
   const months = exploreMonthsThrough(ALL_MONTHS, view.through);
+  const measures = exploreMeasures(params.measure);
+  const segmentRaw = first(params.segment);
+  const requestedSegment = SEGMENTS.find((candidate) => candidate.code === segmentRaw)?.code;
+  const dimensions = resolveDimensionScope(
+    view.permission,
+    requestedSegment === undefined ? {} : { segmentId: requestedSegment },
+  );
+  const filters = dimensions.allowed ? dimensions.filters : view.permission.dimensionFilters;
+  const ctx = { ...contextOf(view), ...filters };
   const pivot = buildPivot({
-    ctx: contextOf(view),
+    ctx,
     rows: axes.rows,
     columns: axes.columns,
-    measureIds: [...EXPLORE_MEASURES],
+    measureIds: measures,
     months,
     periodGrain: grain,
   });
   const comparisons = pivot.rows.map((row) =>
     row.cells.map((cell) => compareMeasure(cell.measureId, cell.ctx, view.comparator)),
   );
-  return { ...axes, view, grain, months, pivot, comparisons };
+  return {
+    ...axes,
+    view,
+    ctx,
+    ...(filters.segmentId === undefined ? {} : { segmentId: filters.segmentId }),
+    ...(dimensions.allowed ? {} : { dimensionRefusal: dimensions.refusal }),
+    grain,
+    months,
+    measures,
+    pivot,
+    comparisons,
+  };
 }
 
 function paramsIntoSearch(params: Params): URLSearchParams {
@@ -162,9 +201,20 @@ function fillAxis(
  * read. It also drops an open drill whenever the axes or grain move, because the old cell coordinates no
  * longer identify the same figure.
  */
-export function exploreHref(params: Params, key: 'rows' | 'cols' | 'grain', value: string): string {
+export function exploreHref(
+  params: Params,
+  key: 'rows' | 'cols' | 'grain' | 'scenario' | 'version',
+  value: string,
+): string {
   const next = paramsIntoSearch(params);
   next.delete('drill');
+
+  if (key === 'scenario' || key === 'version') {
+    if (key === 'scenario' && value === 'actual') next.delete('scenario');
+    else next.set(key, value);
+    const query = next.toString();
+    return query === '' ? '/app/explore' : `/app/explore?${query}`;
+  }
 
   if (key === 'grain') {
     const axes = normaliseExploreAxes(params);
@@ -306,13 +356,26 @@ export function exploreCsv(state: ExploreState): string {
     ...new Set(details.flat(2).flatMap((detail) => detail.provenance.vintageIds)),
   ].sort();
   const firstComparison = state.comparisons[0]?.[0];
+  const datasetLabel =
+    state.view.dataScenario === 'ACTUAL'
+      ? 'Actual'
+      : state.view.dataScenario === 'BUDGET'
+        ? 'Budget FY26'
+        : state.view.version.label;
+  const datasetVersion =
+    state.view.dataScenario === 'ACTUAL'
+      ? 'actual'
+      : state.view.dataScenario === 'BUDGET'
+        ? 'budget-fy26'
+        : state.view.version.id;
 
   const lines = [
     csvRow(['Deeplight Finance Workbench', 'Explore export']),
     csvRow(['Grid window', `${state.months[0] ?? state.view.through} to ${state.months.at(-1) ?? state.view.through}`]),
     csvRow(['Entity', entity(state.view.entityId).name]),
-    csvRow(['Actual version', 'actual']),
-    csvRow(['Selected forecast version', state.view.version.id]),
+    ...(state.segmentId === undefined ? [] : [csvRow(['Segment', state.segmentId])]),
+    csvRow(['Dataset', datasetLabel]),
+    csvRow(['Dataset version', datasetVersion]),
     csvRow(['Comparator', firstComparison?.comparator.basis ?? state.view.comparator.id]),
     csvRow(['Currency lens', state.view.lens]),
     csvRow(['Rows', state.rows.join(' / ')]),
@@ -324,8 +387,8 @@ export function exploreCsv(state: ExploreState): string {
       'Row',
       'Column',
       'Measure',
-      'Actual raw',
-      'Actual shown',
+      `${datasetLabel} raw`,
+      `${datasetLabel} shown`,
       'Comparative raw',
       'Comparative shown',
       'Movement raw',

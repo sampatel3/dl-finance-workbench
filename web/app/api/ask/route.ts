@@ -1,7 +1,9 @@
 import { ask } from '@demo-kit/llm';
 import { liveClient } from '../../../lib/anthropic';
 import { resolvePrincipal } from '../../../lib/permissions';
-import { SUGGESTIONS, TOOLS, runTool, systemFor } from '../../../lib/tools';
+import { ASK_SUBJECTS, SUGGESTIONS, TOOLS, runTool, systemFor } from '../../../lib/tools';
+import type { Params } from '../../../lib/world';
+import { viewOf } from '../../../lib/world';
 
 /**
  * The chat route: one question, one grounded answer, or one named reason there is not one.
@@ -23,23 +25,47 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+function record(value: unknown): Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null
+    ? (value as Readonly<Record<string, unknown>>)
+    : {};
+}
+
+function stringAt(value: Readonly<Record<string, unknown>>, key: string): string | undefined {
+  const candidate = value[key];
+  return typeof candidate === 'string' ? candidate : undefined;
+}
+
+/** Resolve the finance state the HTTP boundary permits Ask to inherit. */
+export function resolveAskView(
+  personaRaw: string | undefined,
+  requestedView: Readonly<Record<string, unknown>>,
+) {
+  const { principal } = resolvePrincipal(personaRaw);
+  const viewParams: Params = {
+    as: principal.id,
+    period: stringAt(requestedView, 'period'),
+    month: stringAt(requestedView, 'month'),
+    comparator: stringAt(requestedView, 'comparator'),
+    entity: stringAt(requestedView, 'entity'),
+    lens: stringAt(requestedView, 'lens'),
+    version: stringAt(requestedView, 'version'),
+  };
+  // Ask is mounted on the actual-only Overview. Do not let a forged request body turn its tools into
+  // an unlabelled budget or forecast reader while their citations resolve back to actual-only pages.
+  return viewOf(viewParams);
+}
+
 export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => ({}));
+  const payload = record(body);
   const question =
-    typeof body === 'object' &&
-    body !== null &&
-    'question' in body &&
-    typeof body.question === 'string'
-      ? body.question.trim()
+    typeof payload.question === 'string'
+      ? payload.question.trim()
       : '';
-  const personaRaw =
-    typeof body === 'object' &&
-    body !== null &&
-    'as' in body &&
-    typeof body.as === 'string'
-      ? body.as
-      : undefined;
-  const { principal } = resolvePrincipal(personaRaw);
+  const requestedView = record(payload.view);
+  const personaRaw = stringAt(payload, 'as') ?? stringAt(requestedView, 'as');
+  const view = resolveAskView(personaRaw, requestedView);
 
   if (question === '') {
     return Response.json({ error: 'A question is required.' }, { status: 400 });
@@ -48,9 +74,10 @@ export async function POST(request: Request) {
   const client = await liveClient();
   const reply = await ask({
     question,
-    system: systemFor(principal),
+    system: systemFor(view),
     tools: TOOLS,
-    runTool: (call) => runTool(call, { principal }),
+    runTool: (call) => runTool(call, { view }),
+    subjects: ASK_SUBJECTS,
     suggestions: SUGGESTIONS,
     ...(client === undefined ? {} : { client }),
   });

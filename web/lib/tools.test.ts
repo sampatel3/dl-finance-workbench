@@ -11,19 +11,32 @@
  *   **Arithmetic the model does is ungrounded by construction.** `compare_measures` exists for that
  *   reason, and the test for it is that the difference appears in the text — not that the tool ran.
  *
- * And one thing the tools must *not* do: project. A question inviting a forecast has to have no tool that
- * can serve it, which is a property of the tool list rather than of the prompt.
+ * And one thing the tools must *not* do: choose a future or scenario assumption. Stored-version
+ * comparison and the single governed 8% sensitivity are deterministic reads; neither turns Ask into a
+ * second forecast engine.
  */
 
 import { describe, expect, it } from 'vitest';
 import { SEED_END } from '@kestrel/model';
-import { measureIds } from '@kestrel/measures';
+import {
+  buildBridge,
+  cashSensitivity,
+  grossProfitBridge,
+  runDetectors,
+} from '@kestrel/analysis';
+import { compareMeasure, computeMeasure, formatValue, measureIds } from '@kestrel/measures';
 
+import { exploreState } from './explore';
 import { principalById } from './permissions';
-import { SUGGESTIONS, SYSTEM, TOOLS, runTool } from './tools';
+import { ASK_SUBJECTS, SUGGESTIONS, SYSTEM, TOOLS, runTool, systemFor } from './tools';
+import { contextOf, detectorContextOf, paramsForView, viewOf } from './world';
 
 const call = (name: string, input: Record<string, unknown> = {}) =>
   runTool({ id: 't', name, input });
+
+function paramsFrom(href: string): Record<string, string> {
+  return Object.fromEntries(new URL(href, 'https://demo.invalid').searchParams.entries());
+}
 
 describe('the tool list', () => {
   it('offers every measure in the catalogue rather than a hand-picked few', () => {
@@ -33,6 +46,12 @@ describe('the tool list', () => {
     const properties = spec?.input_schema.properties ?? {};
     const measure = properties.measure as { enum?: readonly string[] } | undefined;
     expect([...(measure?.enum ?? [])].sort()).toEqual([...measureIds()].sort());
+  });
+
+  it('attributes figures to canonical complete entity names', () => {
+    expect(ASK_SUBJECTS).toContain('Kestrel Industrial Group plc');
+    expect(ASK_SUBJECTS).toContain('Kestrel Gulf Technical Services FZ-LLC');
+    expect(ASK_SUBJECTS).not.toContain('Kestrel');
   });
 
   it('and cannot be pointed at a period that has not closed', async () => {
@@ -45,13 +64,109 @@ describe('the tool list', () => {
        A test that reads vocabulary rather than behaviour fails on the product's own nouns. */
     const future = await call('get_measure', { measure: 'revenue', month: '2027-03' });
     expect(future.content).toMatch(/Jul 2026/);
-    expect(SYSTEM).toMatch(/cannot make one/);
+    expect(SYSTEM).toMatch(/cannot/);
   });
 
   it('and names the arithmetic tool in the description of the one it replaces', () => {
     // A model that does not know the arithmetic tool exists will subtract in its head and be refused.
     const compare = TOOLS.find((t) => t.name === 'compare_measures');
     expect(compare?.description).toMatch(/rather than subtracting/);
+  });
+
+  it('keeps the scenario set closed instead of letting the model choose an assumption', () => {
+    const sensitivity = TOOLS.find((tool) => tool.name === 'cash_sensitivity');
+    const properties = sensitivity?.input_schema.properties ?? {};
+    const input = properties.revenue_change_percent as
+      | { enum?: readonly number[] }
+      | undefined;
+    expect(input?.enum).toEqual([-8]);
+  });
+});
+
+describe('the selected page view', () => {
+  const selected = viewOf({
+    as: 'gulf-controller',
+    period: 'quarter',
+    month: '2026-04',
+    comparator: 'prior_year',
+    entity: 'gulf',
+    lens: 'constant',
+    version: 'v7',
+  });
+
+  it('is the default for period, month, comparator, entity, lens, version and persona', async () => {
+    const out = await runTool(
+      { id: 't', name: 'compare_measures', input: { measure: 'revenue' } },
+      { view: selected },
+    );
+
+    expect(out.content).toMatch(/Kestrel Gulf Technical Services/);
+    expect(out.content).toMatch(/Q2 2026 through Apr 2026/);
+    expect(out.content).toMatch(/same window a year earlier/);
+    const href = new URL(out.citations?.[0]?.href ?? '', 'https://demo.invalid');
+    expect(href.searchParams.get('as')).toBe('gulf-controller');
+    expect(href.searchParams.get('period')).toBe('quarter');
+    expect(href.searchParams.get('month')).toBe('2026-04');
+    expect(href.searchParams.get('comparator')).toBe('prior_year');
+    expect(href.searchParams.get('lens')).toBe('constant');
+    expect(href.searchParams.get('version')).toBe('v7');
+
+    const forecast = await runTool(
+      { id: 't', name: 'compare_measures', input: { measure: 'revenue' } },
+      { view: viewOf({ ...paramsForView(selected), comparator: 'forecast' }) },
+    );
+    expect(forecast.content).toMatch(/forecast v7/);
+  });
+
+  it('states the same context to the model, so "this period" is not reinterpreted', () => {
+    const system = systemFor(selected);
+    expect(system).toMatch(/Gulf business-unit controller/);
+    expect(system).toMatch(/Q2 2026 through Apr 2026/);
+    expect(system).toMatch(/Kestrel Gulf Technical Services/);
+    expect(system).toMatch(/prior year/);
+    expect(system).toMatch(/constant currency lens/);
+    expect(system).toMatch(/version v7/);
+  });
+
+  it('cannot be widened by pairing that principal with a broader forged view', async () => {
+    const out = await runTool(
+      { id: 't', name: 'get_measure', input: { measure: 'revenue' } },
+      { principal: principalById('gulf-controller'), view: viewOf() },
+    );
+    expect(out.content).toMatch(/Kestrel Gulf Technical Services/);
+    expect(out.content).not.toMatch(/Kestrel Industrial Group plc/);
+    expect(out.content).not.toMatch(/£12\.4m/);
+  });
+
+  it('cannot be switched from actuals by a forged Explore scenario', async () => {
+    const actual = viewOf({ version: 'v5' });
+    const forgedBudget = viewOf(
+      { scenario: 'budget', version: 'v5' },
+      { allowDataScenario: true },
+    );
+    const forgedForecast = viewOf(
+      { scenario: 'forecast', version: 'v5' },
+      { allowDataScenario: true },
+    );
+    const calls = [
+      { name: 'cash_sensitivity', input: { revenue_change_percent: -8 } },
+      { name: 'list_findings', input: { board: 'risks' } },
+    ];
+
+    for (const tool of calls) {
+      const expected = await runTool({ id: 'a', ...tool }, { view: actual });
+      for (const forged of [forgedBudget, forgedForecast]) {
+        const resolved = await runTool({ id: 'b', ...tool }, { view: forged });
+        expect(resolved.content).toBe(expected.content);
+        expect(resolved.citations).toEqual(expected.citations);
+        for (const citation of resolved.citations ?? []) {
+          if (citation.href === null) continue;
+          expect(new URL(citation.href, 'https://demo.invalid').searchParams.has('scenario')).toBe(
+            false,
+          );
+        }
+      }
+    }
   });
 });
 
@@ -62,6 +177,10 @@ describe('get_measure', () => {
     expect(out.content).toMatch(/owned by/);
     // The definition is in the body, not only in a citation — a citation grounds nothing.
     expect(out.content).toMatch(/defined as/);
+    const evidence = new URL(out.citations?.[0]?.href ?? '', 'https://demo.invalid');
+    expect(evidence.pathname).toBe('/app/explore');
+    expect(evidence.searchParams.get('measure')).toBe('revenue');
+    expect(evidence.searchParams.get('focus')).toBe('section-cited-measure');
   });
 
   it('says whether the figure is consolidated, because a slice is not', async () => {
@@ -69,6 +188,20 @@ describe('get_measure', () => {
     const sliced = await call('get_measure', { measure: 'revenue', segment: 'contracts' });
     expect(group.content).toMatch(/intercompany eliminated/);
     expect(sliced.content).toMatch(/not consolidated/);
+  });
+
+  it('cites the exact segment value rather than the unsliced group measure', async () => {
+    const out = await call('get_measure', { measure: 'revenue', segment: 'contracts' });
+    const href = out.citations?.[0]?.href;
+    expect(href).toBeTruthy();
+    if (href === null || href === undefined) return;
+
+    const evidence = exploreState(paramsFrom(href));
+    const exact = computeMeasure('revenue', evidence.ctx);
+    expect(evidence.segmentId).toBe('contracts');
+    expect(out.citations?.[0]?.value).toBe(formatValue(exact.value, exact.unit));
+    expect(out.content).toContain(formatValue(exact.value, exact.unit));
+    expect(exact.value).not.toBe(computeMeasure('revenue', contextOf(evidence.view)).value);
   });
 
   it('and names a measure that does not exist rather than throwing', async () => {
@@ -105,11 +238,37 @@ describe('compare_measures', () => {
     // would be refused by the grounding check.
     expect(out.content).toMatch(/£618k/);
     expect(out.content).toMatch(/ahead by|behind by/);
+    const evidence = new URL(out.citations?.[0]?.href ?? '', 'https://demo.invalid');
+    expect(evidence.pathname).toBe('/app/explore');
+    expect(evidence.searchParams.get('measure')).toBe('revenue');
   });
 
   it('and states the basis, so an answer can never be vague about what it compared', async () => {
     const out = await call('compare_measures', { measure: 'revenue', against: 'prior_year' });
     expect(out.content).toMatch(/The comparison is against/);
+  });
+
+  it('cites the comparator it actually used, with the same current and comparative values', async () => {
+    const out = await runTool(
+      {
+        id: 't',
+        name: 'compare_measures',
+        input: { measure: 'revenue', against: 'prior_year' },
+      },
+      { view: viewOf({ comparator: 'forecast', version: 'v6' }) },
+    );
+    const href = out.citations?.[0]?.href;
+    expect(href).toBeTruthy();
+    if (href === null || href === undefined) return;
+
+    const evidence = exploreState(paramsFrom(href));
+    const exact = compareMeasure('revenue', evidence.ctx, evidence.view.comparator);
+    expect(evidence.view.comparator.id).toBe('prior_year');
+    expect(out.citations?.[0]?.value).toBe(
+      formatValue(exact.current.value, exact.current.unit),
+    );
+    expect(out.content).toContain(formatValue(exact.current.value, exact.current.unit));
+    expect(out.content).toContain(formatValue(exact.comparativeValue, exact.current.unit));
   });
 
   it('and discloses that a trend is a fit, on the answer rather than in a footnote', async () => {
@@ -155,6 +314,30 @@ describe('list_findings', () => {
       expect(url.searchParams.get('as')).toBe('gulf-controller');
     }
   });
+
+  it('links every cited finding to the detector figure set, not its separate action', async () => {
+    const out = await call('list_findings', { board: 'risks' });
+    expect(out.citations?.length ?? 0).toBeGreaterThan(0);
+
+    for (const citation of out.citations ?? []) {
+      expect(citation.href).not.toBeNull();
+      if (citation.href === null) continue;
+      const params = paramsFrom(citation.href);
+      expect(params.focus).toBe('section-finding-evidence');
+      const evidenceView = viewOf(params);
+      const finding = runDetectors(detectorContextOf(evidenceView)).findings.find(
+        (candidate) => candidate.fingerprint === params.finding,
+      );
+      expect(finding).toBeDefined();
+      if (finding === undefined) continue;
+      expect(finding.title).toBe(citation.label);
+      expect(finding.figures.map((figure) => formatValue(figure.value, figure.unit))).toContain(
+        citation.value,
+      );
+      expect(out.content).toContain(finding.statement);
+      expect(citation.href).not.toBe(finding.action.href);
+    }
+  });
 });
 
 describe('explain_variance', () => {
@@ -167,6 +350,116 @@ describe('explain_variance', () => {
   it('and refuses a measure it cannot bridge, with the reason', async () => {
     const out = await call('explain_variance', { measure: 'ebitda', against: 'forecast' });
     expect(out.content).toMatch(/needs quantities/);
+  });
+
+  it('carries a tool-level comparator into every bridge evidence link', async () => {
+    for (const call of [
+      { name: 'explain_variance', input: { measure: 'revenue', against: 'prior_year' } },
+      { name: 'explain_ebitda', input: { against: 'prior_year' } },
+    ]) {
+      const out = await runTool({ id: 't', ...call }, {
+        view: viewOf({ comparator: 'forecast', version: 'v6' }),
+      });
+      for (const citation of out.citations ?? []) {
+        if (citation.href === null) continue;
+        expect(viewOf(paramsFrom(citation.href)).comparator.id).toBe('prior_year');
+      }
+    }
+  });
+
+  it('uses bridge values that the linked waterfall actually renders', async () => {
+    const variance = await call('explain_variance', {
+      measure: 'revenue',
+      against: 'prior_year',
+    });
+    const varianceHref = variance.citations?.[0]?.href;
+    expect(varianceHref).toBeTruthy();
+    if (varianceHref !== null && varianceHref !== undefined) {
+      const evidenceView = viewOf(paramsFrom(varianceHref));
+      const bridge = buildBridge({
+        measureId: 'revenue',
+        ctx: contextOf(evidenceView),
+        comparator: evidenceView.comparator,
+      });
+      expect(variance.citations?.[0]?.value).toBe(formatValue(bridge.to, 'currency'));
+    }
+
+    const ebitda = await call('explain_ebitda', { against: 'prior_year' });
+    const marginCitation = ebitda.citations?.find((citation) =>
+      citation.href?.includes('section-margin'),
+    );
+    expect(marginCitation?.href).toBeTruthy();
+    if (marginCitation?.href !== null && marginCitation?.href !== undefined) {
+      const evidenceView = viewOf(paramsFrom(marginCitation.href));
+      const bridge = grossProfitBridge({
+        ctx: contextOf(evidenceView),
+        comparator: evidenceView.comparator,
+      });
+      expect(marginCitation.value).toBe(formatValue(bridge.to, 'currency'));
+    }
+  });
+});
+
+describe('the four illustrative CFO questions', () => {
+  it('answers the EBITDA premise honestly with an exact bridge', async () => {
+    const out = await call('explain_ebitda', { against: 'forecast' });
+    expect(out.content).toMatch(/EBITDA .* against/);
+    expect(out.content).toMatch(/behind, not ahead|is ahead|exactly on/);
+    expect(out.content).toMatch(/Volume (?:added|reduced EBITDA)/);
+    expect(out.content).toMatch(/Operating expense (?:added|reduced EBITDA)/);
+    expect(out.content).toMatch(/sum to the EBITDA movement exactly/);
+    expect(out.citations?.some((citation) => citation.href?.includes('section-margin'))).toBe(true);
+  });
+
+  it('answers the governed revenue-down-8% cash sensitivity without choosing an assumption', async () => {
+    const out = await call('cash_sensitivity', { revenue_change_percent: -8 });
+    expect(out.content).toMatch(/8\.0%/);
+    expect(out.content).toMatch(/revenue falls by/);
+    expect(out.content).toMatch(/lost margin reduces cash by/);
+    expect(out.content).toMatch(/receivable release adds/);
+    expect(out.content).toMatch(/Over 13 weeks/);
+    expect(out.content).toMatch(/not a forecast or an assumption chosen by the model/);
+    expect(out.citations?.[0]?.href).toContain('section-sensitivity');
+    const href = out.citations?.[0]?.href;
+    expect(href).toBeTruthy();
+    if (href !== null && href !== undefined) {
+      const evidenceView = viewOf(paramsFrom(href));
+      const exact = cashSensitivity(contextOf(evidenceView), -0.08);
+      expect(out.citations?.[0]?.value).toBe(formatValue(exact.netCashEffect, 'currency'));
+    }
+
+    const refused = await call('cash_sensitivity', { revenue_change_percent: -7 });
+    expect(refused.content).toMatch(/contains the governed revenue-down-8% sensitivity only/);
+    expect(refused.content).toMatch(/cannot choose or invent/);
+  });
+
+  it('returns the closed v6-to-v7 driver diff and exact total impacts', async () => {
+    const out = await call('compare_versions', { from: 'v6', to: 'v7' });
+    expect(out.content).toMatch(/Forecast v6 to Forecast v7/);
+    expect(out.content).toMatch(/Volume moved/);
+    expect(out.content).toMatch(/Subcontract rate moved up/);
+    expect(out.content).toMatch(/Revenue moved from/);
+    expect(out.content).toMatch(/Gross margin moved from/);
+    expect(out.content).toMatch(/marginal run/);
+    expect(out.citations?.[0]?.href).toContain('from=v6');
+    expect(out.citations?.[0]?.href).toContain('version=v7');
+
+    const refused = await call('compare_versions', { from: 'v6', to: 'v8' });
+    expect(refused.content).toMatch(/No stored forecast version called "v8"/);
+  });
+
+  it('grounds a July risks-and-opportunities draft in detector output and citations', async () => {
+    const risks = await call('list_findings', { month: '2026-07', board: 'risks' });
+    const opportunities = await call('list_findings', {
+      month: '2026-07',
+      board: 'opportunities',
+    });
+    expect(risks.content).toMatch(/findings for Jul 2026/);
+    expect(risks.content).toMatch(/adverse\/forward/);
+    expect(opportunities.content).toMatch(/findings for Jul 2026/);
+    expect(opportunities.content).toMatch(/favourable\/forward/);
+    expect(risks.citations?.length ?? 0).toBeGreaterThan(0);
+    expect(opportunities.citations?.length ?? 0).toBeGreaterThan(0);
   });
 });
 
@@ -185,14 +478,21 @@ describe('describe_measure', () => {
 });
 
 describe('the suggested questions', () => {
-  it('every one of them resolves against a tool that exists', () => {
-    // A chip the demo then refuses turns a limitation into a broken promise. This is a weaker check than
-    // running them through a model, and it is the one that can run without a key: each names a capability
-    // the tool list has.
-    expect(SUGGESTIONS.length).toBeGreaterThan(2);
-    for (const question of SUGGESTIONS) {
-      expect(question.endsWith('?')).toBe(true);
-    }
+  it('are the PRD’s four questions, each backed by the deterministic tools above', () => {
+    expect(SUGGESTIONS).toEqual([
+      'Why is EBITDA ahead of forecast?',
+      'What happens to cash if revenue falls 8%?',
+      'Which drivers changed since forecast v6?',
+      'Draft July Board commentary with risks and opportunities.',
+    ]);
+    expect(TOOLS.map((tool) => tool.name)).toEqual(
+      expect.arrayContaining([
+        'explain_ebitda',
+        'cash_sensitivity',
+        'compare_versions',
+        'list_findings',
+      ]),
+    );
   });
 });
 

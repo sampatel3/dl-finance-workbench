@@ -24,6 +24,7 @@ import {
   monthScope,
   quarterScope,
   subtree,
+  ytdScope,
 } from '@kestrel/model';
 import type { World } from '@kestrel/model';
 import type { ComparatorChoice, MeasureContext } from '@kestrel/measures';
@@ -133,10 +134,10 @@ describe('what a finding carries', () => {
       'open_mapping',
     ];
     const routeByDetector: Readonly<Record<string, string>> = {
-      revenue_ahead_of_forecast: '/app/performance',
-      segment_margin_behind_forecast: '/app/performance',
+      revenue_ahead_of_forecast: '/app/commentary',
+      segment_margin_behind_forecast: '/app/commentary',
       driver_above_assumption: '/app/forecast',
-      currency_distorts_growth: '/app/performance',
+      currency_distorts_growth: '/app/commentary',
       collections_slipping: '/app/scenarios',
       cash_floor_breach: '/app/scenarios',
       unmapped_accounts: '/app/controls',
@@ -165,6 +166,10 @@ describe('what a finding carries', () => {
       new URL(byDetector.get(id)?.action.href ?? '/', 'https://demo.invalid');
 
     expect(url('segment_margin_behind_forecast').searchParams.get('segment')).toBeTruthy();
+    expect(url('segment_margin_behind_forecast').searchParams.get('measure')).toBe(
+      'gross_margin',
+    );
+    expect(url('revenue_ahead_of_forecast').searchParams.get('measure')).toBe('revenue');
     expect(url('driver_above_assumption').searchParams.get('driver')).toBe('subcontract_rate');
     expect(url('forecast_bias').searchParams.get('measure')).toBeTruthy();
     expect(url('collections_slipping').searchParams.get('dsoDays')).toBe('-10');
@@ -201,6 +206,18 @@ describe('what a finding carries', () => {
   it('and names the materiality test it cleared, where it is a variance', () => {
     const variance = run.findings.find((f) => f.plantedCondition === 1);
     expect(variance?.materiality).toMatch(/against a floor of/);
+  });
+});
+
+describe('dimension-scoped detection', () => {
+  it('never enumerates a segment outside the context filter', () => {
+    const run = runDetectors(dctx(world, { segmentId: 'contracts' }));
+    expect(run.errors).toEqual([]);
+    expect(
+      run.findings
+        .filter((finding) => finding.segmentId !== undefined)
+        .every((finding) => finding.segmentId === 'contracts'),
+    ).toBe(true);
   });
 });
 
@@ -327,6 +344,38 @@ describe('the findings the deck depends on', () => {
 });
 
 describe('a finding is scoped to what it was asked about', () => {
+  it('keeps monthly run-rate opportunities and risks stable in wider reporting windows', () => {
+    const month = dctx(world, { scope: monthScope(SEED_END) });
+    const quarter = dctx(world, {
+      scope: {
+        ...quarterScope(2026, 3, CALENDAR_YEAR),
+        endMonth: SEED_END,
+        label: 'Q3 FY26 through July 2026',
+      },
+    });
+
+    for (const id of ['driver_above_assumption', 'pipeline_ahead_of_assumption']) {
+      const monthly = detector(id).run(month)[0];
+      const quarterly = detector(id).run(quarter)[0];
+      expect(monthly).toBeDefined();
+      expect(quarterly).toBeDefined();
+      expect(quarterly?.figures).toEqual(monthly?.figures);
+    }
+  });
+
+  it('reports the open ledger closing-month revenue rather than multiplying it by YTD', () => {
+    const month = detector('close_incomplete').run(dctx())[0];
+    const ytd = detector('close_incomplete').run(
+      dctx(world, { scope: ytdScope(SEED_END, CALENDAR_YEAR) }),
+    )[0];
+    const openRevenue = (finding: typeof month) =>
+      finding?.figures.find((figure) => figure.label === 'Revenue not yet closed')?.value;
+
+    expect(openRevenue(month)).toBeGreaterThan(0);
+    expect(openRevenue(ytd)).toBe(openRevenue(month));
+    expect(ytd?.statement).toMatch(/closing month/);
+  });
+
   it('so a single entity produces a different set from the group', () => {
     // Row-level access is the entity subtree, so a Gulf controller's board is the group's board filtered
     // by the data they can see rather than by a permission on the finding.

@@ -275,6 +275,66 @@ a:hover { opacity: 0.72; }
   background: var(--surface);
 }
 
+/* Performance's bridge and its three-horizon reading belong together. The waterfall keeps the wider
+   track; the companion is narrow and vertical so its two named comparisons remain scannable. */
+.performance-bridge-layout {
+  display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.8fr);
+  gap: 16px; align-items: start;
+}
+.performance-bridge-main { min-width: 0; }
+.three-way-panel { min-width: 0; margin-top: 0; }
+.three-way-head h3 {
+  margin: 0; font-family: var(--ff-display); font-size: 17px; font-weight: 600;
+  letter-spacing: var(--ls-heading); color: var(--text);
+}
+.three-way-head p {
+  margin: 5px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted);
+}
+.three-way-list { margin-top: 14px; border-top: 1px solid var(--border-strong); }
+.three-way-horizon { padding: 15px 0; }
+.three-way-horizon + .three-way-horizon { border-top: 1px solid var(--border); }
+.three-way-horizon-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+}
+.three-way-horizon-head h4 {
+  margin: 0; font-size: 12px; font-weight: 600; color: var(--label);
+}
+.three-way-horizon-head span {
+  text-align: right; font-family: var(--ff-mono); font-size: 9.5px; line-height: 1.35;
+  color: var(--faint);
+}
+.three-way-value {
+  display: block; margin-top: 9px; font-family: var(--ff-display); font-size: 26px;
+  font-weight: 600; letter-spacing: var(--ls-display); color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.three-way-subject {
+  display: block; margin-top: 2px; font-family: var(--ff-mono); font-size: 9.5px;
+  text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--faint);
+}
+.three-way-variances { margin: 11px 0 0; }
+.three-way-variance {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin-top: 5px; font-family: var(--ff-mono); font-size: 10.5px;
+}
+.three-way-variance dt { color: var(--muted); }
+.three-way-variance dd { margin: 0; text-align: right; color: var(--text); }
+.three-way-variance dd.pos { color: var(--pos); }
+.three-way-variance dd.neg { color: var(--neg); }
+.three-way-relative { color: currentColor; opacity: 0.72; }
+.three-way-empty {
+  margin: 10px 0 0; font-size: 11px; line-height: 1.45; color: var(--faint);
+}
+.three-way-basis {
+  margin: 0; padding-top: 12px; border-top: 1px solid var(--border);
+  font-size: 10.5px; line-height: 1.5; color: var(--faint);
+}
+.three-way-basis strong { color: var(--muted); font-weight: 500; }
+
+@media (max-width: 980px) {
+  .performance-bridge-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* The chart. Sized by its viewBox and stretched by CSS, so it holds its shape at every
    device width the tour's window offers — including a 402pt phone. */
 .chart { display: block; width: 100%; height: auto; overflow: visible; }
@@ -427,12 +487,12 @@ a:hover { opacity: 0.72; }
   padding: 0 0 20px; margin-bottom: 28px;
   border-bottom: 1px solid var(--border);
 }
-.sel-row { display: flex; align-items: center; gap: 8px; }
+.sel-row { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
 .sel-label {
   font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: var(--ls-label);
   text-transform: uppercase; color: var(--faint); white-space: nowrap;
 }
-.sel-chips { display: flex; flex-wrap: wrap; gap: 2px; }
+.sel-chips { display: flex; flex-wrap: wrap; gap: 2px; min-width: 0; max-width: 100%; }
 .chip-link {
   padding: 4px 9px; border-radius: var(--radius-md); border: 1px solid transparent;
   font-size: 12.5px; color: var(--muted); text-decoration: none; white-space: nowrap;
@@ -668,7 +728,7 @@ a:hover { opacity: 0.72; }
 /* An end of the range is a dead arrow, not a disabled control that has to explain itself. */
 .step-end { color: var(--border-strong); }
 .step-now {
-  min-width: 9ch; text-align: center;
+  min-width: 9ch; max-width: min(25ch, 58vw); text-align: center; overflow-wrap: anywhere;
   font-family: var(--ff-mono); font-size: 12.5px; color: var(--text);
 }
 

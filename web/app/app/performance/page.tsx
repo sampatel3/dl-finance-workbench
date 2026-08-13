@@ -1,11 +1,18 @@
 import { FocusOnLoad, resolveView } from '@demo-kit/shell';
 import { SEGMENTS, entity, segment as segmentSpec } from '@kestrel/model';
 import { compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
-import { buildBridge, directForecast, grossProfitBridge, principalDriver } from '@kestrel/analysis';
+import {
+  buildBridge,
+  buildThreeWaySplit,
+  directForecast,
+  grossProfitBridge,
+  principalDriver,
+} from '@kestrel/analysis';
 
 import { CashColumns } from '../../../components/CashColumns';
 import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
+import { ThreeWaySplit } from '../../../components/ThreeWaySplit';
 import { Waterfall } from '../../../components/Waterfall';
 import { directionClass, movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
@@ -32,6 +39,23 @@ import {
  */
 
 export const dynamic = 'force-dynamic';
+
+function commentaryHref(
+  view: ReturnType<typeof viewOf>,
+  measureId: 'revenue' | 'gross_margin',
+  options: { readonly entity?: string; readonly segment?: string } = {},
+): string {
+  const base = hrefFor(
+    '/app/commentary',
+    view,
+    options.entity === undefined ? {} : { entity: options.entity },
+  );
+  const params = new URLSearchParams();
+  params.set('focus', 'section-commentary');
+  params.set('measure', measureId);
+  if (options.segment !== undefined) params.set('segment', options.segment);
+  return `${base}${base.includes('?') ? '&' : '?'}${params.toString()}`;
+}
 
 /** A row in the level tables: the measure, its comparative, and the movement between them. */
 function Row({
@@ -85,6 +109,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
     : null;
   const marginBridge = bridgeable ? grossProfitBridge({ ctx, comparator: view.comparator }) : null;
   const principal = revenueBridge === null ? undefined : principalDriver(revenueBridge);
+  const revenueSplit = buildThreeWaySplit({ measureId: 'revenue', ctx });
 
   const cash = directForecast(ctx);
   const basis = compareMeasure('revenue', ctx, view.comparator).comparator.basis;
@@ -105,34 +130,42 @@ export default async function Performance({ searchParams }: { searchParams: Prom
             so no commercial bar carries a translation effect.
           </span>
         </div>
-        {revenueBridge === null ? (
-          <p className="board-empty">
-            A trend cannot be bridged: there are no quantities behind a fitted line, so there is
-            nothing to attribute. Choose a comparator that names a version.
-          </p>
-        ) : (
-          <>
-            <div className="pane">
-              <Waterfall bridge={revenueBridge} favourableWhen="up" />
-            </div>
-            {principal === undefined ? null : (
-              <p className="narration">
-                The largest single component is <strong>{principal.label.toLowerCase()}</strong> at{' '}
-                {formatValue(Math.abs(principal.value), 'currency')}
-                {principal.bySegment === undefined || principal.bySegment.size === 0
-                  ? '.'
-                  : `, and within it ${[...principal.bySegment.entries()]
-                      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-                      .slice(0, 1)
-                      .map(
-                        ([code, value]) =>
-                          `${segmentSpec(code).label.toLowerCase()} at ${formatValue(Math.abs(value), 'currency')}`,
-                      )
-                      .join('')}.`}
-              </p>
+        <div className="performance-bridge-layout">
+          <div className="performance-bridge-main">
+            {revenueBridge === null ? (
+              <div className="pane">
+                <p className="board-empty">
+                  A trend cannot be bridged: there are no quantities behind a fitted line, so there
+                  is nothing to attribute. Choose a comparator that names a version.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="pane">
+                  <Waterfall bridge={revenueBridge} favourableWhen="up" />
+                </div>
+                {principal === undefined ? null : (
+                  <p className="narration">
+                    The largest single component is{' '}
+                    <strong>{principal.label.toLowerCase()}</strong> at{' '}
+                    {formatValue(Math.abs(principal.value), 'currency')}
+                    {principal.bySegment === undefined || principal.bySegment.size === 0
+                      ? '.'
+                      : `, and within it ${[...principal.bySegment.entries()]
+                          .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+                          .slice(0, 1)
+                          .map(
+                            ([code, value]) =>
+                              `${segmentSpec(code).label.toLowerCase()} at ${formatValue(Math.abs(value), 'currency')}`,
+                          )
+                          .join('')}.`}
+                  </p>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+          <ThreeWaySplit split={revenueSplit} />
+        </div>
       </section>
 
       {marginBridge === null ? null : (
@@ -187,7 +220,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
                   measureId="revenue"
                   ctx={contextForEntity(view, e.id)}
                   comparator={view.comparator}
-                  href={hrefFor('/app/performance', view, { entity: e.id })}
+                  href={commentaryHref(view, 'revenue', { entity: e.id })}
                 />
               ))}
             </tbody>
@@ -215,21 +248,25 @@ export default async function Performance({ searchParams }: { searchParams: Prom
               </tr>
             </thead>
             <tbody>
-              {SEGMENTS.map((spec) => (
+              {SEGMENTS.filter(
+                (spec) => ctx.segmentId === undefined || spec.code === ctx.segmentId,
+              ).map((spec) => (
                 <Row
                   key={spec.code}
                   label={spec.label}
                   measureId="gross_margin"
                   ctx={{ ...ctx, segmentId: spec.code }}
                   comparator={view.comparator}
+                  href={commentaryHref(view, 'gross_margin', { segment: spec.code })}
                   active={selectedSegment === spec.code}
                 />
               ))}
             </tbody>
           </table>
           <p className="chart-note">
-            A segment slice is combined rather than consolidated: intercompany trade has no segment,
-            so it is not eliminated here. The group row above is the consolidated figure.
+            Open any row for its commentary, quantified drivers, accounts and source rows. A segment
+            slice is combined rather than consolidated: intercompany trade has no segment, so it is
+            not eliminated here. The group row above is the consolidated figure.
           </p>
         </div>
       </section>
@@ -240,7 +277,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
           <span className="section-note">
             Receipts and payments scored separately, because a week that nets to zero because £2m
             arrived and £2m left is not a quiet week. Opening balance{' '}
-            {formatValue(computeMeasure('cash', ctx).value, 'currency')}.
+            {formatValue(cash.opening, 'currency')}.
           </span>
         </div>
         <div className="pane">

@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ACTUAL_VERSION,
+  PLANNING_MONTHS,
   SEED_END,
   aiUsageLogForCommentary,
   appendAiUsage,
@@ -19,10 +20,12 @@ import {
   carryForwardCommentary,
   closeReadinessFor,
   mappingControlFor,
+  monthCount,
   monthScope,
   reconciliationChecks,
   recordAiReview,
   seedCommentaryQueue,
+  seedSelectedCommentaryDraft,
   sourceLoads,
   sourceStatuses,
   transitionCommentary,
@@ -35,7 +38,11 @@ describe('source and load controls', () => {
   it('joins every vintage to the source definition that owns it', () => {
     const loads = sourceLoads(world.register);
     expect(loads).toHaveLength(world.register.vintages().length);
-    expect(loads).toHaveLength(world.months.length * world.register.sources().length + 1);
+    expect(loads).toHaveLength(
+      world.months.length * world.register.sources().length +
+        (PLANNING_MONTHS.length - world.months.length) +
+        1,
+    );
 
     const july = loads.find((load) => load.vintage.id === `v-${SEED_END}-core`);
     expect(july?.source.name).toBe('SAP S/4HANA — UK ledgers');
@@ -49,6 +56,9 @@ describe('source and load controls', () => {
     expect(statuses.find((status) => status.source.id === 'sap-uk')?.loads).toHaveLength(44);
     expect(statuses.find((status) => status.source.id === 'netsuite-us')?.loads).toHaveLength(
       world.months.length,
+    );
+    expect(statuses.find((status) => status.source.id === 'plan-anaplan')?.loads).toHaveLength(
+      PLANNING_MONTHS.length,
     );
     expect(statuses.every((status) => status.latestStatus !== 'not_loaded')).toBe(true);
   });
@@ -159,19 +169,68 @@ describe('commentary approval', () => {
   const queue = seedCommentaryQueue(world);
 
   it('seeds the queue across every visible state, with a reason on rejection', () => {
-    expect(queue.map((item) => item.state)).toEqual([
+    expect(queue.slice(0, 5).map((item) => item.state)).toEqual([
       'draft',
       'in_review',
       'approved',
       'published',
       'rejected',
     ]);
+    expect(new Set(queue.map((item) => item.state))).toEqual(
+      new Set(['draft', 'in_review', 'approved', 'published', 'rejected']),
+    );
     const rejected = queue.find((item) => item.state === 'rejected');
     expect(rejected?.approvalHistory.at(-1)).toMatchObject({
       action: 'reject',
       actor: 'Group Financial Controller',
     });
     expect(rejected?.approvalHistory.at(-1)?.reason).toMatch(/entity-level/i);
+  });
+
+  it('seeds month, quarter, half-year and year commentary with like-for-like windows', () => {
+    const byType = new Map(queue.map((item) => [item.period.type, item]));
+
+    expect([...byType.keys()]).toEqual(
+      expect.arrayContaining(['MONTH', 'QUARTER', 'HALF_YEAR', 'FISCAL_YEAR']),
+    );
+    expect(monthCount(byType.get('QUARTER')!.period)).toBe(3);
+    expect(byType.get('QUARTER')?.comparatorId).toBe('prior_period');
+    expect(monthCount(byType.get('HALF_YEAR')!.period)).toBe(6);
+    expect(byType.get('HALF_YEAR')?.comparatorId).toBe('prior_year');
+    expect(monthCount(byType.get('FISCAL_YEAR')!.period)).toBe(12);
+    expect(byType.get('FISCAL_YEAR')?.comparatorId).toBe('prior_year');
+  });
+
+  it('labels the live deterministic fallback as code and gives each slice/version a distinct identity', () => {
+    const base = {
+      period: monthScope(SEED_END),
+      comparatorId: 'forecast' as const,
+      entityId: 'group',
+      measureId: 'gross_margin',
+    };
+    const contractsV6 = seedSelectedCommentaryDraft(world, {
+      ...base,
+      versionId: 'v6',
+      segmentId: 'contracts',
+    });
+    const equipmentV6 = seedSelectedCommentaryDraft(world, {
+      ...base,
+      versionId: 'v6',
+      segmentId: 'equipment',
+    });
+    const contractsV7 = seedSelectedCommentaryDraft(world, {
+      ...base,
+      versionId: 'v7',
+      segmentId: 'contracts',
+    });
+
+    expect(contractsV6.provenance).toMatchObject({ authoredBy: 'code' });
+    expect(contractsV6.provenance.modelId).toBeUndefined();
+    expect(contractsV6.provenance.promptVersion).toBeUndefined();
+    expect(new Set([contractsV6.id, equipmentV6.id, contractsV7.id]).size).toBe(3);
+    expect(contractsV6.provenance.figureRefs[0]).toContain('contracts');
+    expect(contractsV6.provenance.figureRefs[0]).toContain('comparator=forecast');
+    expect(contractsV6.provenance.figureRefs[0]).toContain('version=v6');
   });
 
   it('enforces draft → review → approved → published and pins the approved vintage', () => {
@@ -218,6 +277,21 @@ describe('commentary approval', () => {
     expect(carried?.period.endMonth).toBe('2026-06');
     expect(carried?.anchor).toEqual(current.anchor);
     expect(carried?.dataVintageId).toBe('v-2026-06-core');
+  });
+
+  it('does not carry annual commentary into a quarter with the same anchor and comparator', () => {
+    const quarter = queue.find((item) => item.period.type === 'QUARTER');
+    const annual = queue.find((item) => item.period.type === 'FISCAL_YEAR');
+    expect(quarter).toBeDefined();
+    expect(annual).toBeDefined();
+    if (quarter === undefined || annual === undefined) return;
+
+    expect(
+      carryForwardCommentary([annual], {
+        ...quarter,
+        comparatorId: annual.comparatorId,
+      }),
+    ).toBeUndefined();
   });
 });
 

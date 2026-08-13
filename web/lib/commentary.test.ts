@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { seedCommentaryQueue } from '@kestrel/model';
+import { monthCount, seedCommentaryQueue } from '@kestrel/model';
 
 import {
   COMMENTARY_STATES,
@@ -8,8 +8,11 @@ import {
   commentaryEvidence,
   commentaryFilterHref,
   commentaryForView,
+  commentaryPeriodLabel,
+  commentarySelectionForView,
+  selectedCommentaryForView,
 } from './commentary';
-import { principalById } from './permissions';
+import { principalById, resolvePermissionScope } from './permissions';
 import { viewOf, world } from './world';
 
 describe('the governed commentary queue', () => {
@@ -24,6 +27,16 @@ describe('the governed commentary queue', () => {
     const prior = carriedCommentary(queue, currentMargin!);
     expect(prior?.period.endMonth).toBe('2026-06');
     expect(prior?.dataVintageId).toBeDefined();
+  });
+
+  it('names every seeded reporting grain without collapsing it to the closing month', () => {
+    const queue = seedCommentaryQueue(world());
+    const labels = new Map(queue.map((item) => [item.period.type, commentaryPeriodLabel(item.period)]));
+
+    expect(labels.get('MONTH')).toMatch(/Jul 2026/);
+    expect(labels.get('QUARTER')).toMatch(/^Q2 2026$/);
+    expect(labels.get('HALF_YEAR')).toMatch(/^H1 2026$/);
+    expect(labels.get('FISCAL_YEAR')).toMatch(/^FY2025$/);
   });
 
   it('treats the anchor as a row-level read and does not leak group commentary to Gulf', () => {
@@ -53,6 +66,90 @@ describe('the governed commentary queue', () => {
     ).toEqual(['publish']);
     expect(commentaryAffordances(approved!, principalById('group-fpa'))).toEqual([]);
   });
+
+  it('projects the selected period and comparator into a new unapproved draft', () => {
+    const selectedView = viewOf({
+      period: 'quarter',
+      month: '2026-06',
+      comparator: 'prior_year',
+    });
+    const item = selectedCommentaryForView(world(), selectedView);
+    const evidence = commentaryEvidence(item, selectedView, world());
+
+    expect(item.state).toBe('draft');
+    expect(item.period).toEqual(selectedView.scope);
+    expect(item.comparatorId).toBe('prior_year');
+    expect(item.headline).toMatch(/Q2 FY26.*prior year/i);
+    expect(evidence.comparison.comparator.scope).toMatchObject({
+      startMonth: '2025-04',
+      endMonth: '2025-06',
+    });
+    expect(monthCount(evidence.comparison.comparator.scope!)).toBe(monthCount(item.period));
+  });
+
+  it('recomputes selected commentary when period or comparator changes', () => {
+    const quarter = viewOf({ period: 'quarter', month: '2026-06', comparator: 'prior_period' });
+    const halfYear = viewOf({ period: 'half_year', month: '2026-06', comparator: 'budget' });
+    const quarterItem = selectedCommentaryForView(world(), quarter);
+    const halfYearItem = selectedCommentaryForView(world(), halfYear);
+
+    expect(quarterItem.id).not.toBe(halfYearItem.id);
+    expect(commentaryPeriodLabel(quarterItem.period)).toBe('Q2 2026');
+    expect(commentaryPeriodLabel(halfYearItem.period)).toBe('H1 2026');
+    expect(quarterItem.comparatorId).toBe('prior_period');
+    expect(halfYearItem.comparatorId).toBe('budget');
+    expect(commentaryEvidence(quarterItem, quarter, world()).comparison.comparator.id).toBe(
+      'prior_period',
+    );
+    expect(commentaryEvidence(halfYearItem, halfYear, world()).comparison.comparator.id).toBe(
+      'budget',
+    );
+  });
+
+  it('carries a performance segment row through commentary to only that segment’s source rows', () => {
+    const view = viewOf({ comparator: 'forecast' });
+    const item = selectedCommentaryForView(world(), view, {
+      measureId: 'gross_margin',
+      segmentId: 'contracts',
+    });
+    const evidence = commentaryEvidence(item, view, world());
+
+    expect(item.anchor).toMatchObject({ measureId: 'gross_margin', segmentId: 'contracts' });
+    expect(item.headline).toMatch(/gross margin commentary/i);
+    expect(evidence.sourceRows.length).toBeGreaterThan(0);
+    expect(new Set(evidence.sourceRows.map((row) => row.segmentLabel))).toEqual(
+      new Set(['Service contracts']),
+    );
+  });
+
+  it('cannot replace a principal’s mandatory segment with a commentary deep link', () => {
+    const basePrincipal = principalById('group-fpa');
+    const principal = {
+      ...basePrincipal,
+      grant: {
+        ...basePrincipal.grant,
+        dimensionFilters: { segmentId: 'contracts' as const },
+      },
+    };
+    const resolved = resolvePermissionScope(principal);
+    expect(resolved.allowed).toBe(true);
+    if (!resolved.allowed) return;
+    const view = { ...viewOf({ as: 'group-fpa' }), principal, permission: resolved.scope };
+
+    const selection = commentarySelectionForView(world(), view, {
+        measureId: 'gross_margin',
+        segmentId: 'equipment',
+      });
+    expect(selection.refusal).toMatch(/restricted to the contracts segment/i);
+    expect(selection.item.anchor.segmentId).toBe('contracts');
+
+    const item = selectedCommentaryForView(world(), view, { measureId: 'gross_margin' });
+    const evidence = commentaryEvidence(item, view, world());
+    expect(item.anchor.segmentId).toBe('contracts');
+    expect(new Set(evidence.sourceRows.map((row) => row.segmentLabel))).toEqual(
+      new Set(['Service contracts']),
+    );
+  });
 });
 
 describe('commentary evidence', () => {
@@ -63,6 +160,32 @@ describe('commentary evidence', () => {
       const evidence = commentaryEvidence(item, viewOf(), world());
       expect(evidence.drivers.length).toBeGreaterThan(0);
       expect(evidence.driversSum, item.id).toBe(true);
+    }
+  });
+
+  it('reconciles constant-currency gross-margin drivers across every reporting grain and time comparator', () => {
+    const periods = ['month', 'quarter', 'half_year', 'year', 'ytd'] as const;
+    const comparators = ['prior_period', 'prior_year'] as const;
+
+    for (const period of periods) {
+      for (const comparator of comparators) {
+        const selectedView = viewOf({
+          period,
+          month: '2026-07',
+          comparator,
+          lens: 'constant',
+        });
+        const item = selectedCommentaryForView(world(), selectedView, {
+          measureId: 'gross_margin',
+        });
+        const evidence = commentaryEvidence(item, selectedView, world());
+
+        expect(evidence.driversSum, `${period}/${comparator}`).toBe(true);
+        expect(evidence.driverTotal, `${period}/${comparator}`).toBeCloseTo(
+          evidence.movement ?? Number.NaN,
+          8,
+        );
+      }
     }
   });
 

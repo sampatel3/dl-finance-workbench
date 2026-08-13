@@ -70,11 +70,12 @@ const COMPARATOR_LABELS: Readonly<Record<ComparatorId, string>> = {
   trend: 'Trend',
 };
 
-const LENS_LABELS: Readonly<Record<CurrencyLens, string>> = {
+const LENS_LABELS: Readonly<Record<Exclude<CurrencyLens, 'functional'>, string>> = {
   reported: 'Reported',
   constant: 'Constant currency',
-  functional: 'Functional',
 };
+
+const REPORT_LENSES = Object.keys(LENS_LABELS) as Exclude<CurrencyLens, 'functional'>[];
 
 export function Selectors({ path, view }: { readonly path: string; readonly view: View }) {
   /* `SELECTABLE_MONTHS` is newest-first, so "older" is the next index and "newer" the previous one.
@@ -192,7 +193,7 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
       </Row>
 
       <Row label="Currency">
-        {(Object.keys(LENS_LABELS) as CurrencyLens[]).map((lens) => (
+        {REPORT_LENSES.map((lens) => (
           <Chip
             key={lens}
             href={hrefFor(path, view, { lens })}
@@ -200,9 +201,7 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
             title={
               lens === 'constant'
                 ? 'This period’s trading translated at the comparative period’s rates, so the movement excludes currency.'
-                : lens === 'functional'
-                  ? 'Each entity in its own currency, unconsolidated.'
-                  : undefined
+                : undefined
             }
           >
             {LENS_LABELS[lens]}

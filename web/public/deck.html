@@ -103,7 +103,7 @@
   .frame img { display: block; width: 100%; height: auto; }
   .frame iframe {
     display: none; position: absolute; top: 0; left: 0; border: 0;
-    transform-origin: top left; background: var(--night);
+    transform-origin: top left; background: var(--night); pointer-events: none;
   }
   .frame[data-render="live"] iframe { display: block; }
   .frame[data-render="live"] img { visibility: hidden; }
@@ -576,16 +576,25 @@
       };
 
       iframe.addEventListener('load', () => {
+        let doc;
         try {
-          const doc = iframe.contentDocument;
+          doc = iframe.contentDocument;
           if (!doc || (sentinel !== '' && !doc.querySelector(sentinel))) return;
         } catch {
           return;
         }
+
+        /* A live frame is a current picture, not a second product surface. Keep its document
+           out of the tab order and prevent its scroll position diverging from the still that
+           replaces it in print. */
+        doc.documentElement.inert = true;
+        doc.documentElement.style.overflow = 'hidden';
+
         fit();
         frame.dataset.render = 'live';
       });
 
+      iframe.tabIndex = -1;
       new ResizeObserver(fit).observe(frame);
       iframe.src = route;
     }

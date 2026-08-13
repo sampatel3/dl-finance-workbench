@@ -64,6 +64,7 @@ import {
   compareMeasure,
   computeByEntity,
   computeMeasure,
+  contextAtScope,
   formatValue,
   priorityOf,
 } from '@kestrel/measures';
@@ -294,9 +295,9 @@ const revenueAheadOfForecast: DetectorDefinition = {
         ],
         action: {
           kind: 'expand_commentary',
-          label: 'Open the revenue bridge',
+          label: 'Open revenue commentary and evidence',
           href:
-            `/app/performance?focus=section-bridge&month=${dctx.ctx.scope.endMonth}` +
+            `/app/commentary?focus=section-commentary&measure=revenue&month=${dctx.ctx.scope.endMonth}` +
             `&comparator=${choice.id}` +
             (choice.versionId === undefined ? '' : `&version=${choice.versionId}`),
           owner: 'Commercial Director',
@@ -324,7 +325,9 @@ const segmentMarginBehindForecast: DetectorDefinition = {
     const choice = dctx.comparator;
     const findings: Finding[] = [];
 
-    for (const spec of SEGMENTS) {
+    for (const spec of SEGMENTS.filter(
+      (candidate) => dctx.ctx.segmentId === undefined || candidate.code === dctx.ctx.segmentId,
+    )) {
       const ctx: MeasureContext = { ...dctx.ctx, segmentId: spec.code };
       const comparison = compareMeasure('gross_margin', ctx, choice);
       // A margin is a percentage, so only the relative test applies — which is correct here and worth
@@ -363,10 +366,10 @@ const segmentMarginBehindForecast: DetectorDefinition = {
         ],
         action: {
           kind: 'expand_commentary',
-          label: `Open ${spec.label} margin`,
+          label: `Open ${spec.label} commentary and evidence`,
           href:
-            `/app/performance?focus=section-levels&month=${dctx.ctx.scope.endMonth}` +
-            `&segment=${spec.code}&comparator=${choice.id}`,
+            `/app/commentary?focus=section-commentary&measure=gross_margin` +
+            `&month=${dctx.ctx.scope.endMonth}&segment=${spec.code}&comparator=${choice.id}`,
           owner: 'Operations Director',
         },
         fingerprint: fingerprint(segmentMarginBehindForecast.id, dctx, [spec.code]),
@@ -410,8 +413,7 @@ const driverAboveAssumption: DetectorDefinition = {
       const scope = monthScope(month);
       const inForce = forecastInForce(month);
       const actual = readDriver('subcontract_rate', {
-        ...dctx.ctx,
-        scope,
+        ...contextAtScope(dctx.ctx, scope),
         scenario: 'ACTUAL',
         versionId: ACTUAL_VERSION,
       }).value;
@@ -419,8 +421,7 @@ const driverAboveAssumption: DetectorDefinition = {
         inForce === undefined
           ? null
           : readDriver('subcontract_rate', {
-              ...dctx.ctx,
-              scope,
+              ...contextAtScope(dctx.ctx, scope),
               scenario: 'FORECAST',
               versionId: inForce.id,
             }).value;
@@ -444,7 +445,15 @@ const driverAboveAssumption: DetectorDefinition = {
     // is that it continues until somebody changes the assumption, so its size is what it costs over the
     // year it continues for. Judging a run-rate item on a single month's cost understates it by twelve and
     // puts the thing that will cost half a million below the floor — which is what happened here.
-    const hours = computeMeasure('subcontract_hours', dctx.ctx).value;
+    const anchorScope = monthScope(dctx.ctx.scope.endMonth);
+    const anchorCtx: MeasureContext = {
+      ...dctx.ctx,
+      scope: anchorScope,
+      ...(dctx.ctx.lens === 'constant'
+        ? { comparativeScope: priorYearScope(anchorScope) }
+        : {}),
+    };
+    const hours = computeMeasure('subcontract_hours', anchorCtx).value;
     const monthlyCost = hours === null ? null : hours * (actual - assumed);
     const annualCost = monthlyCost === null ? null : monthlyCost * 12;
     if (annualCost === null || annualCost < POLICY.thresholds.pl.absoluteMinor) return [];
@@ -550,9 +559,9 @@ const currencyDistortsGrowth: DetectorDefinition = {
         ],
         action: {
           kind: 'expand_commentary',
-          label: 'Open revenue at constant currency',
+          label: 'Open revenue commentary and evidence',
           href:
-            `/app/performance?focus=section-bridge&month=${dctx.ctx.scope.endMonth}` +
+            `/app/commentary?focus=section-commentary&measure=revenue&month=${dctx.ctx.scope.endMonth}` +
             '&comparator=prior_year&lens=constant',
           owner: 'Group Treasurer',
         },
@@ -592,13 +601,13 @@ const collectionsSlipping: DetectorDefinition = {
     const fromScope = monthScope(addMonths(from, -1));
     const toScope = monthScope(dctx.ctx.scope.endMonth);
 
-    const groupFrom = computeMeasure('dso', { ...dctx.ctx, scope: fromScope }).value;
-    const groupTo = computeMeasure('dso', { ...dctx.ctx, scope: toScope }).value;
+    const groupFrom = computeMeasure('dso', contextAtScope(dctx.ctx, fromScope)).value;
+    const groupTo = computeMeasure('dso', contextAtScope(dctx.ctx, toScope)).value;
     if (groupFrom === null || groupTo === null) return [];
     const groupMove = groupTo - groupFrom;
 
-    const before = computeByEntity('dso', { ...dctx.ctx, scope: fromScope });
-    const after = computeByEntity('dso', { ...dctx.ctx, scope: toScope });
+    const before = computeByEntity('dso', contextAtScope(dctx.ctx, fromScope));
+    const after = computeByEntity('dso', contextAtScope(dctx.ctx, toScope));
 
     const findings: Finding[] = [];
     for (const [entityId, current] of after) {
@@ -608,7 +617,7 @@ const collectionsSlipping: DetectorDefinition = {
       const excess = move - groupMove;
       if (excess < DSO_SLIP_DAYS) continue;
 
-      const revenue = computeByEntity('revenue', { ...dctx.ctx, scope: toScope }).get(
+      const revenue = computeByEntity('revenue', contextAtScope(dctx.ctx, toScope)).get(
         entityId,
       )?.value;
       const days = 30.4;
@@ -925,9 +934,17 @@ const closeIncomplete: DetectorDefinition = {
     if (completeness.open.length === 0) return [];
 
     const names = completeness.open.map((p) => entity(p.entityId).name).join(', ');
+    const closingScope = monthScope(month);
+    const closingCtx: MeasureContext = {
+      ...dctx.ctx,
+      scope: closingScope,
+      ...(dctx.ctx.lens === 'constant'
+        ? { comparativeScope: priorYearScope(closingScope) }
+        : {}),
+    };
     const openRevenue = completeness.open.reduce((sum, p) => {
       const value = computeMeasure('revenue', {
-        ...dctx.ctx,
+        ...closingCtx,
         entityIds: [p.entityId],
       }).value;
       return sum + (value ?? 0);
@@ -939,7 +956,7 @@ const closeIncomplete: DetectorDefinition = {
         title: `${completeness.open.length} of ${completeness.total} ledgers not closed`,
         statement:
           `${names} has submitted ${month} and not closed it, so ` +
-          `${formatValue(openRevenue, 'currency')} of revenue in the selected scope may still move. ` +
+          `${formatValue(openRevenue, 'currency')} of revenue in the closing month may still move. ` +
           `The selected-scope figure is ` +
           `not wrong; it is not final, and nothing in the figure itself says so — which is why this is a ` +
           `board item rather than a footnote.` +
@@ -996,14 +1013,13 @@ const restatementInLoad: DetectorDefinition = {
     for (const vintage of restatements) {
       const restated = vintage.restatesVintageId;
       const asFiled = computeMeasure('gross_margin', {
-        ...dctx.ctx,
-        scope: monthScope(vintage.toMonth),
+        ...contextAtScope(dctx.ctx, monthScope(vintage.toMonth)),
         ...(restated === undefined ? {} : { asOfVintage: restated }),
       }).value;
-      const asNow = computeMeasure('gross_margin', {
-        ...dctx.ctx,
-        scope: monthScope(vintage.toMonth),
-      }).value;
+      const asNow = computeMeasure(
+        'gross_margin',
+        contextAtScope(dctx.ctx, monthScope(vintage.toMonth)),
+      ).value;
 
       findings.push({
         detectorId: restatementInLoad.id,
@@ -1054,13 +1070,21 @@ const pipelineAheadOfAssumption: DetectorDefinition = {
   question: 'Is anything running better than the plan assumes, and what is it worth?',
   run: (dctx) => {
     const forecast = activeApprovedForecast();
-    const actual = readDriver('pipeline_conversion', {
+    const anchorScope = monthScope(dctx.ctx.scope.endMonth);
+    const anchorCtx: MeasureContext = {
       ...dctx.ctx,
+      scope: anchorScope,
+      ...(dctx.ctx.lens === 'constant'
+        ? { comparativeScope: priorYearScope(anchorScope) }
+        : {}),
+    };
+    const actual = readDriver('pipeline_conversion', {
+      ...anchorCtx,
       scenario: 'ACTUAL',
       versionId: ACTUAL_VERSION,
     });
     const assumed = readDriver('pipeline_conversion', {
-      ...dctx.ctx,
+      ...anchorCtx,
       scenario: 'FORECAST',
       versionId: forecast.id,
     });
@@ -1070,7 +1094,7 @@ const pipelineAheadOfAssumption: DetectorDefinition = {
     if (gap < POLICY.thresholds.operational.relative) return [];
 
     // What it is worth if it holds: the coverage gap applied to the forecast's own remaining revenue.
-    const annualRevenue = computeMeasure('revenue', dctx.ctx).value;
+    const annualRevenue = computeMeasure('revenue', anchorCtx).value;
     const atStake = annualRevenue === null ? null : annualRevenue * 12 * gap * 0.5;
 
     return [

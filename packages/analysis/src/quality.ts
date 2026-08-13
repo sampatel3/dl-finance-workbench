@@ -30,7 +30,7 @@
 import type { FiscalMonth, PeriodScope, VersionSpec } from '@kestrel/model';
 import { addMonths, monthScope, monthsBetween } from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
-import { computeMeasure } from '@kestrel/measures';
+import { computeMeasure, contextAtScope } from '@kestrel/measures';
 
 import { versionList } from './forecast.ts';
 
@@ -65,14 +65,12 @@ export function forecastPoints(measureId: string, ctx: MeasureContext): Forecast
     for (const month of monthsBetween(firstForecastMonth, ctx.scope.endMonth)) {
       const scope = monthScope(month);
       const forecast = computeMeasure(measureId, {
-        ...ctx,
-        scope,
+        ...contextAtScope(ctx, scope),
         scenario: 'FORECAST',
         versionId: version.id,
       }).value;
       const actual = computeMeasure(measureId, {
-        ...ctx,
-        scope,
+        ...contextAtScope(ctx, scope),
         scenario: 'ACTUAL',
         versionId: 'actual',
       }).value;
@@ -268,8 +266,7 @@ export function valueAdded(measureId: string, ctx: MeasureContext): ValueAdded {
 
   for (const point of points) {
     const priorYear = computeMeasure(measureId, {
-      ...ctx,
-      scope: monthScope(addMonths(point.month, -12)),
+      ...contextAtScope(ctx, monthScope(addMonths(point.month, -12))),
       scenario: 'ACTUAL',
       versionId: 'actual',
     }).value;

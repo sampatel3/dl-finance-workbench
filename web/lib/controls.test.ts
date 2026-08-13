@@ -8,6 +8,7 @@ describe('the controls projection', () => {
   it('proves the seeded July close, reconciliation, mapping and publication controls', () => {
     const controls = controlsFor(viewOf());
 
+    expect(controls.sharedSourceMetadataWithheld).toBe(false);
     expect(controls.close).toMatchObject({ closed: 4, total: 5, ready: false });
     expect(controls.close.open[0]).toMatchObject({
       entityName: 'Kestrel Inc',
@@ -60,10 +61,55 @@ describe('the controls projection', () => {
     expect(controls.commentary).toEqual([]);
     expect(controls.aiLog).toEqual([]);
     expect(controls.lineage).toBeNull();
-    expect(
-      controls.sourceStatuses.find((status) => status.source.id === 'fusion-gulf')?.latestStatus,
-    ).toBe('accepted');
+    expect(controls.sharedSourceMetadataWithheld).toBe(true);
+    expect(controls.sourceStatuses.map((status) => status.source.id)).toEqual(['fusion-gulf']);
+    expect(controls.sourceStatuses[0]?.latestStatus).toBe('accepted');
+    expect(new Set(controls.recentLoads.map((load) => load.source.id))).toEqual(
+      new Set(['fusion-gulf']),
+    );
+    expect(controls.totalLoads).toBe(controls.sourceStatuses[0]?.loads.length);
     expect(controls.totalLoads).toBeGreaterThan(0);
     expect(controls.requestedRefusal).toMatch(/cannot read group figures/i);
+  });
+
+  it('withholds every shared source history instead of exposing source-wide counts as Gulf data', () => {
+    const view = viewOf({ as: 'group-controller', entity: 'gulf' });
+    const controls = controlsFor(view);
+    const granted = new Set(view.permission.entityIds);
+    const forbiddenSharedSources = new Set([
+      'plan-anaplan',
+      'psa',
+      'crm',
+      'payroll',
+      'bank',
+    ]);
+
+    for (const status of controls.sourceStatuses) {
+      expect(status.source.entityIds.every((entityId) => granted.has(entityId))).toBe(true);
+      expect(forbiddenSharedSources.has(status.source.id)).toBe(false);
+    }
+    for (const load of controls.recentLoads) {
+      expect(load.source.entityIds.every((entityId) => granted.has(entityId))).toBe(true);
+      expect(forbiddenSharedSources.has(load.source.id)).toBe(false);
+    }
+    if (controls.lineage !== null) {
+      expect(controls.lineage.load.source.entityIds.every((entityId) => granted.has(entityId))).toBe(
+        true,
+      );
+    }
+  });
+
+  it('withholds a partially intersecting ledger even from a broadly privileged principal narrowed to one entity', () => {
+    const controls = controlsFor(
+      viewOf({ as: 'group-controller', entity: 'manufacturing' }),
+    );
+
+    // SAP UK also serves Services; every other Manufacturing feed is shared group-wide. None of
+    // their aggregate histories can truthfully be presented as Manufacturing-only metadata.
+    expect(controls.sharedSourceMetadataWithheld).toBe(true);
+    expect(controls.sourceStatuses).toEqual([]);
+    expect(controls.recentLoads).toEqual([]);
+    expect(controls.totalLoads).toBe(0);
+    expect(controls.lineage).toBeNull();
   });
 });

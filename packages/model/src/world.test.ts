@@ -16,6 +16,8 @@ import {
   HEALTHY_SEED,
   IC_MATERIALITY_MINOR,
   MONTHS,
+  PLANNING_END,
+  PLANNING_MONTHS,
   RESTATEMENT_ENTITY,
   RESTATEMENT_MAJOR,
   RESTATEMENT_MONTH,
@@ -27,17 +29,19 @@ import {
   buildHealthyWorld,
   buildWorld,
 } from './seed.ts';
-import { CALENDAR_YEAR, monthScope, priorYearScope, ytdScope } from './period.ts';
+import { CALENDAR_YEAR, addMonths, monthScope, priorYearScope, ytdScope } from './period.ts';
 import { closeCompleteness } from './vintages.ts';
 import { consolidate, groupPl } from './consolidate.ts';
 import { PRESENTATION, foreignEntities, subtree, tradingEntities } from './entities.ts';
+import { ACCOUNTS } from './taxonomy.ts';
+import type { CurrencyLens } from './currency.ts';
 import type { World } from './seed.ts';
 
 const SEED = 'kestrel-industrial-group';
 const world = buildWorld({ seed: SEED });
 const july = monthScope(SEED_END);
 
-function group(w: World, lens: 'reported' | 'constant' = 'reported', scope = july) {
+function group(w: World, lens: CurrencyLens = 'reported', scope = july) {
   return consolidate({
     store: w.store,
     rates: w.rates,
@@ -82,6 +86,59 @@ describe('the world is a pure function of its seed', () => {
     expect(MONTHS[0]).toBe(SEED_START);
     expect(MONTHS.at(-1)).toBe(SEED_END);
     expect(MONTHS).toHaveLength(43);
+  });
+
+  it('keeps selectable close months at July while governing budget and forecast through FY26', () => {
+    const planningMonth = monthScope(PLANNING_END);
+    const query = (scenario: 'ACTUAL' | 'BUDGET' | 'FORECAST', versionId: string) =>
+      world.store.query({
+        entityId: 'manufacturing',
+        accountId: 'revenue',
+        scope: planningMonth,
+        scenario,
+        versionId,
+        costCentreId: null,
+      });
+
+    expect(world.months).toEqual(MONTHS);
+    expect(world.dataThrough).toBe(SEED_END);
+    expect(world.closePositions.every((position) => position.month <= SEED_END)).toBe(true);
+
+    const actual = query('ACTUAL', ACTUAL_VERSION);
+    expect(actual).toMatchObject({ value: null, rows: [], monthsUsed: [] });
+    const futureActualScope = {
+      type: 'FISCAL_YEAR' as const,
+      startMonth: addMonths(SEED_END, 1),
+      endMonth: PLANNING_END,
+      label: 'Unclosed FY26 months',
+    };
+    const futureActualRows = tradingEntities().flatMap((entity) =>
+      ACCOUNTS.flatMap((account) =>
+        world.store.query({
+          entityId: entity.id,
+          accountId: account.code,
+          scope: futureActualScope,
+          scenario: 'ACTUAL',
+          versionId: ACTUAL_VERSION,
+        }).rows,
+      ),
+    );
+    expect(futureActualRows).toEqual([]);
+
+    const budget = query('BUDGET', 'budget-fy26');
+    const forecast = query('FORECAST', 'v6');
+    expect(budget.value).not.toBeNull();
+    expect(forecast.value).not.toBeNull();
+    expect(budget.rows.every((row) => row.scenario === 'BUDGET')).toBe(true);
+    expect(forecast.rows.every((row) => row.scenario === 'FORECAST')).toBe(true);
+
+    expect(world.rates.at('EUR', PLANNING_END).average).toBeGreaterThan(0);
+    expect(world.register.vintage(`v-${PLANNING_END}-plan-anaplan`)).toMatchObject({
+      fromMonth: PLANNING_END,
+      toMonth: PLANNING_END,
+      loadedAt: '2026-08-04T02:00:00Z',
+      sourceId: 'plan-anaplan',
+    });
   });
 });
 
@@ -169,10 +226,14 @@ describe('currency', () => {
     );
   });
 
+  it('refuses to add unlike functional currencies into a group total', () => {
+    expect(() => group(world, 'functional')).toThrow(/one legal entity|unlike currencies/i);
+  });
+
   it('quotes rates with a source, because a re-keyed rate is a variance nobody can reproduce', () => {
     expect(world.rates.id).toBeTruthy();
     expect(world.rates.source).toMatch(/treasury/i);
-    expect(world.rates.monthsFor('EUR')).toHaveLength(43);
+    expect(world.rates.monthsFor('EUR')).toHaveLength(PLANNING_MONTHS.length);
     // Sterling is not in the table and does not need to be.
     expect(world.rates.at(PRESENTATION, SEED_END).closing).toBe(1);
   });

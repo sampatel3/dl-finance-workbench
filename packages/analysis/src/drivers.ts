@@ -171,7 +171,9 @@ function unitFigures(ctx: MeasureContext): { units: number | null; blendedPrice:
   let value = 0;
   let anyUnquantified = false;
 
-  for (const spec of SEGMENTS) {
+  for (const spec of SEGMENTS.filter(
+    (candidate) => ctx.segmentId === undefined || candidate.code === ctx.segmentId,
+  )) {
     for (const entityId of ctx.entityIds) {
       const e = entity(entityId);
       const result = ctx.store.query({

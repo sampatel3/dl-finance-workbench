@@ -9,6 +9,7 @@
 export * from './bridge.ts';
 export * from './drivers.ts';
 export * from './forecast.ts';
+export * from './three-way.ts';
 export * from './cash.ts';
 export * from './quality.ts';
 export * from './detectors.ts';

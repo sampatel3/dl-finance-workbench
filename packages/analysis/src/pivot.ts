@@ -54,7 +54,7 @@ import {
   tradingEntities,
 } from '@kestrel/model';
 import type { MeasureContext, Unit } from '@kestrel/measures';
-import { computeMeasure, measure } from '@kestrel/measures';
+import { computeMeasure, contextAtScope, measure } from '@kestrel/measures';
 
 // ---------------------------------------------------------------------------
 // The dimensions a pivot can hold
@@ -120,7 +120,7 @@ function periodMembers(months: readonly FiscalMonth[], grain: 'month' | 'quarter
       dimension: 'period' as const,
       key: month,
       label: month,
-      narrow: (ctx) => ({ ...ctx, scope: monthScope(month) }),
+      narrow: (ctx) => contextAtScope(ctx, monthScope(month)),
     }));
   }
   /* Distinct quarters covered by the months given, in order. The supplied month window is an upper
@@ -156,7 +156,7 @@ function periodMembers(months: readonly FiscalMonth[], grain: 'month' | 'quarter
       dimension: 'period' as const,
       key,
       label: complete ? key : scope.label,
-      narrow: (ctx: MeasureContext) => ({ ...ctx, scope }),
+      narrow: (ctx: MeasureContext) => contextAtScope(ctx, scope),
     };
   });
 }
@@ -175,8 +175,8 @@ function entityMembers(ctx: MeasureContext): Member[] {
     }));
 }
 
-function segmentMembers(): Member[] {
-  return SEGMENTS.map((spec) => ({
+function segmentMembers(ctx: MeasureContext): Member[] {
+  return SEGMENTS.filter((spec) => ctx.segmentId === undefined || spec.code === ctx.segmentId).map((spec) => ({
     dimension: 'segment' as const,
     key: spec.code,
     label: spec.label,
@@ -184,8 +184,10 @@ function segmentMembers(): Member[] {
   }));
 }
 
-function costCentreMembers(): Member[] {
-  return COST_CENTRES.map((spec) => ({
+function costCentreMembers(ctx: MeasureContext): Member[] {
+  return COST_CENTRES.filter(
+    (spec) => ctx.costCentreId === undefined || spec.code === ctx.costCentreId,
+  ).map((spec) => ({
     dimension: 'cost_centre' as const,
     key: spec.code,
     label: spec.label,
@@ -202,9 +204,9 @@ function membersFor(dimension: Dimension, request: PivotRequest): Member[] {
     case 'entity':
       return entityMembers(request.ctx);
     case 'segment':
-      return segmentMembers();
+      return segmentMembers(request.ctx);
     case 'cost_centre':
-      return costCentreMembers();
+      return costCentreMembers(request.ctx);
   }
 }
 
@@ -337,10 +339,13 @@ export function buildPivot(request: PivotRequest): Pivot {
       };
     });
 
-    /* Recomputed, never summed. See the header. */
+    /* Recomputed, never summed. See the header. When period is down the rows, `rowCtx` already owns
+       the reporting window. Replacing it with the column union would make every row total repeat the
+       page's base period even though the cells on that row correctly use the row period. */
     const total = !request.columns.includes('measure') && totalIsMeaningful(measureId)
       ? (() => {
-          const ctx = { ...rowCtx, scope: unionScope };
+          const totalScope = request.columns.includes('period') ? unionScope : rowCtx.scope;
+          const ctx = contextAtScope(rowCtx, totalScope);
           const value = computeMeasure(measureId, ctx);
           return {
             value: value.value,

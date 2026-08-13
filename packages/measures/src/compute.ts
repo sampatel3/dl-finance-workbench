@@ -43,6 +43,7 @@ import {
   isNonMonetary,
   monthScope,
   monthsBetween,
+  priorYearScope,
   tradingEntities,
   translate,
   translateAtOf,
@@ -103,6 +104,21 @@ export interface MeasureValue {
   readonly costCentreId?: CostCentreCode;
   /** Every account the definition read, in the order it read them. */
   readonly inputs: readonly MeasureInput[];
+}
+
+/**
+ * Narrow a measure context without retaining exchange-rate dates from the wider parent window.
+ *
+ * Constant currency borrows rates from the like-for-like prior-year scope. Any caller that changes
+ * `scope` must therefore change `comparativeScope` with it; spreading a context and replacing only
+ * one field gives a plausible amount translated at unrelated dates.
+ */
+export function contextAtScope(ctx: MeasureContext, scope: PeriodScope): MeasureContext {
+  return {
+    ...ctx,
+    scope,
+    ...(ctx.lens === 'constant' ? { comparativeScope: priorYearScope(scope) } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -202,15 +218,37 @@ function readAccount(ctx: MeasureContext, accountId: AccountCode): Omit<MeasureI
   if (!isSliced(ctx)) {
     const c = consolidationFor(ctx);
     const line = c.lines.get(accountId);
+    const months = new Set<FiscalMonth>();
+    const vintages = new Set<string>();
+    let rowCount = 0;
+    // Consolidation owns translation and elimination, while the store remains the authority for the
+    // rows behind that number. Query the same terminal grain the consolidation reads so provenance is
+    // real row/vintage metadata rather than the number of entities with a value.
+    const segmented = accountId === 'revenue' || accountId === 'cost_of_sales';
+    for (const entityId of ctx.entityIds) {
+      const result = ctx.store.query({
+        entityId,
+        accountId,
+        scope: ctx.scope,
+        scenario: ctx.scenario,
+        versionId: ctx.versionId,
+        costCentreId: null,
+        ...(segmented ? {} : { segmentId: null }),
+        ...(ctx.asOfVintage === undefined ? {} : { asOfVintage: ctx.asOfVintage }),
+      });
+      for (const month of result.monthsUsed) months.add(month);
+      for (const vintage of result.vintageIds) vintages.add(vintage);
+      rowCount += result.rows.length;
+    }
     // A consolidation computes every account, so an absent line means the account produced nothing
     // anywhere — which is a genuine null rather than a missing lookup.
     const value = line === undefined || line.byEntity.size === 0 ? null : line.group;
     return {
       accountId,
       value,
-      monthsUsed: monthsBetween(ctx.scope.startMonth, ctx.scope.endMonth),
-      rowCount: line?.byEntity.size ?? 0,
-      vintageIds: [],
+      monthsUsed: [...months].sort(),
+      rowCount,
+      vintageIds: [...vintages].sort(),
       byEntity: line?.byEntity ?? new Map(),
     };
   }
@@ -350,7 +388,7 @@ export function measureSeries(
 ): { month: FiscalMonth; value: number | null }[] {
   return monthsBetween(from, to).map((month) => ({
     month,
-    value: computeMeasure(id, { ...ctx, scope: monthScope(month) }).value,
+    value: computeMeasure(id, contextAtScope(ctx, monthScope(month))).value,
   }));
 }
 

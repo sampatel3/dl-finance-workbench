@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { MONTHS } from '@kestrel/model';
+import { computeMeasure } from '@kestrel/measures';
 
 import { GET as exportExplore } from '../app/api/v1/explore/route';
 
 import {
+  ALL_EXPLORE_MEASURES,
   cellProvenance,
   exploreCsv,
   exploreHref,
+  exploreMeasures,
   exploreMonthsThrough,
   exploreState,
   normaliseExploreAxes,
@@ -76,6 +79,64 @@ describe('Explore follows the selected through-month', () => {
   });
 });
 
+describe('Explore datasets', () => {
+  it('makes scenario and version real URL state rather than ignored controls', () => {
+    const actual = exploreState({ rows: 'measure', cols: 'period', scenario: 'actual' });
+    const forecast = exploreState({
+      rows: 'measure',
+      cols: 'period',
+      scenario: 'forecast',
+      version: 'v5',
+    });
+
+    expect(forecast.view).toMatchObject({ dataScenario: 'FORECAST', version: { id: 'v5' } });
+    expect(forecast.pivot.rows[0]?.cells[0]?.ctx).toMatchObject({
+      scenario: 'FORECAST',
+      versionId: 'v5',
+    });
+    const actualValues = actual.pivot.rows.flatMap((row) => row.cells.map((cell) => cell.value));
+    const forecastValues = forecast.pivot.rows.flatMap((row) => row.cells.map((cell) => cell.value));
+    expect(forecastValues.some((value, index) => value !== actualValues[index])).toBe(true);
+  });
+
+  it('can narrow the grid to the exact governed measure cited by Ask', () => {
+    expect(exploreMeasures(undefined)).toEqual([
+      'revenue',
+      'gross_profit',
+      'gross_margin',
+      'ebitda',
+      'cash',
+      'dso',
+    ]);
+    expect(exploreMeasures('dso,dso,not-a-measure')).toEqual(['dso']);
+
+    const cited = exploreState({ rows: 'measure', cols: 'period', measure: 'dso' });
+    expect(cited.measures).toEqual(['dso']);
+    expect(cited.pivot.rows).toHaveLength(1);
+    expect(cited.pivot.rows[0]?.cells.every((cell) => cell.measureId === 'dso')).toBe(true);
+  });
+
+  it('resolves an Ask segment citation to that exact governed slice', () => {
+    const cited = exploreState({
+      rows: 'measure',
+      cols: 'period',
+      measure: 'revenue',
+      segment: 'contracts',
+    });
+
+    expect(cited.segmentId).toBe('contracts');
+    expect(cited.ctx.segmentId).toBe('contracts');
+    const exact = computeMeasure('revenue', cited.ctx);
+    const group = computeMeasure('revenue', contextOf(cited.view));
+    expect(exact.value).not.toBe(group.value);
+  });
+
+  it('makes every catalogue definition available to the formula inspector', () => {
+    expect(ALL_EXPLORE_MEASURES).toContain('pipeline_conversion');
+    expect(ALL_EXPLORE_MEASURES.length).toBeGreaterThan(25);
+  });
+});
+
 describe('Explore provenance uses the computed cell grain', () => {
   it('does not double-count aggregate and cost-centre rows', () => {
     const provenance = cellProvenance(
@@ -94,6 +155,7 @@ describe('Explore CSV is the grid with its evidence attached', () => {
   it('carries the comparator, formula and immutable vintage ids in a spreadsheet-safe body', () => {
     const body = exploreCsv(exploreState({ month: '2026-06' }));
     expect(body).toContain('Deeplight Finance Workbench,Explore export');
+    expect(body).toContain('Dataset,Actual');
     expect(body).toContain('Grid window,2026-01 to 2026-06');
     expect(body).toContain('Comparator,"forecast v6, over the same window"');
     expect(body).toMatch(/Vintages,v-2026/);

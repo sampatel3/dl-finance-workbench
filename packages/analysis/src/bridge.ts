@@ -56,7 +56,7 @@ import {
   translateAtOf,
 } from '@kestrel/model';
 import type { ComparatorChoice, MeasureContext, ResolvedComparator } from '@kestrel/measures';
-import { computeMeasure, resolveComparator } from '@kestrel/measures';
+import { computeMeasure, contextAtScope, resolveComparator } from '@kestrel/measures';
 
 /**
  * What each bar of the waterfall means.
@@ -142,7 +142,9 @@ function segmentFigures(
 
   const out = new Map<SegmentCode, SegmentFigure>();
 
-  for (const spec of SEGMENTS) {
+  for (const spec of SEGMENTS.filter(
+    (candidate) => ctx.segmentId === undefined || candidate.code === ctx.segmentId,
+  )) {
     let value = 0;
     let quantity: number | null = 0;
     let present = false;
@@ -326,8 +328,7 @@ export function buildBridge(request: BridgeRequest): Bridge {
   }
 
   const comparativeCtx: MeasureContext = {
-    ...ctx,
-    scope: comparator.scope ?? ctx.scope,
+    ...contextAtScope(ctx, comparator.scope ?? ctx.scope),
     scenario: comparator.scenario ?? ctx.scenario,
     versionId: comparator.versionId ?? ctx.versionId,
   };

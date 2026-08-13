@@ -83,6 +83,15 @@ describe('the catalogue is the semantic layer', () => {
   it('throws on a measure that does not exist rather than returning nothing', () => {
     expect(() => measure('gross_margin_but_better')).toThrow(/Unknown measure/);
   });
+
+  it('carries real consolidated row counts and vintages into the shared drill spine', () => {
+    const revenue = computeMeasure('revenue', ctx());
+    const input = revenue.inputs.find((entry) => entry.accountId === 'revenue');
+
+    expect(input?.rowCount ?? 0).toBeGreaterThan(input?.byEntity.size ?? 0);
+    expect(input?.monthsUsed).toContain(SEED_END);
+    expect(input?.vintageIds.length ?? 0).toBeGreaterThan(0);
+  });
 });
 
 describe('a period reconciles to its parts', () => {

@@ -164,6 +164,11 @@ function translatedSegmentedTotal(
 
 export function consolidate(request: ConsolidationRequest): Consolidation {
   const entities = (request.entityIds ?? tradingEntities().map((e) => e.id)).map(entity);
+  if (request.lens === 'functional' && entities.length !== 1) {
+    throw new Error(
+      'Functional currency is defined for one legal entity only; unlike currencies cannot be added into a group total.',
+    );
+  }
   const lines = new Map<AccountCode, ConsolidatedLine>();
 
   for (const a of ACCOUNTS) {

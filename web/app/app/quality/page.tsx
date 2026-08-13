@@ -13,7 +13,7 @@ import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
 import { movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
-import { contextOf, viewOf } from '../../../lib/world';
+import { LATEST_MONTH, contextOf, monthLabel, viewOf } from '../../../lib/world';
 
 /**
  * Quality — the surface that holds the product accountable for its own output.
@@ -57,7 +57,10 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
   const reports = SCORED_MEASURES.map((id) => qualityReport(id, ctx));
   /* The locked-versus-actual weekly history is seeded at group scope. Do not relabel those rows as an
      entity score when a narrower persona is active; absence is safer than leaking a group series. */
-  const cash = view.entityId === 'group' ? scoreCashForecast([...LOCKED], [...ACTUAL]) : null;
+  const cash =
+    view.entityId === 'group' && view.through === LATEST_MONTH
+      ? scoreCashForecast([...LOCKED], [...ACTUAL])
+      : null;
   const forecast = directForecast(ctx);
 
   return (
@@ -238,7 +241,9 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
       {cash === null ? (
         <section className="section" aria-label="Weekly cash score unavailable">
           <p className="banner">
-            The locked weekly score is held at group scope and is not available in this entity view.
+            {view.entityId !== 'group'
+              ? 'The locked weekly score is held at group scope and is not available in this entity view.'
+              : `The seeded weekly actuals exist for ${monthLabel(LATEST_MONTH)}, not ${monthLabel(view.through)}. No July score is relabelled as this historical view.`}
           </p>
         </section>
       ) : (
@@ -252,7 +257,8 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
           <span className="section-note">
             Receipts and payments scored separately, because a late receipt and a late payment
             cancel in a net figure — two errors, one good-looking score. Weeks locked before their
-            actuals arrived; the figures below are seeded, since the demo has no future to observe.
+            actuals arrived in {monthLabel(LATEST_MONTH)}; the figures below are seeded, since the
+            demo has no future to observe.
           </span>
         </div>
         <div className="pane">

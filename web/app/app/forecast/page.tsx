@@ -14,7 +14,7 @@ import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
 import { directionClass, movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
-import { contextOf, hrefFor, viewOf } from '../../../lib/world';
+import { contextOf, forecastVersionIdOr, hrefFor, viewOf } from '../../../lib/world';
 
 /**
  * Forecast — the version in force, its drivers, and what changed since another version.
@@ -57,7 +57,7 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
   const forecasts = versionList().filter((v) => v.scenario === 'FORECAST');
   const index = forecasts.findIndex((v) => v.id === view.version.id);
   const fallback = forecasts[Math.max(0, index - 1)]?.id ?? forecasts[0]?.id ?? 'v4';
-  const fromId = VERSIONS.some((v) => v.id === raw) ? (raw as string) : fallback;
+  const fromId = forecastVersionIdOr(raw, fallback);
 
   const diff = versionDiff(fromId, view.version.id, ctx);
 

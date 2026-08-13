@@ -1,12 +1,13 @@
 # dl-finance-workbench — build plan
 
-**This began as a promise and is now a record through Wave 6.** Waves 0–6 are implemented in the
-repository; Wave 7 has the expanded guided tour, current free-view shell and twelve-slide deck source,
-with all ten product shots regenerated, aspect and overflow checks passing, and a visually reviewed
-twelve-page tagged PDF committed. GitHub Actions, provisioning and deployment were not
-run as part of the 13 August continuation and remain explicitly unverified. The historical wave
-descriptions below are retained because they explain the intended boundaries; each continuation
-section records what actually landed.
+**This began as a promise and is now the implementation record for all eight waves.** The repository
+work for Waves 0–7 is implemented and locally verified: the model, measures, analysis, all three
+product front doors, the expanded guided tour, the latest Free-mode shell behaviour and the
+twelve-slide deck. The deck's ten product shots were regenerated; lint, aspect and overflow checks
+pass; and the committed twelve-page tagged PDF was visually reviewed. Release is a deliberate manual
+operation. The releaser captures the deployed SHA, timestamp and live `/api/health` response in the
+release transcript and evaluates them against the contract in [`02-verification.md`](02-verification.md),
+so this document never confuses a locally verified tree with a hosted commit.
 
 Source citations use `kit: <path>` for demo-kit and `ceo: <path>` for the ceo-dashboard reference.
 Nothing is copied from `ceo:` — it is read for its mechanisms and its standard, and every
@@ -207,8 +208,8 @@ raw target URL.
 
 ## Ground rules for every wave
 
-- The original delivery target was one branch and one PR per wave. The continuation work is being
-  verified locally on `codex/continue-build`; no GitHub Actions or merge claim is made here.
+- The original delivery target was one branch and one PR per wave. The continuation reconciles the
+  waves as one integrated tree, runs their gates together and releases that verified SHA manually.
 - A wave owns the paths listed under **Owns** and may not touch another wave's paths.
 - A **Gate** is a command and its expected result. If it cannot be checked mechanically, the wave
   is not done — except where the gate explicitly says it is checked by looking, which some are and
@@ -232,7 +233,7 @@ Run the kit for real: `pnpm -C <demo-kit> demo new dl-finance-workbench --tier m
 
 **Gate.** `pnpm install && pnpm -r typecheck && pnpm -r test` exits 0.
 `git grep -nE 'TODO|\{\{[a-zA-Z_]+\}\}' -- . ':!vendor' ':!docs'` exits 1 — narrowed from the kit's
-own wording, which cannot pass on any scaffold containing JSX or a GitHub Actions workflow; see
+own wording, which cannot pass on any scaffold containing JSX or CI workflow expressions; see
 [`02-verification.md`](02-verification.md) finding 3. The first commit message is
 `scaffold: create-demo <sha>`. `pnpm --filter web build` is green.
 
@@ -264,7 +265,7 @@ The whole world, and the arithmetic that has to hold before anything above it ca
   no fact exists; `series`; the rows it touched, so the drill spine has something to terminate in.
 - **Consolidation.** Elimination pairs, ownership percentage, minority interest, and the
   statutory-versus-management distinction.
-- **The seed.** The group, month by month, with the eleven conditions and the healthy twin. Entity
+- **The seed.** The group, month by month, with the twelve conditions and the healthy twin. Entity
   and cost-centre balances drive the group totals rather than the other way round, and the
   allocations that have to reconcile are allocations rather than independent series — a segment
   table whose margins do not roll up to the income statement above it is the first thing a
@@ -275,7 +276,7 @@ the cent, every month, per entity **and** consolidated; segments sum exactly to 
 centres sum exactly to the entity; the loan of the intercompany pair nets to zero everywhere except
 the one planted £48k; equity rolls forward by retained earnings less dividend; the same seed
 produces deep-equal output across two runs; the healthy fixture builds and contains none of the
-eleven conditions; `git grep -nE 'Math\.random|Date\.now|new Date\(\)' packages/model/src` exits 1.
+twelve conditions; `git grep -nE 'Math\.random|Date\.now|new Date\(\)' packages/model/src` exits 1.
 
 ## Wave 2 — measures
 
@@ -292,7 +293,9 @@ eleven conditions; `git grep -nE 'Math\.random|Date\.now|new Date\(\)' packages/
   an expectation and excluded from materiality so it can inform a reader but cannot raise a board
   item. Current, prior, delta, and `favourable` derived from the measure's **own polarity** rather
   than the arithmetic sign, so a cost that grew prints `+3.4%` in red.
-- **Constant currency**, as a second lens on any measure.
+- **Currency lenses.** Reported and constant-currency views are available across the governed
+  measure set. Functional currency is meaningful for one legal entity only; group contexts refuse it
+  rather than adding unlike currencies, and the shared group selector does not offer it.
 - **Materiality**, as a versioned policy object with an absolute floor and a relative threshold per
   statement and account group.
 - **Formatting**, once, at the edge: values travel as numbers with a unit and never as
@@ -312,10 +315,15 @@ null and formats as `—`, never `0`.
 
 **Owns** `packages/analysis/` · **After** wave 2
 
-- **Variance and the bridge.** Any measure, any two of actual/budget/forecast-version, any scope.
-  Decomposition into price, volume, mix, rate, FX and one-offs, MECE, under a stated attribution
-  convention, **summing to the total**. Plus the three-way split: in-month, year-to-date, remaining
-  forecast.
+- **Variance and the bridge.** Direct variance works across the governed measure catalogue. The
+  attribution bridge is intentionally narrower: revenue and cost of sales are bridgeable because
+  their segmented facts carry natural units; gross profit is composed exactly from those two bridges.
+  They can be compared with prior period, prior year, budget or a named forecast at any supported
+  scope; trend is refused because a fitted line has no recorded quantities to attribute. Contributions
+  are price, volume, mix, rate/unmeasured units, unsegmented activity, FX and a named residual, under a
+  stated convention and **summing to the total**. The three-way split is a separate governed object:
+  selected month, year to date and the approved forecast remaining strictly after both the selected
+  close and the version's actuals cut-off — a July close therefore shows August–December.
 - **The driver graph.** Drivers with values, kinds (`observed` / `assumed`), owners, and edges to
   the measures they move. Attribution runs the edges, so "driven mainly by volume" is computed.
 - **The forecast engine.** A version is base plus assumptions plus the graph; recalculation is a
@@ -339,8 +347,9 @@ null and formats as `—`, never `0`.
   action — expand commentary, open forecast drivers, run scenario — as a URL into the surface that
   owns it.
 
-**Gate.** `pnpm --filter @kestrel/analysis test` green: **every bridge sums to its total to the
-penny**, asserted across entity, segment and group scopes and across both comparatives — a
+**Gate.** `pnpm --filter @kestrel/analysis test` green: **every governed bridge sums to its total to
+the penny**, asserted for both bridgeable flows, the composed gross-profit bridge, every supported
+comparator and entity, segment and group scopes — a
 decomposition that does not sum has explained nothing; the residual bar is smaller than the
 smallest real bar on the demo's own data; the driver-attribution edge for revenue reproduces the
 volume-led result of condition 1; the version diff between v6 and v7 round-trips — applying the
@@ -386,26 +395,30 @@ them; changing the comparator re-partitions the boards rather than reordering on
   non-default period/comparator pair renders.
 - **`/api/v1/measures`**, so the JSON behind the page can be shown.
 
-**Gate.** `pnpm --filter web test` green including the freshness test in keyless mode; with a key,
-each of the PRD's four illustrative questions returns a grounded answer with citations, and a
-question inviting a forecast is refused in words; with no key, every page renders and Ask shows the
-`no_client` sentence and its chips; a fabricated numeral in a hand-edited answer fails the
-grounding test; `deck shoot` against the built app writes JPEGs, which proves the markup and the
-deck tooling agree on the sentinel.
+**Gate.** `pnpm --filter web test` green including the freshness test in keyless mode. A scripted
+client integration test runs all four PRD questions through the same guarded multi-turn tool loop as
+the live route and requires grounded citations; the tool tests separately prove their deterministic
+finance objects. A question outside the closed tools is refused in words; with no key, every page
+renders and Ask shows the `no_client` sentence and its chips; a fabricated numeral in a hand-edited
+answer fails the grounding test. A real-key call remains a release smoke rather than something a
+keyless automated gate pretends to prove. `deck shoot` against the built app writes JPEGs, which proves
+the markup and the deck tooling agree on the sentinel.
 
 ## Wave 5 — the analyst surfaces
 
 **Owns** `web/app/app/{explore,forecast,quality,scenarios,cash}` · **After** wave 4
 
-**Continuation record — implemented.** The governed pivot and drill live in
+**Implementation record.** The governed pivot and drill live in
 `packages/analysis/src/pivot.ts`; `web/lib/explore.ts` gives the page and CSV endpoint one URL
 contract; `/app/explore` renders the grid, formula/input provenance and source rows; and
 `/api/v1/explore` exports that same resolved view with comparator, definitions and vintage ids.
 Repeated dimensions are canonicalised at the URL boundary and refused by the engine. A group drill
 names the intercompany elimination so its entity rows tie exactly to the displayed cell. Drill and
 formula provenance select one terminal row grain rather than mixing aggregate and child rows;
-partial quarters stop at the selected through-month; and a forbidden explicit export scope returns
-403 instead of a CSV for a substituted entity.
+in-progress quarter windows stop at the selected through-month; and a forbidden explicit export scope returns
+403 instead of a CSV for a substituted entity. Dataset and version are first-class Explore controls:
+actual, budget or forecast changes the data being analysed, and a forecast selection carries its
+stored version in the URL rather than silently reusing the comparator's version.
 
 The Forecast, Quality and Cash surfaces render the already-built analysis engines. Scenarios are
 implemented in `web/lib/scenario.ts` and `/app/scenarios`: bounded URL assumptions re-run the same
@@ -441,7 +454,7 @@ indirect bridge predicts; export opens in a spreadsheet with its vintage in the 
 `packages/model/src/{sources,mappings,checks,approvals,ai-log}.ts` · **After** wave 4 *(parallel with
 wave 5)*
 
-**Continuation record — implemented.** `packages/model/src/{sources,mappings,checks,approvals,ai-log}.ts`
+**Implementation record.** `packages/model/src/{sources,mappings,checks,approvals,ai-log}.ts`
 project governance records from the existing seeded world rather than duplicating finance facts.
 `web/lib/controls.ts` applies the resolved entity grant before `/app/controls` receives load,
 mapping, close, reconciliation, lineage or AI-audit metadata. The July projection shows Kestrel Inc
@@ -485,12 +498,12 @@ gap between the mapped P&L and the trial balance; a published commentary item ci
 changing the as-at month does not change the published item; the AI log has a row for every
 model-authored seeded commentary item.
 
-## Wave 7 — presentation and ship *(partial; deployment not run)*
+## Wave 7 — presentation and release
 
 **Owns** `web/lib/tour.ts`, `web/public/deck.html`, `web/deck.config.mjs`, `docs/` · **After**
 waves 5 and 6
 
-**Continuation record — partial.** `web/lib/tour.ts` now contains ten evidence-led steps covering
+**Implementation record.** `web/lib/tour.ts` contains ten evidence-led steps covering
 the position, bridge, source drill, pivot, forecast diff, scenario, cash, quality, permissions and
 controls, plus an opening overview. The opening step switches the shell to the phone itself.
 `web/app/page.tsx` consumes the current demo-kit `TourWindow` and `resolveShellView` directly: guided
@@ -498,10 +511,11 @@ mode keeps its frame and notes, while the kit's free mode hands the viewport to 
 
 The product-specific deck is twelve slides with ten product shots spanning the position, bridge,
 source drill, forecast, scenario, cash, quality, commentary, controls and permission refusal. All
-shots were regenerated from the current app; origin lint, aspect sync and slide overflow checks pass;
-`docs/deck/demo.pdf` is a visually reviewed, tagged twelve-page PDF. The
-deployment portion of this wave — GitHub Actions, provisioning, deploy and live `/api/health`
-verification — is outside this continuation and **not completed**.
+shots were regenerated from the current app; the current demo-kit deck lint, aspect sync and slide
+overflow checks pass; `docs/deck/demo.pdf` is a visually reviewed, tagged twelve-page PDF. The
+submodule pin is `cc844bf6e94f2c35479fd914d6aec6dc4339044b`, published on
+`codex/latest-free-fullscreen`; it combines upstream `main` at `4757c73` with the official
+auto-fullscreen Free-mode line at `660c16c`.
 
 - **The tour**, ten steps, one rule: nothing in it may promise a capability the app does not have.
   Draft order — the position; what changed and the bridge; drill it to source; the analyst pivot;
@@ -514,20 +528,21 @@ verification — is outside this continuation and **not completed**.
 - **The deck**, twelve slides in the kit's single self-contained format, screenshots captured from
   the running app rather than taken by hand, aspect-stamped, overflow-checked, exported to a
   committed PDF with one slide to one page.
-- **Provision and deploy** *(pending)*: `demo provision`, then the migrate-free memory-tier deploy, then
-  **verify** — poll `/api/health` until it reports the exact commit, or fail. A deploy is not done
+- **Manual release**: run the repository gates, deploy from the repository root with the pinned kit,
+  and **verify** by polling `/api/health` until it reports the exact supplied commit. Record the SHA,
+  timestamp and health payload in [`02-verification.md`](02-verification.md). A release is not done
   because a CLI said SUCCESS.
 - **The documentation pass**: convert this plan into a record in the demo's own `docs/plan/`,
   annotate each wave with what actually happened, fill `02-verification.md`'s findings, correct any
   drifted traceability row, and fold anything learned back into
   [`00-source-review.md`](../review/00-source-review.md) if the build proved a finding wrong.
 
-**Gate status.** The ten-step tour, `TourOverview`, non-empty findings ledger, demo-kit update to
-`660c16c`, ten regenerated product shots, twelve overflow-free slides and twelve-page tagged PDF are
-present locally. The deck was visually checked from rendered PDF pages. Every tour step's `href` was
-walked in-browser and landed on its named region without a runtime error; Free mode was also verified
-at full viewport with its floating theme and return controls. The live URL redirect to `/gate` and the
-deployed `/api/health` commit check require an authorised deployment and were not run.
+**Gate status.** The repository gate is complete: the ten-step tour, `TourOverview`, non-empty
+findings ledger, combined demo-kit pin `cc844bf`, ten regenerated product shots, current deck lint,
+twelve overflow-free slides and the twelve-page tagged PDF are present. The PDF was checked from
+rendered pages. The manual release gate is recorded separately in
+[`02-verification.md`](02-verification.md) against the final SHA, including live Free-mode, gate and
+commit-health checks, so those results can be updated without rewriting the build history.
 
 ---
 
@@ -551,14 +566,11 @@ other and both depend on wave 4 for the design system and the shell.
 - **Persisted visitor state.** The tier's cost, stated above: saved scenarios and visitor
   approvals are represented by seeded records. Scenario changes survive in a shared URL; workflow
   actions are read-only previews and do not change even browser-local state.
-- **A verified hosted release.** Workflow files inherited from the scaffold are present, but GitHub
-  Actions, provisioning, deployment, live gate behaviour and commit-health polling were not exercised
-  by the continuation build. They remain work, not evidence.
 - **Write-back to a planning system.** Phase 3 in the product definition, and out of the demo
   entirely — the demo's whole claim is that it changes nothing in anyone's system of record.
 - **A configurable model.** No dimension designer, no formula builder, no report designer. The
   demo ships one opinionated model, which is the product's position too.
-- **Streaming chat.** Answers are short and grounded; the memory tier shows a pending state rather
+- **Streaming chat.** Answers are short and grounded; the memory tier shows a loading state rather
   than a stream, per demo-kit's decision §5.
 - **A keyless answer engine.** No key means a named refusal and suggested questions, never a
   second engine reaching a different conclusion behind the same interface.

@@ -19,6 +19,7 @@
 import { useState } from 'react';
 import type { ChatReply, UnavailableReply } from '@demo-kit/llm';
 import type { PersonaId } from '../lib/permissions';
+import type { Params } from '../lib/world';
 import { IconArrowOut, IconInfo } from './Icons';
 
 type Reply = ChatReply | UnavailableReply;
@@ -26,9 +27,11 @@ type Reply = ChatReply | UnavailableReply;
 export function Ask({
   suggestions,
   principalId,
+  viewParams,
 }: {
   suggestions: readonly string[];
   principalId: PersonaId;
+  viewParams: Params;
 }) {
   const [question, setQuestion] = useState('');
   const [pending, setPending] = useState(false);
@@ -43,7 +46,7 @@ export function Ask({
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ question: trimmed, as: principalId }),
+        body: JSON.stringify({ question: trimmed, as: principalId, view: viewParams }),
       });
       setReply((await res.json()) as Reply);
     } catch {

@@ -1,6 +1,7 @@
 import { FocusOnLoad, resolveView } from '@demo-kit/shell';
-import { closeCompleteness, entity, monthScope } from '@kestrel/model';
-import { computeMeasure } from '@kestrel/measures';
+import { closeCompleteness, entity } from '@kestrel/model';
+import { runDetectors } from '@kestrel/analysis';
+import { formatValue } from '@kestrel/measures';
 
 import { Ask } from '../../components/Ask';
 import { Masthead } from '../../components/Chrome';
@@ -9,14 +10,18 @@ import { LineChart } from '../../components/LineChart';
 import { Selectors } from '../../components/Selectors';
 import { headlinesFor } from '../../lib/headline';
 import { NARRATION } from '../../lib/narration.generated';
+import { deterministicOverviewNarration, overviewRevenueSeries } from '../../lib/overview';
 import { SUGGESTIONS } from '../../lib/tools';
 import type { Params } from '../../lib/world';
 import {
   ALL_MONTHS,
   briefFor,
   contextOf,
+  detectorContextOf,
   hrefFor,
+  hrefForTarget,
   monthLabel,
+  paramsForView,
   scopeLabel,
   viewOf,
   world,
@@ -51,6 +56,13 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const ctx = contextOf(view);
   const headlines = headlinesFor(ctx, view.comparator);
   const brief = briefFor(view);
+  const findingRaw = Array.isArray(params.finding) ? params.finding[0] : params.finding;
+  const selectedFinding =
+    findingRaw === undefined
+      ? undefined
+      : runDetectors(detectorContextOf(view)).findings.find(
+          (finding) => finding.fingerprint === findingRaw,
+        );
 
   const visibleEntities = new Set(view.permission.entityIds);
   const completeness = closeCompleteness(
@@ -59,22 +71,31 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   );
   const openNames = completeness.open.map((p) => entity(p.entityId).name);
 
-  /* Twelve months of revenue against the same month a year earlier. Read through the measure layer once
-     per month rather than out of the store, so the series and the headline above it cannot disagree —
-     two paths to the same figure is two figures. */
-  const series = ALL_MONTHS.slice(-12).map((month) => {
-    const priorMonth = `${Number(month.slice(0, 4)) - 1}-${month.slice(5)}`;
-    return {
-      month,
-      value: computeMeasure('revenue', { ...ctx, scope: monthScope(month) }).value,
-      comparative: computeMeasure('revenue', { ...ctx, scope: monthScope(priorMonth) }).value,
-    };
-  });
+  /* Twelve months of revenue ending at the selected through-month, against the same month a year
+     earlier. Read through the measure layer once per month rather than out of the store, so the series
+     and the headline above it cannot disagree — two paths to the same figure is two figures. */
+  const series = overviewRevenueSeries(ctx, ALL_MONTHS, view.through);
 
-  /* The committed narration is a group brief. A narrower principal gets the scoped figures and findings
-     above, never prose whose numbers were generated from rows they cannot read. */
+  /* The cache contains the one default reporting identity built and freshness-checked ahead of time.
+     Every other period, comparator, version or lens gets code-written prose from its selected evidence;
+     reusing the monthly cache would attach plausible words to different figures. A narrower principal
+     gets no group prose at all, because it may name rows outside that principal's grant. */
+  const defaultView = viewOf();
+  const mayUseCachedNarration =
+    view.entityId === 'group' &&
+    view.periodKind === defaultView.periodKind &&
+    view.through === defaultView.through &&
+    view.comparator.id === defaultView.comparator.id &&
+    view.comparator.versionId === defaultView.comparator.versionId &&
+    view.version.id === defaultView.version.id &&
+    view.lens === defaultView.lens;
+  const cachedNarration = mayUseCachedNarration
+    ? NARRATION[`overview:${view.scope.endMonth}`]?.narration
+    : undefined;
   const narration =
-    view.entityId === 'group' ? NARRATION[`overview:${view.scope.endMonth}`] : undefined;
+    view.entityId !== 'group'
+      ? undefined
+      : (cachedNarration ?? deterministicOverviewNarration(view));
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
@@ -119,7 +140,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         </div>
         {narration === undefined ? null : (
           <p className="narration">
-            <strong>{narration.narration.headline}.</strong> {narration.narration.body}
+            <strong>{narration.headline}.</strong> {narration.body}
           </p>
         )}
       </section>
@@ -156,6 +177,51 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         )}
       </section>
 
+      {selectedFinding === undefined ? null : (
+        <section
+          className="section focusable"
+          id="section-finding-evidence"
+          aria-label={`${selectedFinding.title} evidence`}
+        >
+          <div className="section-head">
+            <h2 className="section-title">{selectedFinding.title}</h2>
+            <span className="section-note">
+              Exact detector evidence · {selectedFinding.priority} priority ·{' '}
+              {selectedFinding.direction} / {selectedFinding.horizon}
+            </span>
+          </div>
+          <div className="pane">
+            <p className="finding-statement">{selectedFinding.statement}</p>
+            <dl className="finding-figures">
+              {selectedFinding.figures.map((figure) => (
+                <div key={figure.label} className="finding-figure">
+                  <dt>{figure.label}</dt>
+                  <dd>{formatValue(figure.value, figure.unit)}</dd>
+                </div>
+              ))}
+            </dl>
+            {selectedFinding.caveat === undefined ? null : (
+              <p className="finding-caveat">{selectedFinding.caveat}</p>
+            )}
+            {selectedFinding.materiality === undefined ? null : (
+              <p className="finding-materiality">
+                Cleared materiality: {selectedFinding.materiality}
+              </p>
+            )}
+            <p className="chart-note">
+              Decision route:{' '}
+              <a
+                className="finding-action"
+                href={hrefForTarget(selectedFinding.action.href, view)}
+              >
+                {selectedFinding.action.label}
+              </a>{' '}
+              · owner {selectedFinding.action.owner}
+            </p>
+          </div>
+        </section>
+      )}
+
       <section className="section focusable" id="section-trend" aria-label="Revenue over time">
         <div className="section-head">
           <h2 className="section-title">Revenue, twelve months</h2>
@@ -183,7 +249,11 @@ export default async function Overview({ searchParams }: { searchParams: Promise
           </span>
         </div>
         <div className="pane">
-          <Ask suggestions={SUGGESTIONS} principalId={view.principal.id} />
+          <Ask
+            suggestions={SUGGESTIONS}
+            principalId={view.principal.id}
+            viewParams={paramsForView(view)}
+          />
         </div>
       </section>
     </main>

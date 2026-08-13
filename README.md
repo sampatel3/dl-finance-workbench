@@ -1,9 +1,9 @@
 # dl-finance-workbench
 
 **Deeplight Finance Workbench** — a working demo of a governed measure layer over the systems Finance
-already runs. Built with [demo-kit](https://github.com/sampatel3/demo-kit), which is vendored as a
-submodule at `vendor/demo-kit` and pinned to one commit, so framework fixes reach this demo through
-`demo update` rather than by hand.
+already runs. Built with [demo-kit](https://github.com/sampatel3/demo-kit), vendored as a pinned
+submodule at `vendor/demo-kit`. The current pin, `cc844bf`, combines demo-kit's latest main-line deck
+and LLM guidance with its official auto-fullscreen Free mode.
 
 The company is **Kestrel Industrial Group**: five entities, four currencies, forty-three closed months
 to July 2026. It does not exist. Every figure is computed from one seed string — which is why the
@@ -33,9 +33,9 @@ private, and a demo nobody can open is not a demo.
 
 ## Deploying it
 
-Pushing to `main` is the deploy. CI runs; on green, the deploy workflow builds, ships `--prebuilt`,
-and then polls `/api/health` until the live site reports the exact commit it deployed. A deploy that
-cannot prove that fails.
+Releases are deployed manually from the repository root. Run the repository gates first, then use the
+pinned kit's deploy command; it builds and ships the memory-tier app and polls `/api/health` until the
+live site reports the exact SHA supplied to it. A release that cannot prove its commit is not complete.
 
 Everything runs from the repo **root**, not from `web/`, and `vercel.json` is what points the build
 back down at the app. The app is a member of a pnpm workspace whose `node_modules` live at the root,
@@ -43,30 +43,50 @@ so a build run inside `web/` traces Next's server files above the deploy root: t
 deployment and the first request dies on a missing `next-server.js`. That is a lesson from the kit's
 own first real deploy rather than a precaution.
 
-To ship from here instead — the first deploy, or when Actions is unavailable:
+```sh
+pnpm install
+pnpm -r typecheck
+pnpm -r test
+pnpm --filter web build
+pnpm --filter web deck:lint
+```
+
+Then deploy the verified tree:
 
 ```sh
-pnpm -C ~/Code/sampatel3/demo-kit demo deploy --tier memory --dir "$PWD" \
+pnpm -C vendor/demo-kit demo deploy --tier memory --dir "$PWD" \
   --sha "$(git rev-parse HEAD)" --url https://dl-finance-workbench.vercel.app/api/health
 ```
 
+Keep the literal deployed SHA, UTC timestamp and returned health payload in the release transcript;
+[`docs/plan/02-verification.md`](docs/plan/02-verification.md) records the non-self-referential
+contract those values must satisfy.
+
 ## Updating the kit
 
-The shared machinery — the shell, the gate, the model seam, the deck — is vendored as a pinned
-submodule. A fix made there reaches this demo when the pin moves:
+The shared machinery — the shell, the gate, the model seam and the deck — is vendored as a pinned
+submodule. The current parent pointer is `cc844bf6e94f2c35479fd914d6aec6dc4339044b`, published on
+`sampatel3/demo-kit` as `codex/latest-free-fullscreen`. It merges upstream `main` at `4757c73` into
+the auto-fullscreen Free-mode line at `660c16c`.
+
+Verify the pin with:
 
 ```sh
-pnpm -C ~/Code/sampatel3/demo-kit demo update --dir "$PWD"
+git -C vendor/demo-kit rev-parse HEAD
+pnpm -C vendor/demo-kit -r typecheck
+pnpm -C vendor/demo-kit -r test
 ```
 
-It fetches, installs, runs the tests, prints what changed and commits the pointer. This demo has
-already done it once, from `4e43a1d` to `a108a591`, which makes propagation proven rather than
-assumed.
+Future updates must deliberately preserve both sides of that pin: merge the then-current upstream
+`main` into the published fullscreen branch, run the kit and workbench gates, push that branch, and
+only then move the parent repository's submodule pointer. Do not advance this demo to demo-kit's
+default branch without checking Free mode, because the default branch alone does not contain the
+combined history pinned here.
 
 ## Layout
 
 ```
-packages/model      the fact store: grain, basis, dimensions, three currencies with IAS 21
+packages/model      the fact store: grain, basis, dimensions, four functional currencies with IAS 21
                     translation, immutable load vintages, consolidation, and the seeded group
 packages/measures   the certified measure catalogue — also the semantic layer the chat reads —
                     computed with its inputs recorded, which is the bottom of the drill spine

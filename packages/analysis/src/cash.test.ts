@@ -8,7 +8,17 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ACTUAL_VERSION, SEED_END, buildWorld, monthScope, subtree } from '@kestrel/model';
+import {
+  ACTUAL_VERSION,
+  CALENDAR_YEAR,
+  SEED_END,
+  buildWorld,
+  monthScope,
+  priorYearScope,
+  quarterScope,
+  subtree,
+  ytdScope,
+} from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
 import { allEntityIds, computeMeasure, formatValue } from '@kestrel/measures';
 
@@ -111,6 +121,35 @@ describe('the 13-week direct forecast', () => {
       f.weeks.reduce((total, week) => total + week.receipts, 0) / Math.max(f.opening, 1);
     expect(collectedShare(gulf)).not.toBe(collectedShare(group));
   });
+
+  it('is anchored to one month even when the caller is reporting a quarter or year to date', () => {
+    const anchor = '2026-06';
+    const month = directForecast(ctx({ scope: monthScope(anchor) }));
+    const quarter = directForecast(ctx({ scope: quarterScope(2026, 2, CALENDAR_YEAR) }));
+    const yearToDate = directForecast(ctx({ scope: ytdScope(anchor, CALENDAR_YEAR) }));
+
+    expect(quarter).toEqual(month);
+    expect(yearToDate).toEqual(month);
+  });
+
+  it('anchors the constant-currency comparative to the same month too', () => {
+    const anchor = '2026-06';
+    const forecastAt = (scope: ReturnType<typeof monthScope>) =>
+      directForecast(
+        ctx({
+          scope,
+          lens: 'constant',
+          comparativeScope: priorYearScope(scope),
+        }),
+      );
+
+    const month = forecastAt(monthScope(anchor));
+    const quarter = forecastAt(quarterScope(2026, 2, CALENDAR_YEAR));
+    const yearToDate = forecastAt(ytdScope(anchor, CALENDAR_YEAR));
+
+    expect(quarter).toEqual(month);
+    expect(yearToDate).toEqual(month);
+  });
 });
 
 describe('weekly variance is scored on both sides', () => {
@@ -152,6 +191,17 @@ describe('weekly variance is scored on both sides', () => {
 
 describe('the indirect bridge', () => {
   const bridge = indirectBridge(ctx());
+
+  it('remains period-wide when the direct forecast is anchored to one month', () => {
+    const quarterScopeValue = quarterScope(2026, 2, CALENDAR_YEAR);
+    const quarter = indirectBridge(ctx({ scope: quarterScopeValue }));
+    const month = indirectBridge(ctx({ scope: monthScope(quarterScopeValue.endMonth) }));
+    const ebitda = (value: typeof quarter) =>
+      value.lines.find((line) => line.kind === 'ebitda')?.value;
+
+    expect(quarter.scope).toEqual(quarterScopeValue);
+    expect(ebitda(quarter)).not.toBe(ebitda(month));
+  });
 
   it('closes: every line sums to the movement in cash', () => {
     expect(bridge.sums).toBe(true);
@@ -201,5 +251,19 @@ describe('the answer to "what happens to cash if revenue falls 8%"', () => {
   it('and carries the reasoning with it, because the number alone is not an answer', () => {
     expect(sensitivity.note).toMatch(/overstates the cash effect/);
     expect(sensitivity.horizonWeeks).toBe(13);
+  });
+
+  it('is anchored to the same month when the reporting selector shows a wider window', () => {
+    const month = cashSensitivity(ctx({ scope: monthScope('2026-07') }), -0.08);
+    const quarterScopeToJuly = {
+      ...quarterScope(2026, 3, CALENDAR_YEAR),
+      endMonth: '2026-07' as const,
+      label: 'Q3 FY26 through July 2026',
+    };
+    const quarter = cashSensitivity(ctx({ scope: quarterScopeToJuly }), -0.08);
+    const year = cashSensitivity(ctx({ scope: ytdScope('2026-07', CALENDAR_YEAR) }), -0.08);
+
+    expect(quarter).toEqual(month);
+    expect(year).toEqual(month);
   });
 });

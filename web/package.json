@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "deck:shoot": "deck shoot",
     "deck:aspects": "deck aspects",
+    "deck:lint": "deck lint",
     "deck:slides": "deck slides",
     "deck:pdf": "deck pdf"
   },

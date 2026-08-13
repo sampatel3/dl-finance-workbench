@@ -32,7 +32,7 @@ import {
   tradingEntities,
 } from '@kestrel/model';
 import type { MeasureValue } from '@kestrel/measures';
-import { MEASURES, computeMeasure } from '@kestrel/measures';
+import { MEASURES, computeMeasure, contextAtScope } from '@kestrel/measures';
 
 import { resolvePermissionScope } from './permissions';
 import { NARRATION_PROMPT_VERSION } from './narration';
@@ -61,6 +61,8 @@ export interface PublishedLineage {
 
 export interface ControlsViewModel {
   readonly groupReadable: boolean;
+  /** True when intersecting feeds also serve entities outside this resolved entity grant. */
+  readonly sharedSourceMetadataWithheld: boolean;
   readonly sourceStatuses: readonly SourceStatus[];
   readonly recentLoads: readonly SourceLoad[];
   readonly totalLoads: number;
@@ -140,8 +142,17 @@ export function controlsFor(view: View): ControlsViewModel {
     view.entityId === 'group' &&
     tradingEntities().every((entity) => visibleEntityIds.has(entity.id));
 
-  const visibleSources = sourceStatuses(model.register).filter((status) =>
-    status.source.entityIds.some((entityId) => visibleEntityIds.has(entityId)),
+  const allSourceStatuses = sourceStatuses(model.register);
+  // Source status and load counts are aggregate metadata at the source's declared scope. They cannot
+  // be sliced honestly by entity because a vintage carries one shared row count and validation result.
+  // A source is therefore visible only when every entity it serves is inside the resolved grant.
+  const visibleSources = allSourceStatuses.filter((status) =>
+    status.source.entityIds.every((entityId) => visibleEntityIds.has(entityId)),
+  );
+  const sharedSourceMetadataWithheld = allSourceStatuses.some(
+    (status) =>
+      status.source.entityIds.some((entityId) => visibleEntityIds.has(entityId)) &&
+      status.source.entityIds.some((entityId) => !visibleEntityIds.has(entityId)),
   );
   const visibleSourceIds = new Set(visibleSources.map((status) => status.source.id));
   const visibleLoads = sourceLoads(model.register).filter((load) =>
@@ -175,11 +186,10 @@ export function controlsFor(view: View): ControlsViewModel {
     (item): item is CommentaryItem & { readonly publishedSnapshot: PublishedCommentarySnapshot } =>
       item.publishedSnapshot !== undefined,
   );
-  const allLoads = sourceLoads(model.register);
   const pinnedLoad =
     published === undefined
       ? undefined
-      : allLoads.find(
+      : visibleLoads.find(
           (load) => load.vintage.id === published.publishedSnapshot.dataVintageId,
         );
   const lineage =
@@ -189,16 +199,15 @@ export function controlsFor(view: View): ControlsViewModel {
           item: published,
           snapshot: published.publishedSnapshot,
           pinnedFigure: computeMeasure(published.anchor.measureId, {
-            ...contextOf(view),
-            scope: published.publishedSnapshot.period,
+            ...contextAtScope(contextOf(view), published.publishedSnapshot.period),
             asOfVintage: published.publishedSnapshot.dataVintageId,
           }),
-          currentFigure: computeMeasure(published.anchor.measureId, {
-            ...contextOf(view),
-            scope: published.publishedSnapshot.period,
-          }),
+          currentFigure: computeMeasure(
+            published.anchor.measureId,
+            contextAtScope(contextOf(view), published.publishedSnapshot.period),
+          ),
           load: pinnedLoad,
-          laterRestatements: allLoads.filter(
+          laterRestatements: visibleLoads.filter(
             (load) =>
               load.vintage.restatesVintageId === published.publishedSnapshot.dataVintageId,
           ),
@@ -206,6 +215,7 @@ export function controlsFor(view: View): ControlsViewModel {
 
   return {
     groupReadable,
+    sharedSourceMetadataWithheld,
     sourceStatuses: visibleSources,
     recentLoads: [...visibleLoads]
       .sort((a, b) => b.vintage.loadedAt.localeCompare(a.vintage.loadedAt))

@@ -125,6 +125,29 @@ describe('a total is recomputed, never summed', () => {
     expect(margin?.total).toBeNull();
     expect(pivot.totalNote).toMatch(/not the sum of ratios/);
   });
+
+  it('retains each row period when period is down and entities are across', () => {
+    const periodsDown = buildPivot({
+      ctx: ctx(),
+      rows: ['period', 'measure'],
+      columns: ['entity'],
+      measureIds: ['revenue'],
+      months: ['2026-06', '2026-07'],
+    });
+
+    for (const row of periodsDown.rows) {
+      const period = row.path.find((member) => member.dimension === 'period');
+      expect(period).toBeDefined();
+      expect(row.total).not.toBeNull();
+      if (period === undefined || row.total === null) continue;
+
+      const expectedScope = monthScope(period.key);
+      expect(row.total.ctx.scope).toEqual(expectedScope);
+      expect(row.total.value).toBe(
+        computeMeasure('revenue', ctx({ scope: expectedScope })).value,
+      );
+    }
+  });
 });
 
 describe('three dimensions on an axis', () => {
@@ -197,6 +220,38 @@ describe('the entity axis shows only what the context can see', () => {
       months: ['2026-07'],
     });
     expect(pivot.rowPaths.map((p) => p[0]?.key)).toEqual(['gulf']);
+  });
+});
+
+describe('dimension axes can only narrow a mandatory context filter', () => {
+  it('offers only the granted segment and carries it into every cell', () => {
+    const pivot = buildPivot({
+      ctx: ctx({ segmentId: 'contracts' }),
+      rows: ['segment'],
+      columns: ['period'],
+      measureIds: ['revenue'],
+      months: [SEED_END],
+    });
+
+    expect(pivot.rowPaths.map((path) => path[0]?.key)).toEqual(['contracts']);
+    expect(pivot.rows.flatMap((row) => row.cells).every((cell) => cell.ctx.segmentId === 'contracts')).toBe(true);
+  });
+
+  it('offers only the granted cost centre and carries it into every cell', () => {
+    const pivot = buildPivot({
+      ctx: ctx({ costCentreId: 'operations' }),
+      rows: ['cost_centre'],
+      columns: ['period'],
+      measureIds: ['staff_cost'],
+      months: [SEED_END],
+    });
+
+    expect(pivot.rowPaths.map((path) => path[0]?.key)).toEqual(['operations']);
+    expect(
+      pivot.rows
+        .flatMap((row) => row.cells)
+        .every((cell) => cell.ctx.costCentreId === 'operations'),
+    ).toBe(true);
   });
 });
 

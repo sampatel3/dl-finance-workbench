@@ -25,6 +25,12 @@ export async function GET(request: Request): Promise<Response> {
     );
   }
   const state = exploreState(params);
+  if (state.dimensionRefusal !== undefined) {
+    return Response.json(
+      { error: state.dimensionRefusal, principal: state.view.principal.id },
+      { status: 403 },
+    );
+  }
   const filename = `kestrel-explore-${state.view.through}.csv`;
 
   return new Response(exploreCsv(state), {

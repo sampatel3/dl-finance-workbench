@@ -34,10 +34,11 @@ import {
   daysInMonth,
   forecastWeeks,
   monthScope,
+  priorYearScope,
 } from '@kestrel/model';
 import { entity, rateFor, translate, translateAtOf } from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
-import { computeMeasure } from '@kestrel/measures';
+import { computeMeasure, contextAtScope } from '@kestrel/measures';
 
 // ---------------------------------------------------------------------------
 // The board's floor
@@ -132,21 +133,28 @@ export function directForecast(
   ctx: MeasureContext,
   anchor: FiscalMonth = ctx.scope.endMonth,
 ): DirectForecast {
-  const at = (measureId: string, scope: PeriodScope): number =>
-    computeMeasure(measureId, { ...ctx, scope }).value ?? 0;
-
   const anchorScope = monthScope(anchor);
-  const opening = at('cash', anchorScope);
-  const receivables = at('receivables', anchorScope);
-  const dso = at('dso', anchorScope);
-  const dpo = at('dpo', anchorScope);
+  // The direct forecast is a point-in-time treasury view. A selected quarter or YTD window belongs
+  // to the indirect bridge below; letting it leak into any direct input multiplies cash-flow accounts
+  // by the reporting window and mixes period-average FX into an otherwise monthly opening position.
+  const anchorCtx: MeasureContext = {
+    ...ctx,
+    scope: anchorScope,
+    ...(ctx.lens === 'constant' ? { comparativeScope: priorYearScope(anchorScope) } : {}),
+  };
+  const at = (measureId: string): number => computeMeasure(measureId, anchorCtx).value ?? 0;
 
-  const monthlyRevenue = at('revenue', anchorScope);
-  const monthlyCost = at('cost_of_sales', anchorScope);
-  const monthlyStaff = at('staff_cost', anchorScope);
-  const monthlyOther = at('other_opex', anchorScope) + at('unmapped_opex', anchorScope);
-  const monthlyTax = at('tax', anchorScope);
-  const monthlyInterest = at('interest', anchorScope);
+  const opening = at('cash');
+  const receivables = at('receivables');
+  const dso = at('dso');
+  const dpo = at('dpo');
+
+  const monthlyRevenue = at('revenue');
+  const monthlyCost = at('cost_of_sales');
+  const monthlyStaff = at('staff_cost');
+  const monthlyOther = at('other_opex') + at('unmapped_opex');
+  const monthlyTax = at('tax');
+  const monthlyInterest = at('interest');
   const days = daysInMonth(anchor);
 
   // Thirteen weeks is 91 days, and the horizon is expressed in days throughout so a collection
@@ -165,9 +173,9 @@ export function directForecast(
   const otherPerWeek = (monthlyOther * months) / CASH_HORIZON_WEEKS;
   const taxTotal = monthlyTax * months;
   const interestTotal = monthlyInterest * months;
-  const capexTotal = cashFlowAccount(ctx, 'capex') * months;
-  const dividendTotal = cashFlowAccount(ctx, 'dividends') * months;
-  const borrowingTotal = cashFlowAccount(ctx, 'net_borrowing') * months;
+  const capexTotal = cashFlowAccount(anchorCtx, 'capex') * months;
+  const dividendTotal = cashFlowAccount(anchorCtx, 'dividends') * months;
+  const borrowingTotal = cashFlowAccount(anchorCtx, 'net_borrowing') * months;
 
   const receiptWeight = sum(RECEIPT_PROFILE);
   const supplierWeight = sum(SUPPLIER_PROFILE);
@@ -364,7 +372,7 @@ export interface IndirectBridge {
 export function indirectBridge(ctx: MeasureContext): IndirectBridge {
   const priorScope = monthScope(addMonths(ctx.scope.startMonth, -1));
   const at = (measureId: string, scope: PeriodScope): number =>
-    computeMeasure(measureId, { ...ctx, scope }).value ?? 0;
+    computeMeasure(measureId, contextAtScope(ctx, scope)).value ?? 0;
 
   const from = at('cash', priorScope);
   const to = at('cash', ctx.scope);
@@ -482,9 +490,12 @@ export interface CashSensitivity {
 }
 
 export function cashSensitivity(ctx: MeasureContext, revenueDelta: number): CashSensitivity {
-  const revenue = computeMeasure('revenue', ctx).value ?? 0;
-  const margin = computeMeasure('gross_margin', ctx).value ?? 0;
-  const dso = computeMeasure('dso', ctx).value ?? 0;
+  // This is a thirteen-week run-rate answer. Wider reporting windows describe performance, but they
+  // must not multiply the monthly revenue shock while the stated cash horizon stays fixed.
+  const anchorCtx = contextAtScope(ctx, monthScope(ctx.scope.endMonth));
+  const revenue = computeMeasure('revenue', anchorCtx).value ?? 0;
+  const margin = computeMeasure('gross_margin', anchorCtx).value ?? 0;
+  const dso = computeMeasure('dso', anchorCtx).value ?? 0;
 
   const revenueChange = revenue * revenueDelta;
   const marginEffect = revenueChange * margin;

@@ -13,10 +13,17 @@ import type {
   CommentaryItem,
   CommentaryState,
   Fact,
+  PeriodScope,
   PublishedCommentarySnapshot,
   World,
 } from '@kestrel/model';
-import { account, carryForwardCommentary, entity, segment } from '@kestrel/model';
+import {
+  account,
+  carryForwardCommentary,
+  entity,
+  seedSelectedCommentaryDraft,
+  segment,
+} from '@kestrel/model';
 import type { BridgeBar, DriverDefinition } from '@kestrel/analysis';
 import { attributeBar, buildBridge } from '@kestrel/analysis';
 import type {
@@ -26,12 +33,88 @@ import type {
   MeasureWithComparison,
   Unit,
 } from '@kestrel/measures';
-import { compareMeasure, computeMeasure, formatValue, resolveComparator } from '@kestrel/measures';
+import {
+  compareMeasure,
+  computeMeasure,
+  contextAtScope,
+  formatValue,
+  resolveComparator,
+} from '@kestrel/measures';
 
 import type { Principal } from './permissions';
-import { resolvePermissionScope } from './permissions';
+import { resolveDimensionScope, resolvePermissionScope } from './permissions';
 import type { View } from './world';
-import { contextOf } from './world';
+import { contextOf, scopeLabel } from './world';
+
+/** The full reporting identity a card prints; never reduce a multi-month record to its last month. */
+export function commentaryPeriodLabel(period: PeriodScope): string {
+  switch (period.type) {
+    case 'MONTH':
+      return scopeLabel('month', period);
+    case 'QUARTER':
+      return scopeLabel('quarter', period);
+    case 'HALF_YEAR':
+      return scopeLabel('half_year', period);
+    case 'FISCAL_YEAR':
+      return scopeLabel('year', period);
+    case 'YTD':
+      return scopeLabel('ytd', period);
+    case 'TTM':
+      return period.label;
+  }
+}
+
+/**
+ * Build the unapproved draft driven by the shared period and comparator selectors.
+ *
+ * It is separate from the seeded approval queue because a new reporting identity cannot inherit an
+ * old approval. Every selector click therefore changes both the visible identity and the evidence,
+ * while the workflow examples below it remain immutable historical records.
+ */
+export function selectedCommentaryForView(
+  model: World,
+  view: View,
+  options: { readonly measureId?: string; readonly segmentId?: CommentaryItem['anchor']['segmentId'] } = {},
+): CommentaryItem {
+  return commentarySelectionForView(model, view, options).item;
+}
+
+export interface CommentarySelection {
+  readonly item: CommentaryItem;
+  /** A conflicting deep-link slice is clamped to the mandatory grant and named to the reader. */
+  readonly refusal?: string;
+}
+
+export function commentarySelectionForView(
+  model: World,
+  view: View,
+  options: { readonly measureId?: string; readonly segmentId?: CommentaryItem['anchor']['segmentId'] } = {},
+): CommentarySelection {
+  const dimensions = resolveDimensionScope(view.permission, {
+    ...(options.segmentId === undefined ? {} : { segmentId: options.segmentId }),
+  });
+  const filters = dimensions.allowed ? dimensions.filters : view.permission.dimensionFilters;
+  const versionId =
+    view.comparator.id === 'budget'
+      ? (view.comparator.versionId ?? 'budget-fy26')
+      : view.comparator.id === 'forecast'
+        ? (view.comparator.versionId ?? view.version.id)
+        : view.version.id;
+  const item = seedSelectedCommentaryDraft(model, {
+    period: view.scope,
+    comparatorId: view.comparator.id,
+    versionId,
+    entityId: view.entityId,
+    ...(options.measureId === undefined ? {} : { measureId: options.measureId }),
+    ...(filters.segmentId === undefined
+      ? {}
+      : { segmentId: filters.segmentId }),
+  });
+  return {
+    item,
+    ...(dimensions.allowed ? {} : { refusal: dimensions.refusal }),
+  };
+}
 
 export const COMMENTARY_STATES: readonly CommentaryState[] = [
   'draft',
@@ -84,7 +167,13 @@ export function commentaryAffordances(
  */
 export function canReadCommentary(item: CommentaryItem, view: View): boolean {
   const permission = resolvePermissionScope(view.principal, item.anchor.entityId);
-  return permission.allowed && item.anchor.entityId === view.entityId;
+  if (!permission.allowed || item.anchor.entityId !== view.entityId) return false;
+  const dimensions = resolveDimensionScope(permission.scope, {
+    ...(item.anchor.segmentId === undefined ? {} : { segmentId: item.anchor.segmentId }),
+  });
+  if (!dimensions.allowed) return false;
+  const requiredSegment = permission.scope.dimensionFilters.segmentId;
+  return requiredSegment === undefined || item.anchor.segmentId === requiredSegment;
 }
 
 export function commentaryForView(
@@ -182,7 +271,11 @@ function sourceRows(
         scenario: ctx.scenario,
         versionId: ctx.versionId,
         costCentreId: null,
-        ...(SEGMENTED_ACCOUNTS.has(input.accountId) ? {} : { segmentId: null }),
+        ...(ctx.segmentId !== undefined
+          ? { segmentId: ctx.segmentId }
+          : SEGMENTED_ACCOUNTS.has(input.accountId)
+            ? {}
+            : { segmentId: null }),
         ...(ctx.asOfVintage === undefined ? {} : { asOfVintage: ctx.asOfVintage }),
       });
       for (const row of result.rows) {
@@ -234,9 +327,18 @@ function comparatorFor(item: CommentaryItem): ComparatorChoice {
 
 function comparativeContext(ctx: MeasureContext, choice: ComparatorChoice): MeasureContext {
   const resolved = resolveComparator(choice, ctx);
+  const historicalTimeComparator =
+    ctx.lens === 'constant' &&
+    (choice.id === 'prior_period' || choice.id === 'prior_year');
   return {
-    ...ctx,
-    scope: resolved.scope ?? ctx.scope,
+    ...contextAtScope(ctx, resolved.scope ?? ctx.scope),
+    // Keep the evidence chain on the same basis as compareMeasure. Constant currency rebases the
+    // current side to the historical window; that historical side is itself reported currency.
+    // Rebasing it again would borrow rates from a second year and make its drivers miss the quoted
+    // movement.
+    ...(historicalTimeComparator
+      ? { lens: 'reported' as const, comparativeScope: undefined }
+      : {}),
     scenario: resolved.scenario ?? ctx.scenario,
     versionId: resolved.versionId ?? ctx.versionId,
   };
@@ -373,10 +475,14 @@ export function commentaryEvidence(
   }
 
   const dataVintageId = item.publishedSnapshot?.dataVintageId ?? item.provenance.dataVintageId;
+  const dimensions = resolveDimensionScope(view.permission, {
+    ...(item.anchor.segmentId === undefined ? {} : { segmentId: item.anchor.segmentId }),
+  });
+  if (!dimensions.allowed) throw new Error(dimensions.refusal);
   const ctx: MeasureContext = {
-    ...contextOf(view),
-    scope: item.period,
+    ...contextAtScope(contextOf(view), item.period),
     asOfVintage: dataVintageId,
+    ...dimensions.filters,
   };
   const choice = comparatorFor(item);
   const comparison = compareMeasure(item.anchor.measureId, ctx, choice);

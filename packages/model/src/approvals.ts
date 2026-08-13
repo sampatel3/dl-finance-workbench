@@ -7,9 +7,17 @@
  * a named person approved.
  */
 
-import { addMonths, monthScope } from './period.ts';
+import {
+  CALENDAR_YEAR,
+  addMonths,
+  fiscalYearScope,
+  halfYearScope,
+  monthScope,
+  quarterScope,
+} from './period.ts';
 import type { PeriodScope } from './period.ts';
 import type { World } from './seed.ts';
+import type { SegmentCode } from './taxonomy.ts';
 
 export type CommentaryState = 'draft' | 'in_review' | 'approved' | 'published' | 'rejected';
 
@@ -23,6 +31,7 @@ export type CommentaryComparatorId =
 export interface CommentaryAnchor {
   readonly measureId: string;
   readonly entityId: string;
+  readonly segmentId?: SegmentCode;
 }
 
 export interface CommentaryProvenance {
@@ -188,7 +197,11 @@ export function transitionCommentary(
 }
 
 function sameAnchor(a: CommentaryAnchor, b: CommentaryAnchor): boolean {
-  return a.measureId === b.measureId && a.entityId === b.entityId;
+  return (
+    a.measureId === b.measureId &&
+    a.entityId === b.entityId &&
+    a.segmentId === b.segmentId
+  );
 }
 
 /** The latest earlier published snapshot for the current item's anchor and comparator. */
@@ -199,6 +212,7 @@ export function carryForwardCommentary(
   return items
     .flatMap((item) => (item.publishedSnapshot === undefined ? [] : [item.publishedSnapshot]))
     .filter((snapshot) => sameAnchor(snapshot.anchor, current.anchor))
+    .filter((snapshot) => snapshot.period.type === current.period.type)
     .filter((snapshot) => snapshot.comparatorId === current.comparatorId)
     .filter((snapshot) => snapshot.period.endMonth < current.period.startMonth)
     .sort((a, b) => b.period.endMonth.localeCompare(a.period.endMonth))[0];
@@ -210,19 +224,22 @@ function modelDraft(
     readonly versionId?: string;
   },
 ): CommentaryItem {
+  const versionId = input.versionId ?? 'v6';
   return createCommentaryDraft({
     id: input.id,
     anchor: input.anchor,
     period: input.period,
     comparatorId: input.comparatorId,
-    versionId: input.versionId ?? 'v6',
+    versionId,
     headline: input.headline,
     detail: input.detail,
     author: input.author,
     createdAt: input.createdAt,
     provenance: {
       figureRefs: [
-        `${input.anchor.measureId}:${input.anchor.entityId}:${input.period.startMonth}:${input.period.endMonth}`,
+        `${input.anchor.measureId}:${input.anchor.entityId}:` +
+          `${input.anchor.segmentId ?? 'all-segments'}:${input.period.startMonth}:` +
+          `${input.period.endMonth}:comparator=${input.comparatorId}:version=${versionId}`,
       ],
       authoredBy: 'model',
       modelId: 'claude-opus-5',
@@ -230,6 +247,122 @@ function modelDraft(
       dataVintageId: input.dataVintageId,
     },
   });
+}
+
+/** A deterministic rules-written fallback must never claim that a model ran. */
+function codeDraft(
+  input: Omit<CommentaryDraftInput, 'provenance'> & { readonly dataVintageId: string },
+): CommentaryItem {
+  return createCommentaryDraft({
+    id: input.id,
+    anchor: input.anchor,
+    period: input.period,
+    comparatorId: input.comparatorId,
+    versionId: input.versionId,
+    headline: input.headline,
+    detail: input.detail,
+    author: input.author,
+    createdAt: input.createdAt,
+    provenance: {
+      figureRefs: [
+        `${input.anchor.measureId}:${input.anchor.entityId}:` +
+          `${input.anchor.segmentId ?? 'all-segments'}:${input.period.startMonth}:` +
+          `${input.period.endMonth}:comparator=${input.comparatorId}:version=${input.versionId}`,
+      ],
+      authoredBy: 'code',
+      dataVintageId: input.dataVintageId,
+    },
+  });
+}
+
+const COMMENTARY_COMPARATOR_LABELS: Readonly<Record<CommentaryComparatorId, string>> = {
+  prior_period: 'prior period',
+  prior_year: 'prior year',
+  budget: 'budget',
+  forecast: 'forecast',
+  trend: 'trend expectation',
+};
+
+export interface SelectedCommentaryInput {
+  readonly period: PeriodScope;
+  readonly comparatorId: CommentaryComparatorId;
+  readonly versionId: string;
+  readonly entityId: string;
+  readonly measureId?: string;
+  readonly segmentId?: SegmentCode;
+}
+
+/**
+ * A deterministic first draft for the selected reporting identity.
+ *
+ * This is deliberately a new draft rather than a projection of an approved record: changing period
+ * or comparator changes the figures, so carrying an earlier approval badge onto it would fabricate
+ * governance history. The approval queue remains the evidence that the workflow exists.
+ */
+function selectedCommentaryDraft(
+  world: World,
+  input: SelectedCommentaryInput,
+  authoredBy: 'code' | 'model',
+): CommentaryItem {
+  const dataVintage = world.register.currentFor(input.period.endMonth);
+  if (dataVintage === undefined) {
+    throw new Error(`Commentary requires an accepted vintage through ${input.period.endMonth}`);
+  }
+  const measureId = input.measureId ?? 'revenue';
+  const measureLabel = measureId.replaceAll('_', ' ');
+  const comparator = COMMENTARY_COMPARATOR_LABELS[input.comparatorId];
+  const draft = {
+    id:
+      `commentary:selected:${measureId}:${input.entityId}:${input.period.startMonth}:` +
+      `${input.period.endMonth}:${input.comparatorId}:${input.versionId}:` +
+      `${input.segmentId ?? 'all-segments'}`,
+    anchor: {
+      measureId,
+      entityId: input.entityId,
+      ...(input.segmentId === undefined ? {} : { segmentId: input.segmentId }),
+    },
+    period: input.period,
+    comparatorId: input.comparatorId,
+    versionId: input.versionId,
+    headline: `${input.period.label} ${measureLabel} commentary against ${comparator} is ready for review.`,
+    detail:
+      `This draft states the ${input.period.startMonth} to ${input.period.endMonth} reporting window ` +
+      `and its ${comparator} basis; the supporting chain recomputes both from governed figures.`,
+    author:
+      authoredBy === 'model' ? 'Finance commentary assistant' : 'Finance commentary rules',
+    createdAt: '2026-08-04T08:20:00Z',
+    dataVintageId: dataVintage.id,
+  };
+  return authoredBy === 'model' ? modelDraft(draft) : codeDraft(draft);
+}
+
+export function seedSelectedCommentaryDraft(
+  world: World,
+  input: SelectedCommentaryInput,
+): CommentaryItem {
+  return selectedCommentaryDraft(world, input, 'code');
+}
+
+function publishSeededCommentary(item: CommentaryItem, minute: string): CommentaryItem {
+  return transitionCommentary(
+    transitionCommentary(
+      transitionCommentary(item, {
+        action: 'submit',
+        actor: 'FP&A Manager',
+        at: `2026-08-04T${minute}:00Z`,
+      }),
+      {
+        action: 'approve',
+        actor: 'Group Financial Controller',
+        at: `2026-08-04T${minute}:30Z`,
+      },
+    ),
+    {
+      action: 'publish',
+      actor: 'Chief Financial Officer',
+      at: `2026-08-04T${minute}:45Z`,
+    },
+  );
 }
 
 /**
@@ -366,5 +499,33 @@ export function seedCommentaryQueue(world: World): CommentaryItem[] {
     },
   );
 
-  return [draft, inReview, approved, published, rejected];
+  const quarter = publishSeededCommentary(
+    selectedCommentaryDraft(world, {
+      period: quarterScope(2026, 2, CALENDAR_YEAR),
+      comparatorId: 'prior_period',
+      versionId: 'v6',
+      entityId: 'group',
+    }, 'model'),
+    '11:00',
+  );
+  const halfYear = publishSeededCommentary(
+    selectedCommentaryDraft(world, {
+      period: halfYearScope(2026, 1, CALENDAR_YEAR),
+      comparatorId: 'prior_year',
+      versionId: 'v6',
+      entityId: 'group',
+    }, 'model'),
+    '11:10',
+  );
+  const year = publishSeededCommentary(
+    selectedCommentaryDraft(world, {
+      period: fiscalYearScope(2025, CALENDAR_YEAR),
+      comparatorId: 'prior_year',
+      versionId: 'v6',
+      entityId: 'group',
+    }, 'model'),
+    '11:20',
+  );
+
+  return [draft, inReview, approved, published, rejected, quarter, halfYear, year];
 }

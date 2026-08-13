@@ -183,6 +183,20 @@ describe('segments with no natural unit are reported whole', () => {
   });
 });
 
+describe('a bridge cannot widen a mandatory segment slice', () => {
+  it('contains contributions from the selected segment only', () => {
+    const bridge = buildBridge({
+      measureId: 'revenue',
+      ctx: ctx({ segmentId: 'contracts' }),
+      comparator: { id: 'forecast', versionId: 'v6' },
+    });
+    const segmentKeys = bridge.bars.flatMap((bar) => [...(bar.bySegment?.keys() ?? [])]);
+
+    expect(new Set(segmentKeys)).toEqual(new Set(['contracts']));
+    expect(bridge.sums).toBe(true);
+  });
+});
+
 describe('the caption the concept slide asks for', () => {
   it('names the largest driver and the segment behind it, computed rather than written', () => {
     // PLANTED 1 — July revenue beat forecast v6 mainly on volume, which is the slide's own sentence.

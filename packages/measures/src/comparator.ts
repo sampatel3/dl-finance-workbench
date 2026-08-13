@@ -23,7 +23,7 @@ import type { FiscalMonth, PeriodScope, Scenario } from '@kestrel/model';
 import { addMonths, priorPeriodScope, priorYearScope } from '@kestrel/model';
 
 import type { MeasureContext, MeasureValue } from './compute.ts';
-import { computeMeasure, measureSeries } from './compute.ts';
+import { computeMeasure, contextAtScope, measureSeries } from './compute.ts';
 import { measure } from './catalogue.ts';
 import { delta } from './units.ts';
 import type { Unit } from './units.ts';
@@ -166,12 +166,23 @@ export function compareMeasure(
   const comparativeValue =
     comparator.kind === 'fit'
       ? trendExpectation(id, ctx)
-      : computeMeasure(id, {
-          ...ctx,
-          scope: comparator.scope ?? ctx.scope,
-          scenario: comparator.scenario ?? ctx.scenario,
-          versionId: comparator.versionId ?? ctx.versionId,
-        }).value;
+      : (() => {
+          const scoped = contextAtScope(ctx, comparator.scope ?? ctx.scope);
+          // A time comparator is the reported historic figure. Constant currency changes the current
+          // side by translating it at that historic window's rates; applying another constant transform
+          // to the historic side would borrow rates from a second, unrelated year.
+          const historicalTimeComparator =
+            ctx.lens === 'constant' &&
+            (choice.id === 'prior_period' || choice.id === 'prior_year');
+          return computeMeasure(id, {
+            ...scoped,
+            ...(historicalTimeComparator
+              ? { lens: 'reported' as const, comparativeScope: undefined }
+              : {}),
+            scenario: comparator.scenario ?? ctx.scenario,
+            versionId: comparator.versionId ?? ctx.versionId,
+          }).value;
+        })();
 
   const movement = delta(current.value, comparativeValue, current.unit);
   const favourable =

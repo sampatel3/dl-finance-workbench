@@ -38,8 +38,11 @@ import {
   VERSIONS,
   buildWorld,
   entity,
+  fiscalHalfOf,
   fiscalQuarterOf,
+  fiscalYearScope,
   fiscalYearOf,
+  halfYearScope,
   monthScope,
   quarterScope,
   tradingEntities,
@@ -77,16 +80,17 @@ export const SELECTABLE_MONTHS: readonly FiscalMonth[] = [...MONTHS].slice(-12).
 /**
  * The period shapes a reader can choose.
  *
- * Three, not the model's six. Half-year and trailing-twelve exist in the model and are not offered
- * here: a selector with six options is a selector nobody reads, and those two are the shapes an
- * executive asks for least. The model keeps them so the analyst surfaces can offer them.
+ * The four reporting grains required by FW-AI-005, plus year to date because it remains useful on
+ * the executive surfaces. Trailing twelve months stays an analyst-only grain.
  */
-export const PERIOD_KINDS = ['month', 'quarter', 'ytd'] as const;
+export const PERIOD_KINDS = ['month', 'quarter', 'half_year', 'year', 'ytd'] as const;
 export type PeriodKind = (typeof PERIOD_KINDS)[number];
 
 export const PERIOD_LABELS: Readonly<Record<PeriodKind, string>> = {
   month: 'Month',
   quarter: 'Quarter',
+  half_year: 'Half-year',
+  year: 'Year',
   ytd: 'Year to date',
 };
 
@@ -134,6 +138,27 @@ export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
         label: `${quarter.label} through ${monthLabel(through)}`,
       };
     }
+    case 'half_year': {
+      const fiscalYear = fiscalYearOf(through, CALENDAR_YEAR);
+      const fiscalHalf = fiscalHalfOf(through, CALENDAR_YEAR);
+      const half = halfYearScope(fiscalYear, fiscalHalf, CALENDAR_YEAR);
+      if (half.endMonth === through) return half;
+      return {
+        ...half,
+        endMonth: through,
+        label: `${half.label} through ${monthLabel(through)}`,
+      };
+    }
+    case 'year': {
+      const fiscalYear = fiscalYearOf(through, CALENDAR_YEAR);
+      const year = fiscalYearScope(fiscalYear, CALENDAR_YEAR);
+      if (year.endMonth === through) return year;
+      return {
+        ...year,
+        endMonth: through,
+        label: `${year.label} through ${monthLabel(through)}`,
+      };
+    }
     case 'ytd':
       return ytdScope(through, CALENDAR_YEAR);
   }
@@ -155,6 +180,23 @@ export function scopeLabel(kind: PeriodKind, scope: PeriodScope): string {
       const quarter = quarterScope(fiscalYear, fiscalQuarter, CALENDAR_YEAR);
       const label = `Q${fiscalQuarter} ${fiscalYear}`;
       return scope.endMonth === quarter.endMonth
+        ? label
+        : `${label} through ${monthLabel(scope.endMonth)}`;
+    }
+    case 'half_year': {
+      const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
+      const fiscalHalf = fiscalHalfOf(scope.endMonth, CALENDAR_YEAR);
+      const half = halfYearScope(fiscalYear, fiscalHalf, CALENDAR_YEAR);
+      const label = `H${fiscalHalf} ${fiscalYear}`;
+      return scope.endMonth === half.endMonth
+        ? label
+        : `${label} through ${monthLabel(scope.endMonth)}`;
+    }
+    case 'year': {
+      const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
+      const year = fiscalYearScope(fiscalYear, CALENDAR_YEAR);
+      const label = `FY${fiscalYear}`;
+      return scope.endMonth === year.endMonth
         ? label
         : `${label} through ${monthLabel(scope.endMonth)}`;
     }
@@ -181,6 +223,8 @@ export interface View {
   readonly lens: CurrencyLens;
   /** The forecast version this view reads, and the one a `forecast` comparator compares against. */
   readonly version: VersionSpec;
+  /** The dataset Explore inspects; ordinary finance surfaces default to actual. */
+  readonly dataScenario: 'ACTUAL' | 'BUDGET' | 'FORECAST';
   /** The current demo-kit embedded product treatment, retained by every internal URL. */
   readonly inner: boolean;
   /** Free-mode inner views keep a compact product navigator while guided frames stay presentation-only. */
@@ -195,7 +239,22 @@ export type Params = Readonly<Record<string, string | string[] | undefined>>;
 const first = (value: string | string[] | undefined): string | undefined =>
   Array.isArray(value) ? value[0] : value;
 
-export function viewOf(params: Params = {}): View {
+export interface ViewOptions {
+  /** Dataset switching is an Explore/Ask concern; other surfaces always report closed actuals. */
+  readonly allowDataScenario?: boolean;
+}
+
+/** Resolve only stored forecast versions; budget is a separate scenario, never a forecast alias. */
+export function forecastVersionById(id: string | undefined): VersionSpec | undefined {
+  return VERSIONS.find((version) => version.scenario === 'FORECAST' && version.id === id);
+}
+
+/** Keep hand-edited forecast comparisons inside the forecast version set. */
+export function forecastVersionIdOr(id: string | undefined, fallback: string): string {
+  return forecastVersionById(id)?.id ?? fallback;
+}
+
+export function viewOf(params: Params = {}, options: ViewOptions = {}): View {
   let fellBack = false;
   /** Record that a parameter was present and unreadable, then use the default. */
   const fallback = <T>(value: T): T => {
@@ -223,8 +282,20 @@ export function viewOf(params: Params = {}): View {
 
   const approved = activeApprovedForecast();
   const versionRaw = first(params.version);
-  const found = VERSIONS.find((v) => v.id === versionRaw);
+  const found = forecastVersionById(versionRaw);
   const version = found ?? (versionRaw === undefined ? approved : fallback<VersionSpec>(approved));
+
+  const scenarioRaw = options.allowDataScenario ? first(params.scenario) : undefined;
+  const dataScenario: 'ACTUAL' | 'BUDGET' | 'FORECAST' =
+    scenarioRaw === 'actual'
+      ? 'ACTUAL'
+      : scenarioRaw === 'budget'
+        ? 'BUDGET'
+        : scenarioRaw === 'forecast'
+          ? 'FORECAST'
+          : scenarioRaw === undefined
+            ? 'ACTUAL'
+            : fallback<'ACTUAL'>('ACTUAL');
 
   const comparatorRaw = first(params.comparator);
   const comparatorId: ComparatorId = COMPARATORS.includes(comparatorRaw as ComparatorId)
@@ -270,7 +341,7 @@ export function viewOf(params: Params = {}): View {
 
   const lensRaw = first(params.lens);
   const lens: CurrencyLens =
-    lensRaw === 'constant' || lensRaw === 'functional' || lensRaw === 'reported'
+    lensRaw === 'constant' || lensRaw === 'reported'
       ? lensRaw
       : lensRaw === undefined
         ? 'reported'
@@ -290,6 +361,7 @@ export function viewOf(params: Params = {}): View {
     entityId,
     lens,
     version,
+    dataScenario,
     inner,
     surfaceNav,
     fellBack,
@@ -306,16 +378,36 @@ export function viewOf(params: Params = {}): View {
  * constant-currency figure read identical to reported, and every one of them looked plausible.
  */
 export function contextOf(view: View): MeasureContext {
+  const versionId =
+    view.dataScenario === 'ACTUAL'
+      ? ACTUAL_VERSION
+      : view.dataScenario === 'BUDGET'
+        ? 'budget-fy26'
+        : view.version.id;
   return {
     store: world().store,
     rates: world().rates,
     scope: view.scope,
-    scenario: 'ACTUAL',
-    versionId: ACTUAL_VERSION,
+    scenario: view.dataScenario,
+    versionId,
     lens: view.lens,
     entityIds: view.permission.entityIds,
     ...view.permission.dimensionFilters,
     ...(view.lens === 'constant' ? { comparativeScope: priorYearOf(view.scope) } : {}),
+  };
+}
+
+/** The canonical URL fields needed to reconstruct a view at a non-navigation boundary such as Ask. */
+export function paramsForView(view: View): Params {
+  return {
+    as: view.principal.id,
+    period: view.periodKind,
+    month: view.through,
+    comparator: view.comparator.id,
+    entity: view.entityId,
+    lens: view.lens,
+    version: view.version.id,
+    scenario: view.dataScenario.toLowerCase(),
   };
 }
 
@@ -381,6 +473,7 @@ export function hrefFor(
     entity: string;
     lens: CurrencyLens;
     version: string;
+    scenario: 'actual' | 'budget' | 'forecast';
     persona: PersonaId;
   }> = {},
 ): string {
@@ -395,6 +488,7 @@ export function hrefFor(
       changes.entity ?? (personaChanged ? targetPrincipal.grant.entityRootId : view.entityId),
     lens: changes.lens ?? view.lens,
     version: changes.version ?? view.version.id,
+    scenario: changes.scenario ?? view.dataScenario.toLowerCase(),
   };
   const params = new URLSearchParams();
   if (personaId !== DEFAULT_PERSONA_ID) params.set('as', personaId);
@@ -404,6 +498,9 @@ export function hrefFor(
   if (merged.entity !== targetPrincipal.grant.entityRootId) params.set('entity', merged.entity);
   if (merged.lens !== 'reported') params.set('lens', merged.lens);
   if (merged.version !== activeApprovedForecast().id) params.set('version', merged.version);
+  if (path === '/app/explore' && merged.scenario !== 'actual') {
+    params.set('scenario', merged.scenario);
+  }
   if (view.inner) params.set('view', 'inner');
   if (view.surfaceNav) params.set('shell', 'free');
   const query = params.toString();
@@ -424,6 +521,7 @@ export function hrefForTarget(target: string, view: View): string {
 
   for (const [key, value] of requested.searchParams) {
     if (key === 'as' || key === 'view' || key === 'shell') continue;
+    if (key === 'scenario' && requested.pathname !== '/app/explore') continue;
     if (key === 'entity' && !resolvePermissionScope(view.principal, value).allowed) continue;
     resolved.searchParams.set(key, value);
   }

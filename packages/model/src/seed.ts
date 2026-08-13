@@ -54,7 +54,14 @@ export const SEED_START: FiscalMonth = '2023-01';
  */
 export const SEED_END: FiscalMonth = '2026-07';
 
+/** The governed FY26 planning horizon. It is deliberately later than the last closed month. */
+export const PLANNING_END: FiscalMonth = '2026-12';
+
+/** Closed months exposed by the reporting-period selector. */
 export const MONTHS: readonly FiscalMonth[] = monthsBetween(SEED_START, SEED_END);
+
+/** Months carried by governed budget and forecast versions, including the unclosed FY26 remainder. */
+export const PLANNING_MONTHS: readonly FiscalMonth[] = monthsBetween(SEED_START, PLANNING_END);
 
 /** The month every anchor figure below is quoted at. Index 42 of `MONTHS`. */
 const ANCHOR: FiscalMonth = SEED_END;
@@ -572,8 +579,8 @@ function buildRates(seed: string, healthy: boolean): RateTable {
   const rates: MonthRate[] = [];
   for (const currency of ['USD', 'EUR', 'AED'] as const) {
     let previousClosing = 0;
-    for (const month of MONTHS) {
-      const t = MONTHS.indexOf(month) - ANCHOR_INDEX;
+    for (const month of PLANNING_MONTHS) {
+      const t = PLANNING_MONTHS.indexOf(month) - ANCHOR_INDEX;
       const drift = healthy ? 0 : RATE_DRIFT[currency];
       const trend = RATE_ANCHOR[currency] * (1 + drift) ** t;
       const closing = trend * (1 + noise(`${seed}|fx|${currency}|${month}`) * 0.011);
@@ -590,7 +597,11 @@ function buildRates(seed: string, healthy: boolean): RateTable {
       });
     }
   }
-  return { id: 'fx-2026-07-ecb-close', source: 'Group treasury, ECB close', rates };
+  return {
+    id: 'fx-fy26-governed',
+    source: 'Group treasury, ECB close through July; governed FY26 rates thereafter',
+    rates,
+  };
 }
 
 const round = (value: number, places: number): number => {
@@ -1483,6 +1494,22 @@ function buildRegister(healthy: boolean): VintageRegister {
     }
   }
 
+  // Budget and forecast rows for the unclosed part of FY26 arrived with the July planning cycle.
+  // They are planning vintages, not future source-system loads: ACTUAL feeds and close positions
+  // still stop at SEED_END, while each projected fact retains an immutable governed source id.
+  for (const month of PLANNING_MONTHS.filter((candidate) => candidate > SEED_END)) {
+    register.addVintage({
+      id: sourceVintageId('plan-anaplan', month),
+      sourceId: 'plan-anaplan',
+      fromMonth: month,
+      toMonth: month,
+      loadedAt: `${addMonths(SEED_END, 1)}-04T${loadedAtBySource['plan-anaplan']}Z`,
+      status: 'accepted',
+      rowCount: 6_000 + Math.round(noise(`rows|plan-anaplan|${month}`) * 900),
+      note: 'FY26 budget and forecast horizon loaded with the July planning cycle.',
+    });
+  }
+
   // PLANTED 11 — the restatement. It arrives after the load it corrects, which the register
   // enforces, and it is why a published pack pins a vintage.
   if (!healthy) {
@@ -1581,13 +1608,14 @@ function generateEntity(
   s: EntitySpec,
   assumptions: AssumptionSet,
   actualsThrough: FiscalMonth,
+  months: readonly FiscalMonth[],
   seed: string,
   healthy: boolean,
   rates: Rates,
 ): void {
   let carried: Carried | null = null;
 
-  MONTHS.forEach((month, index) => {
+  months.forEach((month, index) => {
     const projecting = month > actualsThrough;
     const a = projecting ? assumptions : ACTUAL_ASSUMPTIONS;
     const effective = healthy ? healthyAssumptions(a) : a;
@@ -1891,6 +1919,7 @@ export function buildWorld(options: WorldOptions): World {
       s,
       ACTUAL_ASSUMPTIONS,
       SEED_END,
+      MONTHS,
       seed,
       healthy,
       rates,
@@ -1909,6 +1938,7 @@ export function buildWorld(options: WorldOptions): World {
         s,
         version.assumptions,
         version.actualsThrough,
+        PLANNING_MONTHS,
         seed,
         healthy,
         rates,
@@ -1928,6 +1958,7 @@ export function buildWorld(options: WorldOptions): World {
         s,
         scenario.assumptions,
         scenario.actualsThrough,
+        PLANNING_MONTHS,
         seed,
         healthy,
         rates,

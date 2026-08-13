@@ -1,11 +1,12 @@
 import { FocusOnLoad, resolveView } from '@demo-kit/shell';
-import { formatValue, measure } from '@kestrel/measures';
+import { SEGMENTS, VERSIONS } from '@kestrel/model';
+import { compareMeasure, formatValue, measure } from '@kestrel/measures';
 import { DIMENSIONS, DIMENSION_LABELS, drillCell } from '@kestrel/analysis';
 
 import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
 import {
-  EXPLORE_MEASURES,
+  ALL_EXPLORE_MEASURES,
   cellProvenance,
   exploreDrillHref,
   exploreExportHref,
@@ -46,7 +47,31 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
 
   const state = exploreState(params);
-  const { view, rows, columns, grain, pivot, comparisons } = state;
+  const { view, ctx, rows, columns, grain, measures, pivot, comparisons } = state;
+  const datasetLabel =
+    view.dataScenario === 'ACTUAL'
+      ? 'Actual'
+      : view.dataScenario === 'BUDGET'
+        ? 'Budget FY26'
+        : view.version.label;
+  const requestedMeasure =
+    typeof params.measure === 'string' && ALL_EXPLORE_MEASURES.includes(params.measure)
+      ? params.measure
+      : undefined;
+  const citedComparison =
+    requestedMeasure === undefined
+      ? undefined
+      : compareMeasure(requestedMeasure, ctx, view.comparator);
+  const selectedSegmentLabel =
+    state.segmentId === undefined
+      ? undefined
+      : SEGMENTS.find((candidate) => candidate.code === state.segmentId)?.label;
+  const citedDifference =
+    citedComparison?.current.value === null ||
+    citedComparison?.current.value === undefined ||
+    citedComparison.comparativeValue === null
+      ? null
+      : citedComparison.current.value - citedComparison.comparativeValue;
 
   /* `?drill=<rowIndex>:<colIndex>`. Indices rather than a key, because a cell's identity is its
      position in the grid the URL already describes — encoding the whole slice again would let the two
@@ -132,7 +157,46 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
               ))}
             </div>
           </div>
+          <div className="sel-row">
+            <span className="sel-label">Dataset</span>
+            <div className="sel-chips">
+              {(['actual', 'budget', 'forecast'] as const).map((scenario) => (
+                <a
+                  key={scenario}
+                  className={`chip-link${view.dataScenario.toLowerCase() === scenario ? ' is-active' : ''}`}
+                  href={exploreHref(params, 'scenario', scenario)}
+                  aria-current={view.dataScenario.toLowerCase() === scenario ? 'true' : undefined}
+                >
+                  {scenario === 'actual' ? 'Actual' : scenario === 'budget' ? 'Budget' : 'Forecast'}
+                </a>
+              ))}
+            </div>
+          </div>
+          {view.dataScenario === 'FORECAST' ? (
+            <div className="sel-row">
+              <span className="sel-label">Version</span>
+              <div className="sel-chips">
+                {VERSIONS.filter((version) => version.scenario === 'FORECAST').map((version) => (
+                  <a
+                    key={version.id}
+                    className={`chip-link${view.version.id === version.id ? ' is-active' : ''}`}
+                    href={exploreHref(params, 'version', version.id)}
+                    aria-current={view.version.id === version.id ? 'true' : undefined}
+                  >
+                    {version.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
+
+        <p className="chart-note">
+          Dataset: {view.dataScenario.toLowerCase()}
+          {view.dataScenario === 'FORECAST' ? ` · ${view.version.label}` : ''}. The grid contains{' '}
+          {measures.length} governed measure{measures.length === 1 ? '' : 's'} and ends at{' '}
+          {view.through}; the reporting selector above sets the comparator and total context.
+        </p>
 
         {state.normalised ? (
           <p className="banner banner-warn">
@@ -140,6 +204,10 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             removed before the grid was computed.
           </p>
         ) : null}
+
+        {state.dimensionRefusal === undefined ? null : (
+          <p className="banner banner-warn">{state.dimensionRefusal}</p>
+        )}
 
         <p className="chart-note">
           <a className="finding-action" href={exploreExportHref(params)}>
@@ -158,7 +226,7 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                   const comparison = comparisons[0]?.[i];
                   return [
                     <th key={`${i}-actual`} scope="col" className="num">
-                      {label} · Actual
+                      {label} · {datasetLabel}
                     </th>,
                     <th key={`${i}-comparative`} scope="col" className="num">
                       {label} · {comparison?.comparator.label ?? view.comparator.id}
@@ -216,12 +284,74 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
         <p className="chart-note">{pivot.totalNote}</p>
       </section>
 
+      {requestedMeasure === undefined || citedComparison === undefined ? null : (
+        <section
+          className="section focusable"
+          id="section-cited-measure"
+          aria-label={`${citedComparison.current.label} evidence`}
+        >
+          <div className="section-head">
+            <h2 className="section-title">{citedComparison.current.label} evidence</h2>
+            <span className="section-note">
+              The exact governed value, selected comparison and formula cited by Ask for{' '}
+              {view.scope.label}.
+            </span>
+          </div>
+          <div className="pane pane-scroll">
+            <table className="grid">
+              <thead>
+                <tr>
+                  <th scope="col">Dataset</th>
+                  <th scope="col" className="num">Value</th>
+                  <th scope="col">Basis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">{datasetLabel}</th>
+                  <td className="num">
+                    {formatValue(citedComparison.current.value, citedComparison.current.unit)}
+                  </td>
+                  <td>{view.scope.label}</td>
+                </tr>
+                {selectedSegmentLabel === undefined ? null : (
+                  <tr>
+                    <th scope="row">Segment slice</th>
+                    <td colSpan={2}>{selectedSegmentLabel}</td>
+                  </tr>
+                )}
+                <tr>
+                  <th scope="row">{citedComparison.comparator.label}</th>
+                  <td className="num">
+                    {formatValue(citedComparison.comparativeValue, citedComparison.current.unit)}
+                  </td>
+                  <td>{citedComparison.comparator.basis}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Difference</th>
+                  <td className={`num ${directionClass(citedComparison.favourable)}`}>
+                    {formatValue(citedDifference, citedComparison.current.unit)}
+                  </td>
+                  <td>
+                    {formatValue(citedComparison.movement, citedComparison.movementUnit)} relative
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="chart-note">
+              <strong>{citedComparison.current.formula}.</strong> Owned by{' '}
+              {citedComparison.current.owner}; definition {citedComparison.current.status}.
+            </p>
+          </div>
+        </section>
+      )}
+
       <section className="section focusable" id="section-formulas" aria-label="Formula inspector">
         <div className="section-head">
           <h2 className="section-title">Formula inspector</h2>
           <span className="section-note">
             The definitions below are the same catalogue entries that compute the grid and ground Ask.
-            Open any actual cell for the accounts, rows and vintages used in that calculation.
+            Open any dataset cell for the accounts, rows and vintages used in that calculation.
           </span>
         </div>
         <div className="pane pane-scroll">
@@ -235,10 +365,15 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
               </tr>
             </thead>
             <tbody>
-              {EXPLORE_MEASURES.map((id) => {
+              {ALL_EXPLORE_MEASURES.map((id) => {
                 const definition = measure(id);
                 return (
-                  <tr key={id} className={openCell?.measureId === id ? 'row-active' : ''}>
+                  <tr
+                    key={id}
+                    className={
+                      openCell?.measureId === id || requestedMeasure === id ? 'row-active' : ''
+                    }
+                  >
                     <th scope="row">{definition.label}</th>
                     <td>{definition.formula}</td>
                     <td>{definition.owner}</td>

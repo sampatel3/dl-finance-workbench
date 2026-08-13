@@ -159,10 +159,18 @@ export default async function Controls({ searchParams }: { searchParams: Promise
         <div className="section-head">
           <h2 className="section-title">Sources</h2>
           <span className="section-note">
-            Configured feeds remain visible when they have not loaded. Omitting them would make
-            &ldquo;not loaded&rdquo; look like &ldquo;not required&rdquo;.
+            {controls.sharedSourceMetadataWithheld
+              ? 'Only feeds wholly contained in this entity grant are shown with status and counts.'
+              : 'Configured feeds remain visible when they have not loaded. Omitting them would make “not loaded” look like “not required”.'}
           </span>
         </div>
+        {controls.sharedSourceMetadataWithheld ? (
+          <p className="banner banner-warn">
+            <strong>Shared-feed metadata withheld.</strong> Some feeds also serve entities outside
+            this grant. A vintage has one source-wide row count and validation result, so no
+            fabricated entity slice is shown.
+          </p>
+        ) : null}
         <div className="pane pane-scroll">
           <table className="grid grid-controls">
             <thead>
@@ -206,13 +214,17 @@ export default async function Controls({ searchParams }: { searchParams: Promise
         <div className="section-head">
           <h2 className="section-title">Loads and vintages</h2>
           <span className="section-note">
-            The newest twelve loads in scope. Corrections arrive as a new vintage that names the
-            load it restates; the old rows remain reproducible.
+            The newest twelve loads from fully scoped feeds. Corrections arrive as a new vintage
+            that names the load it restates; the old rows remain reproducible.
           </span>
         </div>
         {controls.recentLoads.length === 0 ? (
           <div className="pane">
-            <Empty>No modelled load records are available inside this entity grant.</Empty>
+            <Empty>
+              {controls.sharedSourceMetadataWithheld
+                ? 'No feed has load metadata wholly contained in this entity grant. Shared-feed histories are withheld, not treated as zero.'
+                : 'No modelled load records are available inside this entity grant.'}
+            </Empty>
           </div>
         ) : (
           <div className="pane pane-scroll">
@@ -257,7 +269,7 @@ export default async function Controls({ searchParams }: { searchParams: Promise
             </table>
             <p className="chart-note">
               Showing {controls.recentLoads.length} of {controls.totalLoads} load records available
-              to this scope.
+              from fully scoped feeds.
             </p>
           </div>
         )}

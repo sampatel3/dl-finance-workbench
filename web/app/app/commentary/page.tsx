@@ -5,7 +5,7 @@ import type {
   CommentaryState,
   PublishedCommentarySnapshot,
 } from '@kestrel/model';
-import { entity, seedCommentaryQueue } from '@kestrel/model';
+import { SEGMENTS, entity, seedCommentaryQueue } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
 import { Masthead } from '../../../components/Chrome';
@@ -18,12 +18,14 @@ import {
   commentaryEvidence,
   commentaryFilterHref,
   commentaryForView,
+  commentaryPeriodLabel,
+  commentarySelectionForView,
   commentaryState,
 } from '../../../lib/commentary';
 import type { CommentaryEvidence } from '../../../lib/commentary';
 import { movement } from '../../../lib/format';
 import type { Params, View } from '../../../lib/world';
-import { monthLabel, viewOf, world } from '../../../lib/world';
+import { viewOf, world } from '../../../lib/world';
 
 /**
  * Commentary — the governed narrative, never detached prose.
@@ -62,7 +64,7 @@ function Identity({ item }: { readonly item: CommentaryItem }) {
     <dl className="commentary-identity">
       <div>
         <dt>Period</dt>
-        <dd>{monthLabel(item.period.endMonth)}</dd>
+        <dd>{commentaryPeriodLabel(item.period)}</dd>
       </div>
       <div>
         <dt>Comparator</dt>
@@ -107,7 +109,7 @@ function PriorCommentary({ snapshot }: { readonly snapshot: PublishedCommentaryS
       <strong>{snapshot.headline}</strong>
       <p>{snapshot.detail}</p>
       <span className="commentary-meta">
-        {monthLabel(snapshot.period.endMonth)} · {snapshot.versionId} · pinned to{' '}
+        {commentaryPeriodLabel(snapshot.period)} · {snapshot.versionId} · pinned to{' '}
         <code>{snapshot.dataVintageId}</code>
       </span>
     </aside>
@@ -395,6 +397,18 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
   const selectedState = commentaryState(params.state);
   const view = viewOf(params);
   const queue = seedCommentaryQueue(world());
+  const measureRaw = Array.isArray(params.measure) ? params.measure[0] : params.measure;
+  const measureId =
+    measureRaw === 'gross_margin' || measureRaw === 'cash' || measureRaw === 'dso'
+      ? measureRaw
+      : 'revenue';
+  const segmentRaw = Array.isArray(params.segment) ? params.segment[0] : params.segment;
+  const segmentId = SEGMENTS.find((candidate) => candidate.code === segmentRaw)?.code;
+  const selection = commentarySelectionForView(world(), view, {
+    measureId,
+    ...(segmentId === undefined ? {} : { segmentId }),
+  });
+  const selectedCommentary = selection.item;
   const visibleQueue = commentaryForView(queue, view, selectedState);
 
   return (
@@ -405,11 +419,27 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
 
       <section className="section focusable" id="section-commentary" aria-label="Commentary queue">
         <div className="section-head">
-          <h2 className="section-title">Commentary that stays attached to its figures</h2>
+          <h2 className="section-title">Selected reporting commentary</h2>
           <span className="section-note">
-            The headline is for the Board; the supporting chain is for the controller. Opening one
-            changes no period, version or comparator. Each approval event names the actor, and
-            publication freezes both wording and vintage.
+            Period and comparator come from the shared selectors above. Changing either creates a
+            new unapproved draft and recomputes its like-for-like evidence; it never borrows an old
+            approval. Opening the chain changes no period, version or comparator.
+          </span>
+        </div>
+
+        {selection.refusal === undefined ? null : (
+          <p className="banner banner-warn">{selection.refusal}</p>
+        )}
+
+        <div className="commentary-list">
+          <CommentaryCard item={selectedCommentary} queue={queue} view={view} index={0} />
+        </div>
+
+        <div className="section-head">
+          <h2 className="section-title">Approval workflow records</h2>
+          <span className="section-note">
+            Seeded month, quarter, half-year and year records demonstrate the governed lifecycle.
+            Each approval event names the actor, and publication freezes both wording and vintage.
           </span>
         </div>
 
@@ -454,7 +484,7 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
         ) : (
           <div className="commentary-list">
             {visibleQueue.map((item, index) => (
-              <CommentaryCard key={item.id} item={item} queue={queue} view={view} index={index} />
+              <CommentaryCard key={item.id} item={item} queue={queue} view={view} index={index + 1} />
             ))}
           </div>
         )}
