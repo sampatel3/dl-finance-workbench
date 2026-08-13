@@ -5,6 +5,7 @@ import { closeCompleteness, entity, monthScope, priorYearScope } from '@kestrel/
 import type { MeasureContext } from '@kestrel/measures';
 import { computeMeasure, formatValue } from '@kestrel/measures';
 
+import { closeStatusCopy } from './close';
 import { headlinesFor } from './headline';
 import type { View } from './world';
 import { briefFor, contextOf, scopeLabel, world } from './world';
@@ -44,6 +45,11 @@ export function deterministicOverviewNarration(view: View): OverviewNarration {
     world().closePositions.filter((position) => view.permission.entityIds.includes(position.entityId)),
     view.scope.endMonth,
   );
+  const close = closeStatusCopy({
+    closed: completeness.closed,
+    total: completeness.total,
+    openNames: completeness.open.map((position) => entity(position.entityId).name),
+  });
 
   const headline =
     findings.length === 0
@@ -59,7 +65,8 @@ export function deterministicOverviewNarration(view: View): OverviewNarration {
     body:
       `${boardSentence} Revenue was ${formatValue(headlines[0]?.value ?? null, 'currency')} and ` +
       `EBITDA ${formatValue(headlines[2]?.value ?? null, 'currency')}, against ${brief.comparator.basis}. ` +
-      `${completeness.closed} of ${completeness.total} ledgers are closed for ${entity(view.entityId).name}.`,
+      `${close.summary} Reporting scope: ${entity(view.entityId).name}.` +
+      (close.detail === undefined ? '' : ` ${close.detail}`),
   };
 }
 

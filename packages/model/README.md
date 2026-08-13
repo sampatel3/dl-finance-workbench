@@ -42,14 +42,17 @@ exactly like a number.
 
 ## Currency
 
-Three of them — transaction, functional, presentation — and IAS 21 translation between the last two:
+This demo represents functional and presentation currency, with IAS 21 translation between them:
 balance sheet at the closing rate, profit and loss at the average rate, and the residual to the
 **cumulative translation reserve** inside equity. A model whose reserve is always zero has quietly
 stopped translating; a model that translates at two rates without carrying the reserve does not
 balance. `identity.test.ts` asserts against both failures.
 
-`constant` currency is the same translation run at the comparative period's rates. That is the whole
-mechanism: the rate is a parameter, not a lookup.
+Transaction/document currency is not stored on the seeded fact row and is therefore not offered as
+a reporting lens or drill attribute.
+
+`constant` currency is the same translation run at the like-for-like prior-year rates. That is the
+whole mechanism: the rate-basis window is a parameter, not an implicit lookup.
 
 ## The world
 

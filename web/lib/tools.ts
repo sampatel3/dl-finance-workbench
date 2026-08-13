@@ -31,7 +31,6 @@
 
 import type { ToolCall, ToolOutcome, ToolSpec } from '@demo-kit/llm';
 import { MONTHS, SEGMENTS, entity, tradingEntities } from '@kestrel/model';
-import type { SegmentCode } from '@kestrel/model';
 import {
   COMPARATORS,
   MEASURES,
@@ -40,7 +39,7 @@ import {
   formatValue,
   measureIds,
 } from '@kestrel/measures';
-import type { ComparatorChoice, ComparatorId } from '@kestrel/measures';
+import type { ComparatorChoice } from '@kestrel/measures';
 import {
   buildBridge,
   cashSensitivity,
@@ -67,6 +66,7 @@ import {
   viewOf,
 } from './world';
 import type { View } from './world';
+import { measureEvidenceHref } from './evidence';
 
 const MEASURE_IDS = measureIds();
 const ENTITY_IDS = ['group', ...tradingEntities().map((e) => e.id)];
@@ -293,29 +293,6 @@ function sectionHref(
 ): string {
   const base = hrefFor(path, view, changes);
   return `${base}${base.includes('?') ? '&' : '?'}focus=${encodeURIComponent(section)}`;
-}
-
-/** An Ask citation that renders this exact measure, reporting scope, comparator and formula. */
-function measureEvidenceHref(
-  measureId: string,
-  view: View,
-  options: { readonly comparatorId?: ComparatorId; readonly segmentId?: SegmentCode } = {},
-): string {
-  const origin = 'https://finance-workbench.invalid';
-  const url = new URL(
-    hrefFor(
-      '/app/explore',
-      view,
-      options.comparatorId === undefined ? {} : { comparator: options.comparatorId },
-    ),
-    origin,
-  );
-  url.searchParams.set('rows', 'measure');
-  url.searchParams.set('cols', 'period');
-  url.searchParams.set('measure', measureId);
-  if (options.segmentId !== undefined) url.searchParams.set('segment', options.segmentId);
-  url.searchParams.set('focus', 'section-cited-measure');
-  return `${url.pathname}${url.search}`;
 }
 
 /** Evidence for a finding is its closed figure set; its action remains a separate decision link. */

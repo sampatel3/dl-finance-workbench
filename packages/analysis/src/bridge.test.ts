@@ -17,14 +17,21 @@ import {
   buildWorld,
   halfYearScope,
   monthScope,
+  priorYearScope,
   quarterScope,
   subtree,
   ytdScope,
 } from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
-import { allEntityIds, computeMeasure, formatValue } from '@kestrel/measures';
+import { allEntityIds, compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
 
-import { buildBridge, grossProfitBridge, principalDriver, principalSegment } from './bridge.ts';
+import {
+  buildBridge,
+  ebitdaBridge,
+  grossProfitBridge,
+  principalDriver,
+  principalSegment,
+} from './bridge.ts';
 import type { Bridge } from './bridge.ts';
 
 const world = buildWorld({ seed: 'kestrel-industrial-group' });
@@ -97,6 +104,103 @@ describe('the bars sum to the total', () => {
     expect(bridge.sums).toBe(true);
     // Composed rather than recomputed, so it must agree with the measure layer at both ends.
     expect(bridge.to).toBe(computeMeasure('gross_profit', ctx()).value);
+  });
+
+  it('and the EBITDA bridge across every supported scope and comparator', () => {
+    const failures: string[] = [];
+    for (const scope of scopes) {
+      for (const comparator of comparators) {
+        const bridge = ebitdaBridge({ ctx: ctx({ scope }), comparator });
+        if (!bridge.sums || Math.round(contributions(bridge)) !== Math.round(bridge.total)) {
+          failures.push(
+            `${scope.label} vs ${comparator.id}: ${contributions(bridge)} vs ${bridge.total}`,
+          );
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it('and the EBITDA bridge for every entity slice', () => {
+    for (const entityId of allEntityIds()) {
+      const bridge = ebitdaBridge({
+        ctx: ctx({ entityIds: subtree(entityId) }),
+        comparator: { id: 'forecast', versionId: 'v6' },
+      });
+      expect(bridge.sums, entityId).toBe(true);
+      expect(bridge.to, entityId).toBe(
+        computeMeasure('ebitda', ctx({ entityIds: subtree(entityId) })).value,
+      );
+    }
+  });
+
+  it('and in constant currency, including historical comparators', () => {
+    const scope = quarterScope(2026, 2, CALENDAR_YEAR);
+    const constantCtx = ctx({
+      scope,
+      lens: 'constant',
+      comparativeScope: priorYearScope(scope),
+    });
+
+    for (const comparator of comparators) {
+      const bridge = ebitdaBridge({ ctx: constantCtx, comparator });
+      const comparison = compareMeasure('ebitda', constantCtx, comparator);
+      expect(bridge.sums, comparator.id).toBe(true);
+      expect(Math.round(contributions(bridge)), comparator.id).toBe(Math.round(bridge.total));
+      expect(bridge.from, comparator.id).toBe(comparison.comparativeValue);
+      expect(bridge.to, comparator.id).toBe(comparison.current.value);
+    }
+  });
+});
+
+describe('the EBITDA bridge explains profit, not only revenue', () => {
+  const comparator = { id: 'forecast' as const, versionId: 'v6' };
+
+  it('reuses the gross-profit explanation and names every governed opex component', () => {
+    const grossProfit = grossProfitBridge({ ctx: ctx(), comparator });
+    const bridge = ebitdaBridge({ ctx: ctx(), comparator });
+    const contributionKinds = bridge.bars
+      .filter((bar) => bar.kind !== 'opening' && bar.kind !== 'closing')
+      .map((bar) => bar.kind);
+
+    for (const bar of grossProfit.bars.filter(
+      (candidate) => candidate.kind !== 'opening' && candidate.kind !== 'closing',
+    )) {
+      expect(
+        bridge.bars.some(
+          (candidate) => candidate.kind === bar.kind && candidate.value === bar.value,
+        ),
+      ).toBe(true);
+    }
+    expect(contributionKinds).toEqual(
+      expect.arrayContaining(['staff_cost', 'other_opex', 'unmapped_opex']),
+    );
+    expect(bridge.bars.some((bar) => bar.label === 'Operating expense')).toBe(false);
+  });
+
+  it('expresses each expense movement with the correct EBITDA sign', () => {
+    const bridge = ebitdaBridge({ ctx: ctx(), comparator });
+    const components = [
+      ['staff_cost', 'staff_cost'],
+      ['other_opex', 'other_opex'],
+      ['unmapped_opex', 'unmapped_opex'],
+    ] as const;
+
+    for (const [kind, measureId] of components) {
+      const comparison = compareMeasure(measureId, ctx(), comparator);
+      const expected = (comparison.comparativeValue ?? 0) - (comparison.current.value ?? 0);
+      expect(bridge.bars.find((bar) => bar.kind === kind)?.value).toBeCloseTo(expected, 6);
+    }
+  });
+
+  it('uses the governed EBITDA figures as both terminals', () => {
+    const comparison = compareMeasure('ebitda', ctx(), comparator);
+    const bridge = ebitdaBridge({ ctx: ctx(), comparator });
+
+    expect(bridge.from).toBe(comparison.comparativeValue);
+    expect(bridge.to).toBe(comparison.current.value);
+    expect(bridge.total).toBe(bridge.to - bridge.from);
+    expect(bridge.sums).toBe(true);
   });
 });
 
@@ -233,5 +337,11 @@ describe('a trend cannot be bridged', () => {
     expect(() =>
       buildBridge({ measureId: 'revenue', ctx: ctx(), comparator: { id: 'trend' } }),
     ).toThrow(/trend cannot be bridged/i);
+  });
+
+  it('including EBITDA, because its gross-profit explanation still needs quantities', () => {
+    expect(() => ebitdaBridge({ ctx: ctx(), comparator: { id: 'trend' } })).toThrow(
+      /trend cannot be bridged/i,
+    );
   });
 });

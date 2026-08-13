@@ -33,10 +33,10 @@ describe('the governed commentary queue', () => {
     const queue = seedCommentaryQueue(world());
     const labels = new Map(queue.map((item) => [item.period.type, commentaryPeriodLabel(item.period)]));
 
-    expect(labels.get('MONTH')).toMatch(/Jul 2026/);
-    expect(labels.get('QUARTER')).toMatch(/^Q2 2026$/);
-    expect(labels.get('HALF_YEAR')).toMatch(/^H1 2026$/);
-    expect(labels.get('FISCAL_YEAR')).toMatch(/^FY2025$/);
+    expect(labels.get('MONTH')).toBe('Jul 26');
+    expect(labels.get('QUARTER')).toBe('Q2 FY26');
+    expect(labels.get('HALF_YEAR')).toBe('H1 FY26');
+    expect(labels.get('FISCAL_YEAR')).toBe('FY25');
   });
 
   it('treats the anchor as a row-level read and does not leak group commentary to Gulf', () => {
@@ -94,8 +94,8 @@ describe('the governed commentary queue', () => {
     const halfYearItem = selectedCommentaryForView(world(), halfYear);
 
     expect(quarterItem.id).not.toBe(halfYearItem.id);
-    expect(commentaryPeriodLabel(quarterItem.period)).toBe('Q2 2026');
-    expect(commentaryPeriodLabel(halfYearItem.period)).toBe('H1 2026');
+    expect(commentaryPeriodLabel(quarterItem.period)).toBe('Q2 FY26');
+    expect(commentaryPeriodLabel(halfYearItem.period)).toBe('H1 FY26');
     expect(quarterItem.comparatorId).toBe('prior_period');
     expect(halfYearItem.comparatorId).toBe('budget');
     expect(commentaryEvidence(quarterItem, quarter, world()).comparison.comparator.id).toBe(

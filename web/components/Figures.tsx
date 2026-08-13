@@ -15,6 +15,7 @@ import type { Finding } from '@kestrel/analysis';
 import { formatValue } from '@kestrel/measures';
 
 import type { Headline } from '../lib/headline';
+import { closeStatusCopy } from '../lib/close';
 import { directionClass, movement } from '../lib/format';
 import type { View } from '../lib/world';
 import { hrefForTarget } from '../lib/world';
@@ -22,30 +23,36 @@ import { hrefForTarget } from '../lib/world';
 /** One of the four headline figures, with its comparative and what it is compared against. */
 export function HeadlineCard({
   headline,
-  href,
+  analyseHref,
+  evidenceHref,
 }: {
   readonly headline: Headline;
-  readonly href?: string;
+  readonly analyseHref?: string;
+  readonly evidenceHref?: string;
 }) {
-  const body = (
-    <>
+  return (
+    <article className="card headline-card" title={headline.formula}>
       <span className="card-k">
         {headline.label}
         {headline.draft ? <span className="chip chip-draft">draft</span> : null}
+        {headline.material ? (
+          <span className="chip chip-material" title={headline.materialityReason}>
+            material
+          </span>
+        ) : null}
       </span>
       <span className="card-v">{formatValue(headline.value, headline.unit)}</span>
       <span className={`card-d ${directionClass(headline.favourable)}`}>
         {movement(headline.movement, headline.movementUnit)}
         <span className="card-basis"> vs {headline.basis}</span>
       </span>
-    </>
-  );
-  return href === undefined ? (
-    <div className="card">{body}</div>
-  ) : (
-    <a className="card card-link" href={href} title={headline.formula}>
-      {body}
-    </a>
+      {analyseHref === undefined && evidenceHref === undefined ? null : (
+        <span className="card-actions" aria-label={`${headline.label} actions`}>
+          {analyseHref === undefined ? null : <a href={analyseHref}>Analyse</a>}
+          {evidenceHref === undefined ? null : <a href={evidenceHref}>Evidence</a>}
+        </span>
+      )}
+    </article>
   );
 }
 
@@ -156,20 +163,15 @@ export function CompletenessBanner({
   readonly openNames: readonly string[];
   readonly note?: string;
 }) {
-  if (openNames.length === 0) {
+  const status = closeStatusCopy({ closed, total, openNames });
+  if (status.final) {
     return (
-      <p className="banner banner-ok">
-        All {total} ledgers closed for this period. Figures are final.
-      </p>
+      <p className="banner banner-ok">{status.summary}</p>
     );
   }
   return (
     <p className="banner banner-warn">
-      <strong>
-        {closed} of {total} ledgers closed.
-      </strong>{' '}
-      {openNames.join(', ')} {openNames.length === 1 ? 'has' : 'have'} submitted and not closed, so
-      these figures are not final. {note ?? ''}
+      <strong>{status.summary}</strong> {status.detail ?? ''} {note ?? ''}
     </p>
   );
 }

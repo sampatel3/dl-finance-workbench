@@ -4,6 +4,7 @@ import { tradingEntities } from '@kestrel/model';
 import {
   DEFAULT_PERSONA_ID,
   PERSONAS,
+  organisationalAccessLabel,
   principalById,
   resolveDimensionScope,
   resolvePermissionScope,
@@ -33,6 +34,18 @@ describe('the seeded principals', () => {
     const resolved = resolvePrincipal('somebody-else');
     expect(resolved.principal.id).toBe('gulf-controller');
     expect(resolved.fellBack).toBe(true);
+  });
+
+  it('keeps permission roles separate from their organisational access grants', () => {
+    const executive = principalById('group-executive');
+    const controller = principalById('gulf-controller');
+
+    expect(controller.label).toBe('Business-unit controller');
+    expect(controller.label).not.toContain('Gulf');
+    expect(organisationalAccessLabel(executive)).toBe('Group-wide (5 legal entities)');
+    expect(organisationalAccessLabel(controller)).toBe(
+      'Kestrel Gulf Technical Services FZ-LLC only',
+    );
   });
 });
 
@@ -64,7 +77,7 @@ describe('entity-subtree permissions', () => {
     }
     expect(group.allowed).toBe(false);
     if (!group.allowed) {
-      expect(group.refusal).toMatch(/Gulf business-unit controller/);
+      expect(group.refusal).toMatch(/Business-unit controller/);
       expect(group.refusal).toMatch(/cannot read group figures/);
     }
   });
@@ -108,6 +121,24 @@ describe('the shared URL resolver', () => {
     expect(view.permission.entityIds).toEqual(['gulf']);
     expect(view.deniedEntityId).toBe('group');
     expect(view.fellBack).toBe(true);
+  });
+
+  it('changes role without changing a still-permitted organisational scope', () => {
+    const manufacturing = viewOf({ entity: 'manufacturing' });
+    const groupRole = new URL(
+      hrefFor('/app', manufacturing, { persona: 'group-fpa' }),
+      'https://demo.invalid',
+    );
+    const narrowerRole = new URL(
+      hrefFor('/app', manufacturing, { persona: 'gulf-controller' }),
+      'https://demo.invalid',
+    );
+
+    expect(groupRole.searchParams.get('as')).toBe('group-fpa');
+    expect(groupRole.searchParams.get('entity')).toBe('manufacturing');
+    expect(narrowerRole.searchParams.get('as')).toBe('gulf-controller');
+    expect(narrowerRole.searchParams.get('entity')).toBeNull();
+    expect(viewOf(Object.fromEntries(narrowerRole.searchParams)).entityId).toBe('gulf');
   });
 
   it('resolves every detail-table row through the principal instead of reusing a group context', () => {

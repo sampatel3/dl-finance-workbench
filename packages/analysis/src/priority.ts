@@ -63,9 +63,10 @@ export interface Board extends BoardKey {
 /**
  * The four boards, named.
  *
- * The titles are the client's own — Performance, Opportunities, Risks, and the current adverse board
- * their deck calls "Attention". The `question` matters more than the title: a board with a heading and
- * no stated purpose gets filled with whatever fires.
+ * Visible titles use finance's decision language: Adverse, Favourable, Risks and Opportunities. Stable
+ * ids remain `attention` and `performance` so saved links and analytics do not break when copy changes.
+ * The `question` matters more than the title: a board with a heading and no stated purpose gets filled
+ * with whatever fires.
  */
 const BOARD_SPECS: readonly (BoardKey & {
   id: string;
@@ -77,7 +78,7 @@ const BOARD_SPECS: readonly (BoardKey & {
     id: 'attention',
     direction: 'adverse',
     horizon: 'current',
-    title: 'Needs attention',
+    title: 'Adverse',
     question: 'What went wrong in the period just closed, and who owns it?',
     emptyNote: 'Nothing adverse cleared materiality this period.',
   },
@@ -85,7 +86,7 @@ const BOARD_SPECS: readonly (BoardKey & {
     id: 'performance',
     direction: 'favourable',
     horizon: 'current',
-    title: 'Performance',
+    title: 'Favourable',
     question: 'What went better than plan, and is it repeatable?',
     emptyNote: 'Nothing favourable cleared materiality this period.',
   },

@@ -1,5 +1,5 @@
 import { resolveView } from '@demo-kit/shell';
-import { SEGMENTS, VERSIONS, entity } from '@kestrel/model';
+import { SEGMENTS, VERSIONS, closeCompleteness, entity } from '@kestrel/model';
 import { compareMeasure, formatValue, measure } from '@kestrel/measures';
 import { DIMENSIONS, DIMENSION_LABELS, drillCell } from '@kestrel/analysis';
 
@@ -8,16 +8,20 @@ import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import {
   ALL_EXPLORE_MEASURES,
+  EXPLORE_PRESETS,
   cellProvenance,
   exploreCloseDrillHref,
   exploreDrillHref,
   exploreExportHref,
   exploreHref,
+  explorePresetHref,
   exploreState,
 } from '../../../lib/explore';
 import { directionClass, movement } from '../../../lib/format';
+import { SUGGESTIONS } from '../../../lib/tools';
+import { Ask } from '../../../components/Ask';
 import type { Params } from '../../../lib/world';
-import { hrefFor } from '../../../lib/world';
+import { hrefFor, paramsForView, world } from '../../../lib/world';
 
 /**
  * Explore — the analyst's pivot.
@@ -74,6 +78,16 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
     citedComparison.comparativeValue === null
       ? null
       : citedComparison.current.value - citedComparison.comparativeValue;
+  const citedVintages =
+    citedComparison === undefined
+      ? []
+      : [...new Set(citedComparison.current.inputs.flatMap((input) => input.vintageIds))].sort();
+  const citedRows =
+    citedComparison?.current.inputs.reduce((sum, input) => sum + input.rowCount, 0) ?? 0;
+  const citedClose = closeCompleteness(
+    world().closePositions.filter((position) => view.permission.entityIds.includes(position.entityId)),
+    view.scope.endMonth,
+  );
 
   /* `?drill=<rowIndex>:<colIndex>`. Indices rather than a key, because a cell's identity is its
      position in the grid the URL already describes — encoding the whole slice again would let the two
@@ -108,6 +122,24 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
       <Masthead path="/app/explore" view={view} />
       <Selectors path="/app/explore" view={view} />
 
+      <section className="section focusable" id="section-ask" aria-label="Ask finance">
+        <div className="section-head">
+          <h2 className="section-title">Ask from this finance context</h2>
+          <span className="section-note">
+            The question inherits the selected role, organisational scope, period, comparator,
+            currency basis and forecast version. Every returned figure links back to governed
+            evidence; unsupported or unauthorised questions are refused.
+          </span>
+        </div>
+        <div className="pane">
+          <Ask
+            suggestions={SUGGESTIONS}
+            principalId={view.principal.id}
+            viewParams={paramsForView(view)}
+          />
+        </div>
+      </section>
+
       <section className="section focusable" id="section-axes" aria-label="Axes">
         <div className="section-head">
           <h2 className="section-title">Explore</h2>
@@ -117,6 +149,15 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             never a share of the one above it.
           </span>
         </div>
+
+        <nav className="explore-presets" aria-label="Ready-made finance views">
+          {EXPLORE_PRESETS.map((preset) => (
+            <a key={preset.id} href={explorePresetHref(params, preset.id)}>
+              <strong>{preset.label}</strong>
+              <span>{preset.description}</span>
+            </a>
+          ))}
+        </nav>
 
         <div className="selectors">
           <div className="sel-row">
@@ -540,6 +581,49 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             <p className="chart-note">
               <strong>{citedComparison.current.formula}.</strong> Owned by{' '}
               {citedComparison.current.owner}; definition {citedComparison.current.status}.
+            </p>
+            <dl className="evidence-summary">
+              <div>
+                <dt>Currency &amp; rate basis</dt>
+                <dd>
+                  GBP presentation ·{' '}
+                  {view.lens === 'constant'
+                    ? 'constant currency at prior-year rates'
+                    : 'reported rates'}
+                </dd>
+              </div>
+              <div>
+                <dt>Aggregation</dt>
+                <dd>
+                  {citedComparison.current.consolidated
+                    ? 'Consolidated, including eliminations'
+                    : 'Combined slice; not consolidated'}
+                </dd>
+              </div>
+              <div>
+                <dt>Contributing evidence</dt>
+                <dd>
+                  {citedComparison.current.inputs.length} accounts · {citedRows} source rows ·{' '}
+                  {citedVintages.length} load vintage{citedVintages.length === 1 ? '' : 's'}
+                </dd>
+              </div>
+              <div>
+                <dt>Close status</dt>
+                <dd>
+                  {citedClose.closed}/{citedClose.total} ledger
+                  {citedClose.total === 1 ? '' : 's'} closed ·{' '}
+                  {citedClose.open.length === 0 ? 'period final' : 'provisional'}
+                </dd>
+              </div>
+              <div>
+                <dt>Vintages</dt>
+                <dd className="mono-cell">{citedVintages.join(', ') || 'No contributing load'}</dd>
+              </div>
+            </dl>
+            <p className="chart-note">
+              Open the same measure in the grid below for the account inputs, entity drill,
+              eliminations and source-shaped rows. Controls holds load validation, mappings,
+              reconciliation and published lineage for this governed model.
             </p>
           </div>
         </section>

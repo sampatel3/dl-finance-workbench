@@ -138,7 +138,7 @@ export const DRIVERS: readonly DriverDefinition[] = [
   {
     id: 'pipeline_conversion',
     label: 'Pipeline conversion',
-    unit: 'ratio',
+    unit: 'percent',
     // Observed in the actual and assumed in every forecast, which is what makes the gap between them a
     // finding. The least reliable feed in the product, and the one behind the forward-looking opportunity.
     kind: 'observed',

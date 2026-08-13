@@ -42,6 +42,7 @@ import { closeCompleteness, entity } from '@kestrel/model';
 import type { Unit } from '@kestrel/measures';
 import { formatValue } from '@kestrel/measures';
 
+import { closeStatusCopy } from './close';
 import { DEMO_NAME } from './demo';
 import { headlinesFor } from './headline';
 import { LATEST_MONTH, briefFor, contextOf, monthLabel, viewOf, world } from './world';
@@ -184,6 +185,11 @@ function briefPack(month: FiscalMonth): NarrationPack {
   const headlines = headlinesFor(ctx, view.comparator);
   const brief = briefFor(view);
   const completeness = closeCompleteness(world().closePositions, month);
+  const close = closeStatusCopy({
+    closed: completeness.closed,
+    total: completeness.total,
+    openNames: completeness.open.map((position) => entity(position.entityId).name),
+  });
   /* Two sentences with different jobs: `finding` is the pinned evidence line the freshness test
      compares, and `summary` is what the commentary paragraph says. They must not be the same string —
      the paragraph sits directly above the card that renders `finding`. */
@@ -204,7 +210,7 @@ function briefPack(month: FiscalMonth): NarrationPack {
       })),
       findingCount: findings.length,
       boards: brief.boards.map((b) => ({ board: b.title, count: b.triage.kept.length })),
-      ledgersClosed: `${completeness.closed} of ${completeness.total}`,
+      ledgersClosed: `${completeness.closed}/${completeness.total}`,
       openLedgers: completeness.open.map((p) => entity(p.entityId).name),
     },
     // Every numeral the model may use, drawn from the same figure sets the cards render.
@@ -247,7 +253,8 @@ function briefPack(month: FiscalMonth): NarrationPack {
         `${summary} ` +
         `Revenue was ${formatValue(headlines[0]?.value ?? null, 'currency')} and EBITDA ` +
         `${formatValue(headlines[2]?.value ?? null, 'currency')}, measured against version ` +
-        `${view.version.id}. ${completeness.closed} of ${completeness.total} ledgers are closed.`,
+        `${view.version.id}. ${close.summary}` +
+        (close.detail === undefined ? '' : ` ${close.detail}`),
     },
   };
 }

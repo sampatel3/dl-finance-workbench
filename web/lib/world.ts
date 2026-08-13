@@ -135,7 +135,7 @@ export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
       return {
         ...quarter,
         endMonth: through,
-        label: `${quarter.label} through ${monthLabel(through)}`,
+        label: `Q${fiscalQuarter} FY${String(fiscalYear).slice(-2)} QTD to ${shortMonthLabel(through)}`,
       };
     }
     case 'half_year': {
@@ -146,7 +146,7 @@ export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
       return {
         ...half,
         endMonth: through,
-        label: `${half.label} through ${monthLabel(through)}`,
+        label: `H${fiscalHalf} FY${String(fiscalYear).slice(-2)} to ${shortMonthLabel(through)}`,
       };
     }
     case 'year': {
@@ -156,11 +156,17 @@ export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
       return {
         ...year,
         endMonth: through,
-        label: `${year.label} through ${monthLabel(through)}`,
+        label: `FY${String(fiscalYear).slice(-2)} YTD to ${shortMonthLabel(through)}`,
       };
     }
-    case 'ytd':
-      return ytdScope(through, CALENDAR_YEAR);
+    case 'ytd': {
+      const scope = ytdScope(through, CALENDAR_YEAR);
+      const fiscalYear = fiscalYearOf(through, CALENDAR_YEAR);
+      return {
+        ...scope,
+        label: `FY${String(fiscalYear).slice(-2)} YTD to ${shortMonthLabel(through)}`,
+      };
+    }
   }
 }
 
@@ -173,35 +179,37 @@ export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
 export function scopeLabel(kind: PeriodKind, scope: PeriodScope): string {
   switch (kind) {
     case 'month':
-      return monthLabel(scope.endMonth);
+      return shortMonthLabel(scope.endMonth);
     case 'quarter': {
       const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
       const fiscalQuarter = fiscalQuarterOf(scope.endMonth, CALENDAR_YEAR);
       const quarter = quarterScope(fiscalYear, fiscalQuarter, CALENDAR_YEAR);
-      const label = `Q${fiscalQuarter} ${fiscalYear}`;
+      const label = `Q${fiscalQuarter} FY${String(fiscalYear).slice(-2)}`;
       return scope.endMonth === quarter.endMonth
         ? label
-        : `${label} through ${monthLabel(scope.endMonth)}`;
+        : `${label} QTD to ${shortMonthLabel(scope.endMonth)}`;
     }
     case 'half_year': {
       const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
       const fiscalHalf = fiscalHalfOf(scope.endMonth, CALENDAR_YEAR);
       const half = halfYearScope(fiscalYear, fiscalHalf, CALENDAR_YEAR);
-      const label = `H${fiscalHalf} ${fiscalYear}`;
+      const label = `H${fiscalHalf} FY${String(fiscalYear).slice(-2)}`;
       return scope.endMonth === half.endMonth
         ? label
-        : `${label} through ${monthLabel(scope.endMonth)}`;
+        : `${label} to ${shortMonthLabel(scope.endMonth)}`;
     }
     case 'year': {
       const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
       const year = fiscalYearScope(fiscalYear, CALENDAR_YEAR);
-      const label = `FY${fiscalYear}`;
+      const label = `FY${String(fiscalYear).slice(-2)}`;
       return scope.endMonth === year.endMonth
         ? label
-        : `${label} through ${monthLabel(scope.endMonth)}`;
+        : `${label} YTD to ${shortMonthLabel(scope.endMonth)}`;
     }
-    case 'ytd':
-      return `${monthLabel(scope.startMonth)} – ${monthLabel(scope.endMonth)}`;
+    case 'ytd': {
+      const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
+      return `FY${String(fiscalYear).slice(-2)} YTD to ${shortMonthLabel(scope.endMonth)}`;
+    }
   }
 }
 
@@ -372,9 +380,10 @@ export function viewOf(params: Params = {}, options: ViewOptions = {}): View {
  * The measure context a view resolves to.
  *
  * `comparativeScope` is set only for the constant-currency lens, because that is the one lens whose
- * definition needs a second window: constant currency is *this* period's trading at the comparative
- * period's rates, so with no comparative window there is nothing to hold constant and the lens quietly
- * returns the reported figure. That happened while building the currency detector — every
+ * definition needs a second window: the reporting lens holds rates at the like-for-like prior-year
+ * window, independent of the selected performance comparator. With no rate-basis window there is
+ * nothing to hold constant and the lens quietly returns the reported figure. That happened while
+ * building the currency detector — every
  * constant-currency figure read identical to reported, and every one of them looked plausible.
  */
 export function contextOf(view: View): MeasureContext {
@@ -480,12 +489,19 @@ export function hrefFor(
   const personaId = changes.persona ?? view.principal.id;
   const targetPrincipal = principalById(personaId);
   const personaChanged = personaId !== view.principal.id;
+  const canKeepSelectedEntity =
+    personaChanged && resolvePermissionScope(targetPrincipal, view.entityId).allowed;
   const merged = {
     period: changes.period ?? view.periodKind,
     month: changes.month ?? view.through,
     comparator: changes.comparator ?? view.comparator.id,
     entity:
-      changes.entity ?? (personaChanged ? targetPrincipal.grant.entityRootId : view.entityId),
+      changes.entity ??
+      (personaChanged
+        ? canKeepSelectedEntity
+          ? view.entityId
+          : targetPrincipal.grant.entityRootId
+        : view.entityId),
     lens: changes.lens ?? view.lens,
     version: changes.version ?? view.version.id,
     scenario: changes.scenario ?? view.dataScenario.toLowerCase(),

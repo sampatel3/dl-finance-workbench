@@ -41,6 +41,10 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
     forecast.breach === undefined
       ? null
       : (forecast.weeks[forecast.breach.index - 1]?.closing ?? null);
+  const recovery =
+    forecast.breach === undefined
+      ? undefined
+      : forecast.weeks.slice(forecast.breach.index).find((week) => !week.belowFloor);
   const bridge = indirectBridge(ctx);
   const sensitivity = cashSensitivity(ctx, SENSITIVITY);
 
@@ -79,8 +83,13 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
             , {formatValue(forecast.breach.shortfall, 'currency')} under the{' '}
             {formatValue(MINIMUM_CASH.amountMinor, 'currency')} floor set in {MINIMUM_CASH.owner}.
             Its low point is {formatValue(forecast.low.amount, 'currency')} in week{' '}
-            {forecast.low.index}. It recovers by the end of the horizon, so this is a week to fund
-            rather than a solvency question — the dividend and a supplier run land together.
+            {forecast.low.index}.{' '}
+            {recovery === undefined
+              ? 'It does not recover inside the forecast horizon.'
+              : `It recovers above the floor in week ${recovery.index}.`}{' '}
+            {recovery === undefined
+              ? 'This needs a funding decision beyond the visible horizon.'
+              : 'This is a week to fund rather than a solvency question — the dividend and a supplier run land together.'}
           </p>
         )}
       </section>
@@ -216,9 +225,8 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
         <div className="section-head">
           <h2 className="section-title">Which entity is holding the cash</h2>
           <span className="section-note">
-            Collection, payment and inventory days per entity, each computed at its own level. The
-            Gulf entity has the slowest collections in the group, and its horizon collects a smaller
-            share of its book than the group&rsquo;s does.
+            Collection, payment and inventory days for the entities available in the selected
+            organisational scope, each computed independently at that entity&rsquo;s own level.
           </span>
         </div>
         <div className="pane">

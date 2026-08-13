@@ -352,7 +352,7 @@ a:hover { opacity: 0.72; }
 
 /* The chart. Sized by its viewBox and stretched by CSS, so it holds its shape at every
    device width the tour's window offers — including a 402pt phone. */
-.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart { display: block; width: 100%; height: auto; margin: 0; overflow: visible; }
 .chart-grid { stroke: var(--border); stroke-width: 1; }
 .chart-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .chart-axis { fill: var(--muted); font-size: 9px; font-variant-numeric: tabular-nums; }
@@ -492,6 +492,11 @@ a:hover { opacity: 0.72; }
    links remain ordinary focusable links and the active destination remains aria-current. */
 .inner-surface-nav, .masthead-nav { scrollbar-width: thin; }
 
+.domain-switch {
+  display: flex; flex-wrap: wrap; gap: 4px; margin: -10px 0 28px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+
 /* ------------------------------------------------------------------- selectors
 
    Links rather than dropdowns, so the address bar and the screen cannot disagree.
@@ -578,6 +583,57 @@ a:hover { opacity: 0.72; }
 .card-link:hover { opacity: 1; background: var(--surface-2); }
 .card-d.pos { color: var(--pos); }
 .card-d.neg { color: var(--neg); }
+.headline-card { display: flex; min-width: 0; flex-direction: column; }
+.headline-card .card-k { min-height: 24px; }
+.chip-material {
+  margin-left: 7px; border-color: var(--accent); color: var(--accent);
+}
+.card-actions {
+  display: flex; gap: 12px; margin-top: auto; padding-top: 16px;
+  font-size: 12px; font-weight: 600;
+}
+.card-actions a { color: var(--accent); text-decoration: none; }
+.card-actions a::after { content: ' ›'; }
+.card-actions a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+
+.policy-disclosure {
+  margin: -2px 0 16px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.policy-disclosure > summary { cursor: pointer; color: var(--accent); font-size: 12.5px; font-weight: 600; }
+.policy-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px;
+  margin-top: 12px; background: var(--border);
+}
+.policy-grid > div { display: grid; gap: 3px; padding: 10px 12px; background: var(--surface-2); }
+.policy-grid strong { font-size: 11px; color: var(--label); }
+.policy-grid span { font-family: var(--ff-mono); font-size: 11px; color: var(--text); }
+.policy-disclosure > p { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); }
+@media (max-width: 700px) { .policy-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.evidence-summary {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px;
+  margin: 16px 0 0; overflow: hidden; border: 1px solid var(--border);
+  border-radius: var(--radius-md); background: var(--border);
+}
+.evidence-summary > div { min-width: 0; padding: 10px 12px; background: var(--surface-2); }
+.evidence-summary dt {
+  font-family: var(--ff-mono); font-size: 9.5px; letter-spacing: var(--ls-label);
+  text-transform: uppercase; color: var(--faint);
+}
+.evidence-summary dd { margin: 4px 0 0; font-size: 12px; color: var(--label); overflow-wrap: anywhere; }
+@media (max-width: 560px) { .evidence-summary { grid-template-columns: 1fr; } }
+
+.explore-presets {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px;
+  margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--border);
+}
+.explore-presets a { display: grid; gap: 4px; padding: 14px; background: var(--surface); text-decoration: none; }
+.explore-presets a:hover { opacity: 1; background: var(--surface-2); }
+.explore-presets strong { color: var(--accent); font-size: 13px; }
+.explore-presets span { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+@media (max-width: 700px) { .explore-presets { grid-template-columns: 1fr; } }
 
 /* Commentary. Set as prose at a readable measure, not boxed — it is the one paragraph on the
    page a person actually reads rather than scans. */

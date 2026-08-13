@@ -6,10 +6,12 @@
  * disclosure changes only how much control furniture a reader meets before the figures.
  */
 
-import { entity, type CurrencyLens } from '@kestrel/model';
+import React from 'react';
+
+import { PRESENTATION, entity, type CurrencyLens } from '@kestrel/model';
 import type { ComparatorId } from '@kestrel/measures';
 
-import { PERSONAS } from '../lib/permissions';
+import { PERSONAS, organisationalAccessLabel } from '../lib/permissions';
 import type { PeriodKind, View } from '../lib/world';
 import {
   PERIOD_KINDS,
@@ -62,8 +64,8 @@ const COMPARATOR_LABELS: Readonly<Record<ComparatorId, string>> = {
 };
 
 const LENS_LABELS: Readonly<Record<CurrencyLens, string>> = {
-  reported: 'Reported',
-  constant: 'Constant currency',
+  reported: `${PRESENTATION} presentation currency`,
+  constant: `${PRESENTATION} presentation currency · constant rates`,
   functional: 'Functional currency',
 };
 
@@ -92,35 +94,34 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
       <div className="context-bar">
         <p className="context-current">
           <span className="context-value">
-            <span className="visually-hidden">Role: </span>
+            Role: {' '}
             {view.principal.label}
           </span>
           <span className="context-separator" aria-hidden>
             ·
           </span>
           <span className="context-value">
-            <span className="visually-hidden">Period: </span>
+            Period: {' '}
             {scopeLabel(view.periodKind, view.scope)}
           </span>
           <span className="context-separator" aria-hidden>
             ·
           </span>
           <span className="context-value">
-            <span className="visually-hidden">Entity: </span>
+            Organisational scope: {' '}
             {entity(view.entityId).name}
           </span>
           <span className="context-separator" aria-hidden>
             ·
           </span>
           <span className="context-value">
-            <span className="visually-hidden">Comparator: </span>
-            vs {comparator}
+            Comparator: vs {comparator}
           </span>
           <span className="context-separator" aria-hidden>
             ·
           </span>
           <span className="context-value">
-            <span className="visually-hidden">Currency: </span>
+            Currency: {' '}
             {LENS_LABELS[view.lens]}
           </span>
         </p>
@@ -128,17 +129,21 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
         <details className="context-editor">
           <summary className="context-edit-trigger">Edit context</summary>
           <div className="selectors context-editor-body">
-            <Group label="Demo as">
+            <Group label="Role">
               {PERSONAS.map((persona) => (
                 <Chip
                   key={persona.id}
                   href={hrefFor(path, view, { persona: persona.id })}
                   active={view.principal.id === persona.id}
-                  title={`${persona.role}; ${entity(persona.grant.entityRootId).name}`}
+                  title={`${persona.role}; access: ${organisationalAccessLabel(persona)}`}
                 >
                   {persona.label}
                 </Chip>
               ))}
+            </Group>
+
+            <Group label="Role access">
+              <span className="step-now">{organisationalAccessLabel(view.principal)}</span>
             </Group>
 
             <Group label="Period">
@@ -188,7 +193,7 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
               </div>
             </fieldset>
 
-            <Group label="Entity">
+            <Group label="Organisational scope">
               {selectableEntities(view.principal).map((e) => (
                 <Chip
                   key={e.id}
@@ -220,7 +225,7 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
               ))}
             </Group>
 
-            <Group label="Currency">
+            <Group label="Currency basis">
               {REPORT_LENSES.map((lens) => (
                 <Chip
                   key={lens}
@@ -228,8 +233,8 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
                   active={view.lens === lens}
                   title={
                     lens === 'constant'
-                      ? 'This period’s trading translated at the comparative period’s rates, so the movement excludes currency.'
-                      : undefined
+                      ? `Group presentation in ${PRESENTATION}, with this period’s trading translated at like-for-like prior-year rates so the movement excludes FX.`
+                      : `Group presentation in ${PRESENTATION}; foreign entities are translated from their functional currencies at the governed rates for this period.`
                   }
                 >
                   {LENS_LABELS[lens]}

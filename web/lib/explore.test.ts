@@ -12,6 +12,7 @@ import {
   exploreCloseDrillHref,
   exploreDrillHref,
   exploreHref,
+  explorePresetHref,
   exploreMeasures,
   exploreMonthsThrough,
   exploreState,
@@ -55,6 +56,22 @@ describe('Explore axes are an unambiguous URL', () => {
     expect(url.searchParams.get('rows')).toBe('entity');
     expect(url.searchParams.get('cols')).toBe('period');
     expect(url.searchParams.get('grain')).toBe('quarter');
+    expect(url.searchParams.has('drill')).toBe(false);
+  });
+});
+
+describe('Explore finance presets', () => {
+  it('opens a plain-language profitability view without losing reporting context', () => {
+    const url = new URL(
+      explorePresetHref({ period: 'quarter', comparator: 'budget', drill: '2:1' }, 'profitability'),
+      'https://demo.invalid',
+    );
+    expect(url.searchParams.get('period')).toBe('quarter');
+    expect(url.searchParams.get('comparator')).toBe('budget');
+    expect(url.searchParams.get('rows')).toBe('measure');
+    expect(url.searchParams.get('cols')).toBe('period');
+    expect(url.searchParams.get('measure')).toContain('ebitda');
+    expect(url.searchParams.get('measure')).toContain('opex');
     expect(url.searchParams.has('drill')).toBe(false);
   });
 });
@@ -182,7 +199,7 @@ describe('Explore CSV is the grid with its evidence attached', () => {
     expect(body).toContain('Deeplight Finance Workbench,Explore export');
     expect(body).toContain('Dataset,Actual');
     expect(body).toContain('Grid window,2026-01 to 2026-06');
-    expect(body).toContain('Comparator,"forecast v6, over the same window"');
+    expect(body).toContain('Comparator,Jan 26 Forecast v6');
     expect(body).toMatch(/Vintages,v-2026/);
     expect(body).toContain('Formula,Owner,Definition state,Vintages');
     expect(body).toContain('external revenue + any intercompany revenue that did not eliminate');

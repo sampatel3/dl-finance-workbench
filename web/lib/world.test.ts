@@ -20,7 +20,8 @@ describe('view period scopes', () => {
       startMonth: '2026-07',
       endMonth: '2026-07',
     });
-    expect(scopeLabel(view.periodKind, view.scope)).toBe('Q3 2026 through Jul 2026');
+    expect(view.scope.label).toBe('Q3 FY26 QTD to Jul 26');
+    expect(scopeLabel(view.periodKind, view.scope)).toBe('Q3 FY26 QTD to Jul 26');
     expect(() => computeMeasure('revenue', contextOf(view))).not.toThrow();
   });
 
@@ -32,7 +33,7 @@ describe('view period scopes', () => {
       startMonth: '2026-04',
       endMonth: '2026-06',
     });
-    expect(scopeLabel(view.periodKind, view.scope)).toBe('Q2 2026');
+    expect(scopeLabel(view.periodKind, view.scope)).toBe('Q2 FY26');
   });
 
   it('offers the four commentary periods in the shared selector', () => {
@@ -47,7 +48,8 @@ describe('view period scopes', () => {
       startMonth: '2026-07',
       endMonth: '2026-07',
     });
-    expect(scopeLabel(view.periodKind, view.scope)).toBe('H2 2026 through Jul 2026');
+    expect(view.scope.label).toBe('H2 FY26 to Jul 26');
+    expect(scopeLabel(view.periodKind, view.scope)).toBe('H2 FY26 to Jul 26');
   });
 
   it('keeps a completed half-year as its full six-month window', () => {
@@ -58,7 +60,7 @@ describe('view period scopes', () => {
       startMonth: '2026-01',
       endMonth: '2026-06',
     });
-    expect(scopeLabel(view.periodKind, view.scope)).toBe('H1 2026');
+    expect(scopeLabel(view.periodKind, view.scope)).toBe('H1 FY26');
   });
 
   it('stops an in-progress fiscal year at the selected through-month', () => {
@@ -69,7 +71,8 @@ describe('view period scopes', () => {
       startMonth: '2026-01',
       endMonth: '2026-07',
     });
-    expect(scopeLabel(view.periodKind, view.scope)).toBe('FY2026 through Jul 2026');
+    expect(view.scope.label).toBe('FY26 YTD to Jul 26');
+    expect(scopeLabel(view.periodKind, view.scope)).toBe('FY26 YTD to Jul 26');
   });
 
   it('keeps a completed fiscal year as its full twelve-month window', () => {
@@ -80,7 +83,16 @@ describe('view period scopes', () => {
       startMonth: '2025-01',
       endMonth: '2025-12',
     });
-    expect(scopeLabel(view.periodKind, view.scope)).toBe('FY2025');
+    expect(scopeLabel(view.periodKind, view.scope)).toBe('FY25');
+  });
+
+  it('uses concise finance labels for month and year to date', () => {
+    const month = viewOf({ period: 'month', month: '2026-07' });
+    const ytd = viewOf({ period: 'ytd', month: '2026-07' });
+
+    expect(scopeLabel(month.periodKind, month.scope)).toBe('Jul 26');
+    expect(ytd.scope.label).toBe('FY26 YTD to Jul 26');
+    expect(scopeLabel(ytd.periodKind, ytd.scope)).toBe('FY26 YTD to Jul 26');
   });
 });
 

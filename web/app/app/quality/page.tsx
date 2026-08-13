@@ -12,6 +12,7 @@ import {
 import { Masthead } from '../../../components/Chrome';
 import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
+import { QualityControlsNav } from '../../../components/QualityControlsNav';
 import { movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
 import { LATEST_MONTH, contextOf, monthLabel, viewOf } from '../../../lib/world';
@@ -69,12 +70,14 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
       <FocusOnLoad elementId={focus} />
       <Masthead path="/app/quality" view={view} />
       <Selectors path="/app/quality" view={view} />
+      <QualityControlsNav active="quality" view={view} />
 
       <section className="section focusable" id="section-bias" aria-label="Bias">
         <div className="section-head">
-          <h2 className="section-title">Are we wrong the same way every time?</h2>
+          <h2 className="section-title">Forecast bias &amp; accuracy</h2>
           <span className="section-note">
-            A run across <strong>versions</strong>, not across months. Months inside one version
+            Persistent over- or under-forecasting across stored versions, separated from ordinary
+            forecast error. A run is measured across <strong>versions</strong>, not across months. Months inside one version
             share its assumptions, so twelve months all wrong the same way is one mistake seen
             twelve times; three versions all wrong the same way is three separate opportunities to
             correct it, not taken. Bias needs a run of {BIAS_RUN_THRESHOLD} <em>and</em> a mean miss

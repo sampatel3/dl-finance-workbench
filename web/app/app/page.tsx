@@ -1,9 +1,8 @@
 import { resolveView } from '@demo-kit/shell';
 import { closeCompleteness, entity } from '@kestrel/model';
 import { runDetectors } from '@kestrel/analysis';
-import { formatValue } from '@kestrel/measures';
+import { POLICY, formatValue } from '@kestrel/measures';
 
-import { Ask } from '../../components/Ask';
 import { Masthead } from '../../components/Chrome';
 import { FocusOnLoad } from '../../components/FocusOnLoad';
 import { BoardPanel, CompletenessBanner, HeadlineCard } from '../../components/Figures';
@@ -11,8 +10,8 @@ import { LineChart } from '../../components/LineChart';
 import { Selectors } from '../../components/Selectors';
 import { headlinesFor } from '../../lib/headline';
 import { NARRATION } from '../../lib/narration.generated';
+import { measureEvidenceHref } from '../../lib/evidence';
 import { deterministicOverviewNarration, overviewRevenueSeries } from '../../lib/overview';
-import { SUGGESTIONS } from '../../lib/tools';
 import type { Params } from '../../lib/world';
 import {
   ALL_MONTHS,
@@ -22,7 +21,6 @@ import {
   hrefFor,
   hrefForTarget,
   monthLabel,
-  paramsForView,
   scopeLabel,
   viewOf,
   world,
@@ -150,7 +148,8 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             <HeadlineCard
               key={headline.measureId}
               headline={headline}
-              href={headlineHref(view, headline.measureId)}
+              analyseHref={headlineHref(view, headline.measureId)}
+              evidenceHref={measureEvidenceHref(headline.measureId, view)}
             />
           ))}
         </div>
@@ -170,6 +169,32 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             reconciliation break and a £0.8m opportunity are not comparable quantities.
           </span>
         </div>
+        <details className="policy-disclosure">
+          <summary>
+            Materiality policy in force · v{POLICY.version} · {POLICY.status}
+          </summary>
+          <div className="policy-grid">
+            {([
+              ['P&L', POLICY.thresholds.pl],
+              ['Balance sheet', POLICY.thresholds.bs],
+              ['Cash flow', POLICY.thresholds.cf],
+              ['Operational', POLICY.thresholds.operational],
+            ] as const).map(([label, threshold]) => (
+              <div key={label}>
+                <strong>{label}</strong>
+                <span>
+                  {threshold.absoluteMinor === 0
+                    ? `${formatValue(threshold.relative, 'percent')} relative`
+                    : `${formatValue(threshold.absoluteMinor, 'currency')} and ${formatValue(threshold.relative, 'percent')}`}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p>
+            Both tests must clear. Owned by {POLICY.owner}; effective {POLICY.effectiveFrom}.{' '}
+            {POLICY.rationale}
+          </p>
+        </details>
         <div className="boards">
           {brief.boards.map((board) => (
             <BoardPanel
@@ -256,20 +281,19 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         </div>
       </section>
 
-      <section className="section focusable" id="section-ask" aria-label="Ask a question">
+      <section className="section focusable" id="section-ask" aria-label="Explore and Ask">
         <div className="section-head">
-          <h2 className="section-title">Ask</h2>
+          <h2 className="section-title">Need to go deeper?</h2>
           <span className="section-note">
-            Every figure in an answer comes from a tool that read the measure layer. None is written
-            by the model.
+            Explore &amp; Ask inherits this role, organisational scope, period, comparator and
+            currency basis. It opens ready-made finance views, grounded questions and the evidence
+            chain behind a cited figure.
           </span>
         </div>
         <div className="pane">
-          <Ask
-            suggestions={SUGGESTIONS}
-            principalId={view.principal.id}
-            viewParams={paramsForView(view)}
-          />
+          <a className="finding-action" href={hrefFor('/app/explore', view)}>
+            Open Explore &amp; Ask
+          </a>
         </div>
       </section>
     </main>

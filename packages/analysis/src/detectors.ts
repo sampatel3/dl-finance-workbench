@@ -316,7 +316,7 @@ const revenueAheadOfForecast: DetectorDefinition = {
 
 const segmentMarginBehindForecast: DetectorDefinition = {
   id: 'segment_margin_behind_forecast',
-  label: 'Segment margin behind forecast',
+  label: 'Adverse segment margin variance',
   direction: 'adverse',
   horizon: 'current',
   plantedCondition: 2,
@@ -346,7 +346,9 @@ const segmentMarginBehindForecast: DetectorDefinition = {
 
       findings.push({
         detectorId: segmentMarginBehindForecast.id,
-        title: `${spec.label} margin ${formatValue(Math.abs(comparison.movement ?? 0), 'bps')} behind forecast`,
+        title:
+          `${spec.label} margin ${formatValue(Math.abs(comparison.movement ?? 0), 'bps')} ` +
+          `behind ${basis.toLowerCase()}`,
         statement:
           `${spec.label} gross margin of ${formatValue(comparison.current.value, 'percent')} is ` +
           `${formatValue(Math.abs(comparison.movement ?? 0), 'bps')} behind ${basis.toLowerCase()}` +
@@ -478,7 +480,7 @@ const driverAboveAssumption: DetectorDefinition = {
         figures: [
           { label: 'Rate paid', value: actual, unit: 'rate' },
           { label: `${forecast.label} assumption`, value: assumed, unit: 'rate' },
-          { label: 'Subcontract hours', value: hours, unit: 'count' },
+          { label: 'Subcontract hours', value: hours, unit: 'hours' },
           { label: 'Cost of the gap, monthly', value: monthlyCost, unit: 'currency' },
           { label: 'Cost of the gap, annualised', value: annualCost, unit: 'currency' },
           { label: 'Months above assumption', value: above.length, unit: 'count' },

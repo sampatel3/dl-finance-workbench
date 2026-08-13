@@ -189,7 +189,15 @@ export const MEASURES: readonly MeasureDefinition[] = [
     owner: 'Operations Director',
     status: 'approved',
     trend: 'sum',
-    compute: (get) => get('subcontract_hours'),
+    compute: (get) => {
+      const value = get('subcontract_hours');
+      // The fact table has one numeric storage convention: every amount is held in minor units,
+      // including non-monetary operational facts. Hours therefore cross the semantic-layer boundary
+      // by dividing out that storage scale, just as headcount does below. Without this conversion a
+      // genuine 3,900-hour month is presented as 390,000 hours and its rate variance is overstated by
+      // the same factor.
+      return value === null ? null : value / 100;
+    },
   },
   {
     id: 'subcontract_rate',
@@ -533,7 +541,7 @@ export const MEASURES: readonly MeasureDefinition[] = [
   {
     id: 'pipeline_conversion',
     label: 'Pipeline conversion',
-    unit: 'ratio',
+    unit: 'percent',
     polarity: 'higher_is_better',
     formula: 'pipeline converted to order ÷ weighted pipeline',
     owner: 'Sales Director',

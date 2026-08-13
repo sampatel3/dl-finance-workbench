@@ -33,7 +33,13 @@ import {
 } from './compute.ts';
 import type { MeasureContext } from './compute.ts';
 import { MEASURES, measure, measureIds } from './catalogue.ts';
-import { COMPARATORS, compareMeasure, resolveComparator, trendExpectation } from './comparator.ts';
+import {
+  COMPARATORS,
+  compareMeasure,
+  financePeriodLabel,
+  resolveComparator,
+  trendExpectation,
+} from './comparator.ts';
 import { assessMateriality, POLICY } from './materiality.ts';
 import { ABSENT, delta, deltaUnitFor, formatValue } from './units.ts';
 
@@ -91,6 +97,30 @@ describe('the catalogue is the semantic layer', () => {
     expect(input?.rowCount ?? 0).toBeGreaterThan(input?.byEntity.size ?? 0);
     expect(input?.monthsUsed).toContain(SEED_END);
     expect(input?.vintageIds.length ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('operational measures preserve their business units', () => {
+  it('converts subcontract hours out of the fact table minor-unit storage scale', () => {
+    const hours = computeMeasure('subcontract_hours', ctx());
+    const stored = hours.inputs.find((input) => input.accountId === 'subcontract_hours')?.value;
+
+    expect(stored).not.toBeNull();
+    expect(hours.unit).toBe('hours');
+    expect(hours.value).toBe((stored ?? 0) / 100);
+    expect(hours.value ?? 0).toBeGreaterThan(100);
+    expect(hours.value ?? 0).toBeLessThan(100_000);
+    expect(formatValue(hours.value, hours.unit)).toMatch(/hrs$/);
+  });
+
+  it('presents pipeline conversion as a percentage rather than a coverage multiple', () => {
+    const conversion = computeMeasure('pipeline_conversion', ctx());
+
+    expect(conversion.value ?? 0).toBeGreaterThan(0);
+    expect(conversion.value ?? 0).toBeLessThan(1);
+    expect(conversion.unit).toBe('percent');
+    expect(formatValue(conversion.value, conversion.unit)).toMatch(/%$/);
+    expect(formatValue(conversion.value, conversion.unit)).not.toMatch(/×$/);
   });
 });
 
@@ -196,6 +226,15 @@ describe('polarity, not sign', () => {
     expect(compareMeasure('headcount', ctx(), { id: 'prior_year' }).favourable).toBeNull();
   });
 
+  it('an unchanged measure is neutral rather than adverse by default', () => {
+    const unchangedCost = compareMeasure('staff_cost', ctx(), {
+      id: 'budget',
+      versionId: 'budget-fy26',
+    });
+    expect(unchangedCost.movement).toBe(0);
+    expect(unchangedCost.favourable).toBeNull();
+  });
+
   it('a movement in a percentage is basis points, not a percentage of a percentage', () => {
     // "Gross margin fell 2.6%" is ambiguous between 2.6 points and 2.6% of 41.8%, and the two differ
     // by a factor of forty.
@@ -234,6 +273,29 @@ describe('the five comparators', () => {
       expect(resolved.basis.length).toBeGreaterThan(10);
       expect(resolved.label).toBeTruthy();
     }
+  });
+
+  it('states comparator bases in finance-native periods rather than raw month counts', () => {
+    const july = ctx({ scope: monthScope('2026-07') });
+    expect(resolveComparator({ id: 'prior_period' }, july).basis).toBe('Jun 26 Actual');
+    expect(resolveComparator({ id: 'prior_year' }, july).basis).toBe('Jul 25 Actual');
+    expect(resolveComparator({ id: 'budget' }, july).basis).toBe(
+      'Jul 26 Budget (approved)',
+    );
+    expect(resolveComparator({ id: 'forecast', versionId: 'v6' }, july).basis).toBe(
+      'Jul 26 Forecast v6',
+    );
+    expect(resolveComparator({ id: 'prior_period' }, july).basis).not.toMatch(/1 months|2026-06/);
+
+    const quarter = quarterScope(2026, 2, CALENDAR_YEAR);
+    expect(financePeriodLabel(quarter)).toBe('Q2 FY26');
+    expect(resolveComparator({ id: 'prior_period' }, ctx({ scope: quarter })).basis).toBe(
+      'Q1 FY26 Actual',
+    );
+    expect(
+      resolveComparator({ id: 'prior_year' }, ctx({ scope: ytdScope('2026-07', CALENDAR_YEAR) }))
+        .basis,
+    ).toBe('FY25 YTD to Jul 25 Actual');
   });
 
   it('produce different comparatives, so the choice is a real one', () => {

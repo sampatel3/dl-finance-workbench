@@ -56,7 +56,7 @@ import {
   translateAtOf,
 } from '@kestrel/model';
 import type { ComparatorChoice, MeasureContext, ResolvedComparator } from '@kestrel/measures';
-import { computeMeasure, contextAtScope, resolveComparator } from '@kestrel/measures';
+import { compareMeasure, computeMeasure, contextAtScope, resolveComparator } from '@kestrel/measures';
 
 /**
  * What each bar of the waterfall means.
@@ -78,6 +78,10 @@ export type BridgeBarKind =
    */
   | 'unsegmented'
   | 'fx'
+  /** Operating-expense movements expressed as their impact on EBITDA. */
+  | 'staff_cost'
+  | 'other_opex'
+  | 'unmapped_opex'
   /** Named, small, and reported. Never absorbed. */
   | 'other'
   | 'closing';
@@ -327,8 +331,17 @@ export function buildBridge(request: BridgeRequest): Bridge {
     );
   }
 
+  // Match `compareMeasure` exactly for a historical constant-currency comparison: the current side
+  // is translated at the historic window's rates, while that historic side is its recorded reported
+  // value. Rebasing the older side again would borrow rates from a second prior window and make an
+  // otherwise summing bridge disagree with the comparative shown beside it.
+  const historicalTimeComparator =
+    ctx.lens === 'constant' && (choice.id === 'prior_period' || choice.id === 'prior_year');
   const comparativeCtx: MeasureContext = {
     ...contextAtScope(ctx, comparator.scope ?? ctx.scope),
+    ...(historicalTimeComparator
+      ? { lens: 'reported' as const, comparativeScope: undefined }
+      : {}),
     scenario: comparator.scenario ?? ctx.scenario,
     versionId: comparator.versionId ?? ctx.versionId,
   };
@@ -501,6 +514,85 @@ export function grossProfitBridge(request: Omit<BridgeRequest, 'measureId'>): Br
     total,
     bars,
     residual: (revenue.residual ?? 0) - (cost.residual ?? 0),
+    sums: Math.round(contributions) === Math.round(total),
+  };
+}
+
+/**
+ * EBITDA as one exact walk from its comparator to actual.
+ *
+ * Gross profit already has the strongest available explanation: a price/volume/mix bridge with FX
+ * separated first. Reusing those contribution bars matters. Re-running a second decomposition here
+ * would let the EBITDA and gross-profit views give different answers for the same movement.
+ *
+ * The remainder is not an opaque "opex" plug. EBITDA subtracts three governed measures, so each is
+ * shown separately and carries the opposite sign to its expense movement:
+ *
+ *     EBITDA impact = comparative expense − actual expense
+ *
+ * A cost increase is therefore a negative EBITDA contribution. The three lines exhaust the opex
+ * definition; no invented category or balancing allocation is needed.
+ */
+export function ebitdaBridge(request: Omit<BridgeRequest, 'measureId'>): Bridge {
+  const grossProfit = grossProfitBridge(request);
+  const ebitda = compareMeasure('ebitda', request.ctx, request.comparator);
+
+  const opexLines = [
+    {
+      kind: 'staff_cost' as const,
+      measureId: 'staff_cost',
+      label: 'Staff costs',
+      note: 'the movement in payroll cost, shown with the opposite sign because expense reduces EBITDA',
+    },
+    {
+      kind: 'other_opex' as const,
+      measureId: 'other_opex',
+      label: 'Other opex',
+      note: 'the movement in operating expense other than payroll, shown as its impact on EBITDA',
+    },
+    {
+      kind: 'unmapped_opex' as const,
+      measureId: 'unmapped_opex',
+      label: 'Unmapped opex',
+      note: 'the movement in ledger cost not placed by the mapping set, kept visible rather than allocated',
+    },
+  ].map(({ kind, measureId, label, note }): BridgeBar => {
+    const comparison = compareMeasure(measureId, request.ctx, request.comparator);
+    return {
+      kind,
+      label,
+      value: (comparison.comparativeValue ?? 0) - (comparison.current.value ?? 0),
+      note,
+    };
+  });
+
+  const from = ebitda.comparativeValue ?? 0;
+  const to = ebitda.current.value ?? 0;
+  const total = to - from;
+  const bars: BridgeBar[] = [
+    { kind: 'opening', label: grossProfit.comparator.label, value: from },
+    ...grossProfit.bars.filter((bar) => bar.kind !== 'opening' && bar.kind !== 'closing'),
+    // Keep zero-value opex lines. These three categories are the governed identity behind EBITDA,
+    // and explicitly showing "no movement" is more useful than making one disappear from the walk.
+    ...opexLines,
+    { kind: 'closing', label: 'Actual', value: to },
+  ];
+  const contributions = bars
+    .filter((bar) => bar.kind !== 'opening' && bar.kind !== 'closing')
+    .reduce((sum, bar) => sum + bar.value, 0);
+
+  return {
+    measureId: 'ebitda',
+    label: 'EBITDA',
+    scope: request.ctx.scope,
+    comparator: grossProfit.comparator,
+    from,
+    to,
+    total,
+    bars,
+    // Gross profit is the only decomposed part of this bridge. Its disclosed residual remains this
+    // bridge's disclosed residual; the three opex measures are an exhaustive identity.
+    residual: grossProfit.residual,
     sums: Math.round(contributions) === Math.round(total),
   };
 }

@@ -80,7 +80,7 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
 
       <section className="section focusable" id="section-versions" aria-label="Versions">
         <div className="section-head">
-          <h2 className="section-title">Versions</h2>
+          <h2 className="section-title">Forecast versions &amp; drivers</h2>
           <span className="section-note">
             The version in force is {approved.label} — the approved forecast, not the draft on top
             of it. A draft is visible and is not what a variance is measured against.

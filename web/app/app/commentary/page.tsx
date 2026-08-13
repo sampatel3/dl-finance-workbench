@@ -360,7 +360,7 @@ function CommentaryCard({
     <article className="commentary-card" id={`commentary-${index + 1}`}>
       <header className="commentary-card-head">
         <div>
-          <span className="commentary-kicker">Board-ready headline</span>
+          <span className="commentary-kicker">Executive / Board commentary</span>
           <h3>{snapshot?.headline ?? item.headline}</h3>
         </div>
         <StateChip state={item.state} />
@@ -373,7 +373,7 @@ function CommentaryCard({
 
       <details className="commentary-detail">
         <summary>
-          Open supporting chain
+          Open detailed controller evidence
           <span>movement → drivers → accounts → source rows</span>
         </summary>
         <EvidenceChain evidence={evidence} />
@@ -423,11 +423,12 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
 
       <section className="section focusable" id="section-commentary" aria-label="Commentary queue">
         <div className="section-head">
-          <h2 className="section-title">Selected reporting commentary</h2>
+          <h2 className="section-title">Executive / Board commentary</h2>
           <span className="section-note">
-            Period and comparator come from the shared selectors above. Changing either creates a
-            new unapproved draft and recomputes its like-for-like evidence; it never borrows an old
-            approval. Opening the chain changes no period, version or comparator.
+            The concise executive narrative is shown first. Open detailed controller evidence for
+            the movement, drivers, accounts and source rows. Period and comparator come from the
+            shared selectors; changing either creates a new unapproved draft rather than borrowing
+            an old approval.
           </span>
         </div>
 

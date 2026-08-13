@@ -58,7 +58,9 @@ export const PERSONAS: readonly Principal[] = [
   },
   {
     id: 'gulf-controller',
-    label: 'Gulf business-unit controller',
+    // The persona names the job, while the grant below names where that job may read. Keeping Gulf
+    // out of the role label prevents organisational scope from masquerading as a permission role.
+    label: 'Business-unit controller',
     role: 'controller',
     grant: { entityRootId: 'gulf', dimensionFilters: {}, canPublish: false },
   },
@@ -72,6 +74,14 @@ export function principalById(id: PersonaId): Principal {
   const found = PERSONAS.find((persona) => persona.id === id);
   if (found === undefined) throw new Error(`Unknown persona: ${id}`);
   return found;
+}
+
+/** Human-readable row-level access, kept separate from the role and selected reporting scope. */
+export function organisationalAccessLabel(principal: Principal): string {
+  if (principal.grant.entityRootId === 'group') {
+    return `Group-wide (${subtree('group').length} legal entities)`;
+  }
+  return `${entity(principal.grant.entityRootId).name} only`;
 }
 
 export function resolvePrincipal(raw: string | undefined): {

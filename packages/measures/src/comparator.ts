@@ -20,7 +20,16 @@
  */
 
 import type { FiscalMonth, PeriodScope, Scenario } from '@kestrel/model';
-import { addMonths, priorPeriodScope, priorYearScope } from '@kestrel/model';
+import {
+  CALENDAR_YEAR,
+  addMonths,
+  fiscalHalfOf,
+  fiscalQuarterOf,
+  fiscalYearOf,
+  formatMonthShort,
+  priorPeriodScope,
+  priorYearScope,
+} from '@kestrel/model';
 
 import type { MeasureContext, MeasureValue } from './compute.ts';
 import { computeMeasure, contextAtScope, measureSeries } from './compute.ts';
@@ -80,7 +89,7 @@ export function resolveComparator(
         scope,
         scenario: 'ACTUAL',
         versionId: 'actual',
-        basis: `the ${monthsIn(scope)} months to ${scope.endMonth}, actual`,
+        basis: `${financePeriodLabel(scope)} Actual`,
       };
     }
     case 'prior_year': {
@@ -93,7 +102,7 @@ export function resolveComparator(
         scope,
         scenario: 'ACTUAL',
         versionId: 'actual',
-        basis: `the same window a year earlier, actual`,
+        basis: `${financePeriodLabel(scope)} Actual`,
       };
     }
     case 'budget': {
@@ -107,7 +116,7 @@ export function resolveComparator(
         scope: ctx.scope,
         scenario: 'BUDGET',
         versionId,
-        basis: `the approved budget, ${versionId}`,
+        basis: `${financePeriodLabel(ctx.scope)} Budget (approved)`,
       };
     }
     case 'forecast': {
@@ -120,7 +129,7 @@ export function resolveComparator(
         scope: ctx.scope,
         scenario: 'FORECAST',
         versionId,
-        basis: `forecast ${versionId}, over the same window`,
+        basis: `${financePeriodLabel(ctx.scope)} Forecast ${versionId}`,
       };
     }
     case 'trend':
@@ -130,10 +139,38 @@ export function resolveComparator(
         kind: 'fit',
         admissibleForMateriality: false,
         basis:
-          `a straight line fitted through the ${TREND_WINDOW_MONTHS} months before this window, ` +
-          'extended across it — an expectation, not a plan',
+          `${financePeriodLabel(ctx.scope)} ${TREND_WINDOW_MONTHS}-month fitted trend ` +
+          '(expectation, not an approved plan)',
       };
   }
+}
+
+/**
+ * A compact finance label for a comparative window.
+ *
+ * A one-month period is named as "Jun 26", not "the 1 months to 2026-06". Complete fiscal
+ * periods retain the familiar Q/H/FY convention; irregular or partial comparative windows name
+ * their exact endpoints so the wording never implies months that are not in the calculation.
+ */
+export function financePeriodLabel(scope: PeriodScope): string {
+  const months = monthsIn(scope);
+  if (months === 1) return formatMonthShort(scope.endMonth);
+
+  const fiscalYear = fiscalYearOf(scope.endMonth, CALENDAR_YEAR);
+  const shortYear = String(fiscalYear).slice(-2);
+  if (scope.type === 'QUARTER' && months === 3) {
+    return `Q${fiscalQuarterOf(scope.endMonth, CALENDAR_YEAR)} FY${shortYear}`;
+  }
+  if (scope.type === 'HALF_YEAR' && months === 6) {
+    return `H${fiscalHalfOf(scope.endMonth, CALENDAR_YEAR)} FY${shortYear}`;
+  }
+  if (scope.type === 'FISCAL_YEAR' && months === 12) return `FY${shortYear}`;
+  if (scope.type === 'YTD') return `FY${shortYear} YTD to ${formatMonthShort(scope.endMonth)}`;
+  if (scope.type === 'TTM' && months === 12) {
+    return `12 months to ${formatMonthShort(scope.endMonth)}`;
+  }
+
+  return `${formatMonthShort(scope.startMonth)}–${formatMonthShort(scope.endMonth)}`;
 }
 
 /** A measure, its comparative, and the movement between them. */
@@ -186,7 +223,7 @@ export function compareMeasure(
 
   const movement = delta(current.value, comparativeValue, current.unit);
   const favourable =
-    movement.value === null || current.polarity === 'neutral'
+    movement.value === null || movement.value === 0 || current.polarity === 'neutral'
       ? null
       : current.polarity === 'higher_is_better'
         ? movement.value > 0

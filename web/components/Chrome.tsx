@@ -13,33 +13,13 @@
 import { entity } from '@kestrel/model';
 
 import { DEMO_MARK, DEMO_NAME } from '../lib/demo';
+import { SURFACES, surfaceFor } from '../lib/navigation';
 import type { View } from '../lib/world';
 import { hrefFor, scopeLabel } from '../lib/world';
 import { ActiveNavScroll } from './ActiveNavScroll';
 
-/** Every surface, in the order a reader meets them: executive, then analyst, then governance. */
-export const SURFACES = [
-  { path: '/app', label: 'Overview', ariaLabel: 'Overview' },
-  {
-    path: '/app/performance',
-    label: 'Performance',
-    ariaLabel: 'Performance — variance analysis',
-  },
-  { path: '/app/explore', label: 'Explore', ariaLabel: 'Explore — data explorer' },
-  { path: '/app/forecast', label: 'Forecast', ariaLabel: 'Forecast planning' },
-  { path: '/app/cash', label: 'Cash', ariaLabel: 'Cash and liquidity' },
-  { path: '/app/quality', label: 'Forecast accuracy', ariaLabel: 'Forecast accuracy' },
-  { path: '/app/scenarios', label: 'Scenarios', ariaLabel: 'Scenarios — scenario planning' },
-  {
-    path: '/app/commentary',
-    label: 'Commentary',
-    ariaLabel: 'Commentary — reporting approvals',
-  },
-  { path: '/app/controls', label: 'Controls', ariaLabel: 'Controls and governance' },
-] as const;
-
 export function Masthead({ path, view }: { readonly path: string; readonly view: View }) {
-  const title = SURFACES.find((surface) => surface.path === path)?.label ?? DEMO_NAME;
+  const title = surfaceFor(path)?.label ?? DEMO_NAME;
   const skipLink = (
     <a className="skip-link" href="#main-content">
       Skip to content
@@ -58,7 +38,7 @@ export function Masthead({ path, view }: { readonly path: string; readonly view:
         {view.surfaceNav ? (
           <nav className="inner-surface-nav" aria-label="Finance workbench sections">
             {SURFACES.map((surface) => {
-              const active = surface.path === path;
+              const active = surface.activePaths.includes(path);
               return (
                 <a
                   key={surface.path}
@@ -95,7 +75,7 @@ export function Masthead({ path, view }: { readonly path: string; readonly view:
         </span>
         <nav className="masthead-nav" aria-label="Finance workbench sections">
           {SURFACES.map((surface) => {
-            const active = surface.path === path;
+            const active = surface.activePaths.includes(path);
             return (
               <a
                 key={surface.path}

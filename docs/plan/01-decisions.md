@@ -76,8 +76,8 @@ equal the sum of its months.
 
 ## 5. Currency translation lives in the model, not in a report
 
-Three currencies, a versioned rate table with a source, IAS 21 translation, and constant currency as
-the same translation run at the comparative period's rates.
+Functional and presentation currencies, a versioned rate table with a source, IAS 21 translation,
+and constant currency as the same translation run at like-for-like prior-year rates.
 
 **Why.** "How much of that is FX?" is the first question a group CFO asks about any variance, and it
 cannot be answered by a report that receives already-translated numbers. Constant currency has to be

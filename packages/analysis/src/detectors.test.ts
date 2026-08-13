@@ -433,6 +433,15 @@ describe('the four boards', () => {
     }
   });
 
+  it('uses finance decision titles while preserving stable board ids', () => {
+    expect(boards.boards.map(({ id, title }) => ({ id, title }))).toEqual([
+      { id: 'attention', title: 'Adverse' },
+      { id: 'performance', title: 'Favourable' },
+      { id: 'risks', title: 'Risks' },
+      { id: 'opportunities', title: 'Opportunities' },
+    ]);
+  });
+
   it('and carries the basis, so a reader is never guessing what the comparison is', () => {
     expect(boards.comparator.basis.length).toBeGreaterThan(10);
     expect(boards.comparator.id).toBe('forecast');
@@ -486,6 +495,14 @@ describe('changing the comparator re-partitions the boards', () => {
     const before = forecast.findings.map((f) => f.fingerprint).sort();
     const after = priorYear.findings.map((f) => f.fingerprint).sort();
     expect(after).not.toEqual(before);
+  });
+
+  it('names an adverse margin against the selected comparator, not a hard-coded forecast', () => {
+    const priorYear = withComparator({ id: 'prior_year' });
+    const margin = priorYear.findings.find((finding) => finding.plantedCondition === 2);
+
+    expect(margin?.title).toMatch(/behind prior year/i);
+    expect(margin?.title).not.toMatch(/behind forecast/i);
   });
 
   it('and a fitted comparator cannot raise a board item at all', () => {

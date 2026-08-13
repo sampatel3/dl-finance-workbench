@@ -5,6 +5,7 @@ import { formatValue } from '@kestrel/measures';
 import { Masthead } from '../../../components/Chrome';
 import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
+import { QualityControlsNav } from '../../../components/QualityControlsNav';
 import { controlsFor } from '../../../lib/controls';
 import { PERSONAS } from '../../../lib/permissions';
 import type { Params } from '../../../lib/world';
@@ -113,6 +114,7 @@ export default async function Controls({ searchParams }: { searchParams: Promise
       <FocusOnLoad elementId={focus} />
       <Masthead path="/app/controls" view={view} />
       <Selectors path="/app/controls" view={view} />
+      <QualityControlsNav active="controls" view={view} />
 
       {controls.requestedRefusal === null ? null : (
         <p className="banner banner-warn" role="alert">

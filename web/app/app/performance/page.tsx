@@ -1,17 +1,22 @@
 import { resolveView } from '@demo-kit/shell';
-import { SEGMENTS, entity, segment as segmentSpec } from '@kestrel/model';
-import { compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
+import { SEGMENTS, addMonths, entity, monthScope, segment as segmentSpec } from '@kestrel/model';
+import {
+  compareMeasure,
+  contextAtScope,
+  formatValue,
+  measureSeries,
+} from '@kestrel/measures';
 import {
   buildBridge,
   buildThreeWaySplit,
-  directForecast,
+  ebitdaBridge,
   grossProfitBridge,
   principalDriver,
 } from '@kestrel/analysis';
 
-import { CashColumns } from '../../../components/CashColumns';
 import { Masthead } from '../../../components/Chrome';
 import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { LineChart } from '../../../components/LineChart';
 import { Selectors } from '../../../components/Selectors';
 import { ThreeWaySplit } from '../../../components/ThreeWaySplit';
 import { Waterfall } from '../../../components/Waterfall';
@@ -40,6 +45,26 @@ import {
  */
 
 export const dynamic = 'force-dynamic';
+
+const TREND_METRICS = [
+  { id: 'revenue', label: 'Revenue' },
+  { id: 'gross_profit', label: 'Gross profit' },
+  { id: 'gross_margin', label: 'Gross margin %' },
+  { id: 'ebitda', label: 'EBITDA' },
+  { id: 'ebitda_margin', label: 'EBITDA %' },
+  { id: 'opex', label: 'Opex' },
+  { id: 'cash', label: 'Cash' },
+] as const;
+
+type TrendMetric = (typeof TREND_METRICS)[number];
+
+/** Keep the selected performance metric in the URL so back, refresh and shared links reproduce it. */
+function trendHref(view: ReturnType<typeof viewOf>, metric: TrendMetric['id']): string {
+  const target = new URL(hrefFor('/app/performance', view), 'https://finance-workbench.invalid');
+  target.searchParams.set('metric', metric);
+  target.searchParams.set('focus', 'section-trend');
+  return `${target.pathname}${target.search}`;
+}
 
 function commentaryHref(
   view: ReturnType<typeof viewOf>,
@@ -109,6 +134,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
   const selectedMeasure = typeof params.measure === 'string' ? params.measure : undefined;
   const selectedSegment = typeof params.segment === 'string' ? params.segment : undefined;
+  const requestedMetric = typeof params.metric === 'string' ? params.metric : undefined;
 
   const view = viewOf(params);
   const ctx = contextOf(view);
@@ -121,10 +147,26 @@ export default async function Performance({ searchParams }: { searchParams: Prom
     ? buildBridge({ measureId: 'revenue', ctx, comparator: view.comparator })
     : null;
   const marginBridge = bridgeable ? grossProfitBridge({ ctx, comparator: view.comparator }) : null;
+  const profitBridge = bridgeable ? ebitdaBridge({ ctx, comparator: view.comparator }) : null;
   const principal = revenueBridge === null ? undefined : principalDriver(revenueBridge);
   const revenueSplit = buildThreeWaySplit({ measureId: 'revenue', ctx });
 
-  const cash = directForecast(ctx);
+  const trendMetric =
+    TREND_METRICS.find((candidate) => candidate.id === requestedMetric) ?? TREND_METRICS[0];
+  const trendStart = addMonths(view.through, -11);
+  const trendPoints = measureSeries(trendMetric.id, ctx, trendStart, view.through).map((point) => {
+    const monthCtx = contextAtScope(ctx, monthScope(point.month));
+    return {
+      ...point,
+      comparative: compareMeasure(trendMetric.id, monthCtx, view.comparator).comparativeValue,
+    };
+  });
+  const trendComparison = compareMeasure(
+    trendMetric.id,
+    contextAtScope(ctx, monthScope(view.through)),
+    view.comparator,
+  );
+
   const basis = compareMeasure('revenue', ctx, view.comparator).comparator.basis;
 
   return (
@@ -206,57 +248,125 @@ export default async function Performance({ searchParams }: { searchParams: Prom
       <section
         className="section focusable"
         id="section-ebitda"
-        aria-label="EBITDA composition"
+        aria-label="EBITDA bridge"
       >
         <div className="section-head">
-          <h2 className="section-title">EBITDA, composed</h2>
+          <h2 className="section-title">EBITDA, decomposed</h2>
           <span className="section-note">
-            Gross profit less operating expense. Each component is read from the governed measure
-            catalogue against {basis}, so this view ties directly to the headline figure.
+            The exact gross-profit bridge, followed by staff, other and unmapped operating-expense
+            impacts. Every bar is governed and together they tie to the EBITDA movement against{' '}
+            {basis}.
+          </span>
+        </div>
+        {profitBridge === null ? (
+          <div className="pane">
+            <p className="board-empty">
+              A trend cannot be bridged: it has no recorded quantities or version behind it. Choose
+              a comparator that names a version for an exact EBITDA explanation.
+            </p>
+          </div>
+        ) : (
+          <div className="pane">
+            <Waterfall bridge={profitBridge} favourableWhen="up" />
+          </div>
+        )}
+      </section>
+
+      <section
+        className="section focusable"
+        id="section-opex"
+        aria-label="Operating expense analysis"
+      >
+        <div className="section-head">
+          <h2 className="section-title">Operating expense</h2>
+          <span className="section-note">
+            Actual, comparator, sterling variance and relative movement by the three categories in
+            the governed Opex definition. A positive variance is an overspend; the direction colour
+            follows that cost polarity.
           </span>
         </div>
         <div className="pane pane-scroll">
           <table className="grid">
-            <caption>EBITDA composition</caption>
+            <caption>Operating expense against {basis}</caption>
             <thead>
               <tr>
-                <th scope="col">Measure</th>
+                <th scope="col">Category</th>
                 <th scope="col" className="num">
                   Actual
                 </th>
                 <th scope="col" className="num">
-                  Comparative
+                  Comparator
                 </th>
                 <th scope="col" className="num">
-                  Variance
+                  £ variance
                 </th>
                 <th scope="col" className="num">
-                  %
+                  % variance
                 </th>
               </tr>
             </thead>
             <tbody>
               <Row
-                label="Gross profit"
-                measureId="gross_profit"
+                label="Staff cost"
+                measureId="staff_cost"
                 ctx={ctx}
                 comparator={view.comparator}
               />
               <Row
-                label="Operating expense"
+                label="Other operating expense"
+                measureId="other_opex"
+                ctx={ctx}
+                comparator={view.comparator}
+              />
+              <Row
+                label="Unmapped operating expense"
+                measureId="unmapped_opex"
+                ctx={ctx}
+                comparator={view.comparator}
+              />
+              <Row
+                label="Total operating expense"
                 measureId="opex"
                 ctx={ctx}
                 comparator={view.comparator}
-              />
-              <Row
-                label="EBITDA"
-                measureId="ebitda"
-                ctx={ctx}
-                comparator={view.comparator}
-                active={selectedMeasure === 'ebitda'}
+                active={selectedMeasure === 'opex'}
               />
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section
+        className="section focusable"
+        id="section-trend"
+        aria-label="Performance over twelve months"
+      >
+        <div className="section-head">
+          <h2 className="section-title">{trendMetric.label}, twelve months</h2>
+          <span className="section-note">
+            Monthly actual against {trendComparison.comparator.basis}. Choose a metric below; the
+            selection is retained in the URL so this view can be shared and reproduced.
+          </span>
+        </div>
+        <div className="pane">
+          <nav className="sel-chips" aria-label="Twelve-month metric">
+            {TREND_METRICS.map((metric) => (
+              <a
+                key={metric.id}
+                className={`chip-link${metric.id === trendMetric.id ? ' is-active' : ''}`}
+                href={trendHref(view, metric.id)}
+                {...(metric.id === trendMetric.id ? { 'aria-current': 'true' as const } : {})}
+              >
+                {metric.label}
+              </a>
+            ))}
+          </nav>
+          <LineChart
+            points={trendPoints}
+            unit={trendComparison.current.unit}
+            label="Actual"
+            comparativeLabel={trendComparison.comparator.label}
+          />
         </div>
       </section>
 
@@ -350,19 +460,6 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         </div>
       </section>
 
-      <section className="section focusable" id="section-cash" aria-label="Cash forecast">
-        <div className="section-head">
-          <h2 className="section-title">Thirteen weeks of cash</h2>
-          <span className="section-note">
-            Receipts and payments scored separately, because a week that nets to zero because £2m
-            arrived and £2m left is not a quiet week. Opening balance{' '}
-            {formatValue(cash.opening, 'currency')}.
-          </span>
-        </div>
-        <div className="pane">
-          <CashColumns forecast={cash} />
-        </div>
-      </section>
     </main>
   );
 }

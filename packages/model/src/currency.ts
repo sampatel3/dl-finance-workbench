@@ -1,13 +1,15 @@
 /**
  * Currency, and IAS 21 translation.
  *
- * Three currencies matter and the product needs all three:
+ * Two currency layers are represented in this deterministic demo:
  *
- *   **transaction** — what the document was in. Held for exposure and for drill-down.
  *   **functional**  — the entity's own; its books are kept in this, and an entity-level variance
  *                     should be read in it, because that is the currency the manager being asked
  *                     about the variance actually spends.
  *   **presentation** — the group's; what the CFO reads.
+ *
+ * Transaction/document currency is intentionally not represented on `Fact`; exposing it as a lens or
+ * drill attribute would invent provenance the seeded ledger does not contain.
  *
  * Translation between the last two follows IAS 21 and the rule has two halves that are easy to
  * get half-right:

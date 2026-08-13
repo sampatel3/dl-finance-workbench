@@ -253,11 +253,13 @@ The whole world, and the arithmetic that has to hold before anything above it ca
   makes every scope correct from one table; without it a quarterly comparison sums three closing
   balances.
 - **Dimensions.** Entity (with functional currency, ownership, consolidation method), account, cost
-  centre, segment, channel, each with its hierarchy.
-- **Currency.** Transaction, functional and presentation; a versioned rate table with a source;
+  centre and segment. The deterministic build does not seed a separate channel or full organisation
+  hierarchy, so neither is exposed in the product.
+- **Currency.** Functional and presentation currency; a versioned rate table with a source;
   IAS 21 translation — closing rate for balance-sheet items, average for the period for P&L items,
   residual to a cumulative translation adjustment inside equity. Constant currency is the same
-  translation run at the comparative period's rates.
+  translation run at like-for-like prior-year rates. Transaction/document currency is not stored on
+  the implemented fact grain and is not offered as a lens or drill attribute.
 - **Vintages.** Immutable loads with source system, timestamp, row counts, validation result, and
   `restatesVintageId`. Nothing is ever updated in place.
 - **The fact store.** The grain of §5.1 of the product definition, keyed for the common query;

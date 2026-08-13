@@ -63,7 +63,7 @@ describe('the tool list', () => {
        "future" — and failed, because a segment is called `projects` and a comparator is called `forecast`.
        A test that reads vocabulary rather than behaviour fails on the product's own nouns. */
     const future = await call('get_measure', { measure: 'revenue', month: '2027-03' });
-    expect(future.content).toMatch(/Jul 2026/);
+    expect(future.content).toMatch(/Jul 26/);
     expect(SYSTEM).toMatch(/cannot/);
   });
 
@@ -101,8 +101,8 @@ describe('the selected page view', () => {
     );
 
     expect(out.content).toMatch(/Kestrel Gulf Technical Services/);
-    expect(out.content).toMatch(/Q2 2026 through Apr 2026/);
-    expect(out.content).toMatch(/same window a year earlier/);
+    expect(out.content).toMatch(/Q2 FY26 QTD to Apr 26/);
+    expect(out.content).toMatch(/Apr 25 Actual/);
     const href = new URL(out.citations?.[0]?.href ?? '', 'https://demo.invalid');
     expect(href.searchParams.get('as')).toBe('gulf-controller');
     expect(href.searchParams.get('period')).toBe('quarter');
@@ -115,13 +115,13 @@ describe('the selected page view', () => {
       { id: 't', name: 'compare_measures', input: { measure: 'revenue' } },
       { view: viewOf({ ...paramsForView(selected), comparator: 'forecast' }) },
     );
-    expect(forecast.content).toMatch(/forecast v7/);
+    expect(forecast.content).toMatch(/Forecast v7/);
   });
 
   it('states the same context to the model, so "this period" is not reinterpreted', () => {
     const system = systemFor(selected);
-    expect(system).toMatch(/Gulf business-unit controller/);
-    expect(system).toMatch(/Q2 2026 through Apr 2026/);
+    expect(system).toMatch(/Business-unit controller/);
+    expect(system).toMatch(/Q2 FY26 QTD to Apr 26/);
     expect(system).toMatch(/Kestrel Gulf Technical Services/);
     expect(system).toMatch(/prior year/);
     expect(system).toMatch(/constant currency lens/);
@@ -280,7 +280,7 @@ describe('compare_measures', () => {
 describe('list_findings', () => {
   it('returns every finding with its board, priority and owner', async () => {
     const out = await call('list_findings');
-    expect(out.content).toMatch(/findings for Jul 2026/);
+    expect(out.content).toMatch(/findings for Jul 26/);
     expect(out.content).toMatch(/adverse\/current|favourable\/forward/);
     expect(out.citations?.length ?? 0).toBeGreaterThan(0);
   });
@@ -454,9 +454,9 @@ describe('the four illustrative CFO questions', () => {
       month: '2026-07',
       board: 'opportunities',
     });
-    expect(risks.content).toMatch(/findings for Jul 2026/);
+    expect(risks.content).toMatch(/findings for Jul 26/);
     expect(risks.content).toMatch(/adverse\/forward/);
-    expect(opportunities.content).toMatch(/findings for Jul 2026/);
+    expect(opportunities.content).toMatch(/findings for Jul 26/);
     expect(opportunities.content).toMatch(/favourable\/forward/);
     expect(risks.citations?.length ?? 0).toBeGreaterThan(0);
     expect(opportunities.citations?.length ?? 0).toBeGreaterThan(0);
@@ -506,7 +506,7 @@ describe('an unknown tool', () => {
 describe('the demo’s own month', () => {
   it('is what a tool defaults to, so an answer never silently reports a different period', async () => {
     const out = await call('get_measure', { measure: 'revenue', month: 'not-a-month' });
-    expect(out.content).toMatch(/Jul 2026/);
+    expect(out.content).toMatch(/Jul 26/);
     expect(SEED_END).toBe('2026-07');
   });
 });

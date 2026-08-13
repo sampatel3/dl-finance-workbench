@@ -59,7 +59,7 @@ describe('Overview narration follows the selected reporting identity', () => {
     expect(`${narration.headline} ${narration.body}`).toContain(
       scopeLabel(view.periodKind, view.scope),
     );
-    expect(narration.body).toContain('against the same window a year earlier, actual');
+    expect(narration.body).toContain('against H1 FY25 Actual');
   });
 
   it('recomputes figures when the selected window changes', () => {
@@ -71,7 +71,7 @@ describe('Overview narration follows the selected reporting identity', () => {
     );
 
     expect(month.body).not.toBe(quarter.body);
-    expect(month.body).toContain('Jun 2026');
-    expect(quarter.body).toContain('Q2 2026');
+    expect(month.body).toContain('Jun 26');
+    expect(quarter.body).toContain('Q2 FY26');
   });
 });

@@ -28,6 +28,29 @@ export const EXPLORE_MEASURES = [
 
 export const ALL_EXPLORE_MEASURES: readonly string[] = measureIds();
 
+export const EXPLORE_PRESETS = [
+  {
+    id: 'profitability',
+    label: 'Profitability',
+    description: 'Revenue, gross profit, margin, Opex and EBITDA over time',
+    measures: ['revenue', 'gross_profit', 'gross_margin', 'opex', 'ebitda', 'ebitda_margin'],
+  },
+  {
+    id: 'cash-working-capital',
+    label: 'Cash & working capital',
+    description: 'Cash, receivables, working capital and the cash-conversion cycle',
+    measures: ['cash', 'receivables', 'working_capital', 'dso', 'dpo', 'dio', 'cash_conversion_cycle'],
+  },
+  {
+    id: 'operations',
+    label: 'Operational drivers',
+    description: 'Utilisation, headcount, revenue per head and bought-in capacity',
+    measures: ['utilisation', 'headcount', 'revenue_per_head', 'subcontract_hours', 'subcontract_rate'],
+  },
+] as const;
+
+export type ExplorePresetId = (typeof EXPLORE_PRESETS)[number]['id'];
+
 export interface ExploreAxes {
   readonly rows: readonly Dimension[];
   readonly columns: readonly Dimension[];
@@ -182,6 +205,20 @@ function paramsIntoSearch(params: Params): URLSearchParams {
     if (single !== undefined) next.set(key, single);
   }
   return next;
+}
+
+/** Open a finance question first; the expert can still rearrange the resulting axes afterwards. */
+export function explorePresetHref(params: Params, id: ExplorePresetId): string {
+  const preset = EXPLORE_PRESETS.find((candidate) => candidate.id === id);
+  if (preset === undefined) throw new Error(`Unknown Explore preset: ${id}`);
+  const next = paramsIntoSearch(params);
+  next.delete('focus');
+  next.delete('drill');
+  next.set('rows', 'measure');
+  next.set('cols', 'period');
+  next.set('measure', preset.measures.join(','));
+  const query = next.toString();
+  return query === '' ? '/app/explore' : `/app/explore?${query}`;
 }
 
 function fillAxis(
