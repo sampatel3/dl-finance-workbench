@@ -1,110 +1,127 @@
 /*
- * The demo's design language, as tokens and the few selectors that use them.
+ * The design language: the Deeplight design system, expressed in the token names the kit reads.
  *
- * This file is a starting posture, not a design system, and three things about it are
- * deliberate.
+ * ## Where this comes from
  *
- *   There is no CSS framework and no component library. The kit ships zero UI dependencies
- *   (01-decisions.md §16), because a template has to be readable in one sitting and a
- *   demo's author is going to write their own product UI regardless. What is here is the
- *   token layer plus the smallest set of selectors the placeholder product needs.
+ * `docs/plan/04-design.md` records the decisions. The values are Deeplight's own — near-black
+ * surfaces, one amber accent, Inter Tight for headings, JetBrains Mono for data — taken from
+ * `colors_and_type.css` in the brand system rather than invented here.
  *
- *   The tokens carry their reasoning inline. A hex value with no argument behind it is a
- *   value nobody can change safely, and the first person to try will pick a different one.
+ * ## Dark is the product; light is paper
  *
- *   `@demo-kit/shell` reads these same names — `--bg`, `--surface`, `--text`, `--accent`
- *   and the rest — falling back to its own where a demo has not defined them. So a demo
- *   gets one design system rather than two, and the tour furniture matches the product
- *   without either knowing about the other.
+ * The brand is dark-first and its light palette is scoped to "documents and print only". The kit
+ * gives a demo two treatments selected by a cookie read on the SERVER, so the first painted frame is
+ * already correct. Those two facts fit together exactly: `:root` is the product, and `.skin-light`
+ * is the paper treatment a reader switches to before printing a board pack. That is the opposite of
+ * the template's arrangement, where light was the default — and it is why every token below is
+ * declared on `:root` in its dark value rather than the two being swapped at the end.
  *
- * Both treatments are stated: `:root` is light and `.skin-dark` is the second, selected by
- * a cookie read on the SERVER so the first painted frame is already correct.
+ * ## The one place the brand is bent
+ *
+ * Amber is Deeplight's action colour, and the brand asks for "one highlight per screen". In a finance
+ * product that is not quite enough: a figure can be favourable or adverse, and those need colour of
+ * their own or a reader has to read every number to find the bad one. The brand reserves green and red
+ * for GO/NO-GO, which is the same shape of decision, so `--pos` and `--neg` take `--dl-success` and
+ * `--dl-danger`. Amber then stays strictly interactive — links, the active control, the primary
+ * button — and never lands on a value. A palette where the accent also means "good" is a palette that
+ * cannot say "this good thing is clickable".
+ *
+ * `@demo-kit/shell` reads `--bg`, `--surface`, `--text`, `--accent` and the rest, falling back to its
+ * own where a demo defines none. Mapping the brand onto those names rather than introducing a parallel
+ * set is what makes the tour furniture match the product without either knowing about the other.
  */
 
 :root {
-  /* The canvas is deeper than a white page by roughly seven points, so that a white surface
-     laid on it reads as a pane rather than as nothing. Every contrast judgement in this file
-     is made against this colour, which is the harsher of the two. */
-  --bg: #e8edf3;
-  --surface: #ffffff;
-  --surface-2: #f4f6f9;   /* inset wells and grouped rows */
+  /* ---- Surfaces. Depth is surface lightness plus a hairline, never a shadow. */
+  --bg: #0a0a0a;          /* --dl-night */
+  --surface: #141414;     /* between night and night-2: a pane on the canvas, not a slab */
+  --surface-2: #1c1c1c;   /* --dl-night-2, for inset wells and grouped rows */
+  --surface-3: #242424;   /* --dl-night-3, hover and raised */
 
-  /* Hairlines, not shadows and not heavy rules. A demo made of stacked bordered boxes is the
-     single most common way one comes to look cheap; grouped cards divided by hairlines is
-     the same information with the furniture turned down. */
-  --border: #dde3e9;
-  --border-strong: #c2cad3;
-  --control-border: #8b95a1;
+  --border: #2a2a2a;         /* --dl-line */
+  --border-strong: #3f3f3f;  /* --dl-line-strong */
+  --control-border: #4a4a4a;
 
-  --text: #0e1720;
-  --label: #48545f;
-  /* Walked down from a lighter grey that measured 4.44:1 on white and worse on the canvas —
-     under AA everywhere it was used, and it was used on every small label on the page. This
-     measures 5.7:1 on white. */
-  --muted: #5c6874;
+  /* ---- Foreground */
+  --text: #ffffff;   /* --dl-white, headlines */
+  --label: #cecece;  /* --dl-body */
+  --muted: #9d9d9d;  /* --dl-muted */
+  --faint: #6b6b6b;  /* --dl-faint */
 
-  /* Interactive only, never a value. In any product where a figure can be good or bad,
-     green and red already carry meaning, so the colour the reader clicks has to stay out of
-     their way — which is why the accent is blue and why direction gets its own two tokens. */
-  --accent: #15537f;
-  --accent-deep: #0d3b5e;
-  --accent-soft: #e9f0f6;
+  /* ---- Amber: interactive only. Never a value, and never decorative. */
+  --accent: #f2a900;         /* --dl-amber */
+  --accent-bright: #ffbb1f;  /* --dl-amber-bright, hover */
+  --accent-deep: #c98c00;
+  --accent-ink: #0a0a0a;     /* --dl-amber-ink: text on amber is near-black */
+  --accent-soft: #241c04;    /* the quietest amber that reads as a state on near-black */
 
-  --pos: #0f6b4f;
-  --neg: #a52833;
+  /* ---- Direction. The brand's GO/NO-GO pair, used for favourable and adverse. */
+  --pos: #2e9e63;   /* --dl-success */
+  --neg: #c04a3f;   /* --dl-danger */
+  --warn: #c98c00;  /* --dl-warning */
 
-  /* Chart ink. Held as tokens rather than as hex literals inside the chart component, so a
-     treatment can reach them: colours written into JSX are colours the dark surface cannot
-     restate, and four series tuned for a white canvas go muddy on a near-black one. The
-     chart itself reads only these, --text, --muted and --border. They are ink, not meaning —
-     no line here is "good" or "bad", which is what --pos and --neg are for. */
-  --series-1: #15537f;
-  --series-2: #2c7cb0;
-  --series-3: #a8632a;
-  --series-4: #7d8a99;
+  /* ---- Chart ink. Held as tokens rather than hex in JSX so a treatment can restate them.
+     These are ink, not meaning: no line here is good or bad, which is what --pos and --neg are
+     for. Amber leads because a chart's subject is the thing a reader came for. */
+  --series-1: #f2a900;
+  --series-2: #9d9d9d;
+  --series-3: #6b6b6b;
+  --series-4: #3f3f3f;
 
-  /* Tight radii: the page should read as an instrument rather than as app furniture. */
+  /* ---- Radii. Square-ish: buttons and badges 4px, cards 8px. No pills in this brand. */
   --radius: 8px;
-  --radius-md: 6px;
+  --radius-md: 4px;
 
-  /* One shadow, and it is a lift rather than a drop — the pane sits on the canvas, it does
-     not float above it. */
-  --lift: 0 1px 2px rgba(14, 23, 32, .05), 0 8px 22px -14px rgba(14, 23, 32, .22);
+  /* Flat. The token stays so the kit's shell can read it; it resolves to nothing. */
+  --lift: none;
 
-  /* Figures are set in the text face with tabular numerals, not in a monospace. Monospace
-     numerals read as engineering output; a reader scanning eight figures wants them to read
-     as the business. */
-  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  /* ---- Type. Three faces, each with a job.
+
+     Headings are Inter Tight at 600 — the brand's display face, sentence case, tightly tracked.
+     Body and UI are Inter. **Data values are JetBrains Mono**, and that is a departure from the
+     template, which argued figures should read as money rather than as engineering output. In this
+     product the opposite is true: a reader is comparing columns of figures against each other, and a
+     mono face makes a column scan in a way a proportional one cannot. The brand agrees — it lists
+     mono for "data values, annotations, technical badges". Prose stays proportional. */
+  --ff-display: var(--font-display), 'Inter Tight', system-ui, sans-serif;
+  --ff-body: var(--font-body), Inter, system-ui, sans-serif;
+  --ff-mono: var(--font-mono), ui-monospace, monospace;
+  --sans: var(--ff-body);
+
+  --ls-display: -0.025em;
+  --ls-heading: -0.015em;
+  --ls-label: 0.14em;
 }
 
 /*
- * The second treatment. It restates the same names, so every rule below is written once —
- * a stylesheet that names both treatments in every rule states every colour twice and
- * drifts the first time one of them is edited.
+ * The paper treatment: the brand's light tokens, scoped as the brand scopes them — documents and
+ * print. It restates the same names, so every rule below is written once. A stylesheet that names
+ * both treatments in every rule states every colour twice and drifts the first time one is edited.
  */
-.skin-dark {
-  --bg: #0d1219;
-  --surface: #131a23;
-  --surface-2: #18202b;
-  --border: #26303d;
-  --border-strong: #3b4859;
-  --control-border: #5d6c84;
-  --text: #e6edf5;
-  --label: #b3c0cf;
-  --muted: #8a97a7;
-  --accent: #58a6ff;
-  --accent-deep: #1d5fbf;
-  --accent-soft: #16283f;
-  --pos: #4bb98a;
-  --neg: #e2707c;
-  /* Lifted and separated: on a near-black canvas the light treatment's deepest two blues
-     sit within a few points of the background and of each other, so a four-line chart
-     becomes a two-line chart with two ghosts. */
-  --series-1: #6aa9e0;
-  --series-2: #3f7fb8;
-  --series-3: #d08a4e;
-  --series-4: #9aa7b6;
-  --lift: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px -14px rgba(0, 0, 0, .7);
+.skin-light {
+  --bg: #ececE8;          /* --dl-paper-soft */
+  --surface: #ffffff;     /* --dl-canvas */
+  --surface-2: #f4f4f2;   /* --dl-paper */
+  --surface-3: #ececE8;
+  --border: #d4d4d0;      /* --dl-rule */
+  --border-strong: #b4b4b0;
+  --control-border: #8a8a86;
+  --text: #0a0a0a;        /* --dl-ink */
+  --label: #3a3a3a;       /* --dl-ink-3 */
+  --muted: #5f5f5f;       /* walked down from --dl-ink-4 for AA on paper */
+  --faint: #8a8a86;
+  /* Amber on paper needs to be darker or it disappears into white. */
+  --accent: #a06f00;
+  --accent-bright: #c98c00;
+  --accent-deep: #7a5500;
+  --accent-ink: #ffffff;
+  --accent-soft: #fdf3dc;
+  --pos: #1d7a49;
+  --neg: #a63a30;
+  --series-1: #a06f00;
+  --series-2: #5f5f5f;
+  --series-3: #8a8a86;
+  --series-4: #c4c4c0;
 }
 
 * { box-sizing: border-box; }
@@ -113,16 +130,22 @@ html, body {
   margin: 0;
   padding: 0;
   background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
+  color: var(--label);
+  font-family: var(--ff-body);
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+/* Hover is an opacity dip or a 2px translate, never a colour change and never a spring. */
+a { color: inherit; transition: opacity 120ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+a:hover { opacity: 0.72; }
 
 /* The treatment wrapper has to fill the viewport, or the dark canvas ends where the content
    does and the page has a white foot. */
 .skin { min-height: 100dvh; background: var(--bg); }
 
-a { color: inherit; }
 
 /* ------------------------------------------------------------------------- the gate */
 
@@ -134,10 +157,14 @@ a { color: inherit; }
 }
 .gate-mark {
   display: grid; place-items: center; width: 40px; height: 40px;
-  border-radius: var(--radius-md); background: var(--accent-deep);
-  color: #fff; font-size: 15px; font-weight: 600;
+  border-radius: var(--radius-md); background: var(--accent);
+  color: var(--accent-ink); font-family: var(--ff-display);
+  font-size: 15px; font-weight: 700;
 }
-.gate-title { margin: 0; font-size: 20px; letter-spacing: -0.015em; }
+.gate-title {
+  margin: 0; font-family: var(--ff-display); font-size: 26px; font-weight: 600;
+  line-height: 1.15; letter-spacing: var(--ls-heading); color: var(--text);
+}
 .gate-sub, .gate-foot { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .gate-card label { font-size: 13px; font-weight: 600; }
 .gate-card input[type='password'] {
@@ -146,7 +173,8 @@ a { color: inherit; }
 }
 .gate-card button {
   padding: 10px; border: 0; border-radius: var(--radius-md);
-  background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600;
+  cursor: pointer;
 }
 .gate-error { margin: 0; color: var(--neg); font-size: 13px; }
 .gate-foot { margin-top: 6px; }
@@ -164,23 +192,38 @@ a { color: inherit; }
   border-bottom: 1px solid var(--border);
 }
 .masthead-mark {
-  display: grid; place-items: center; width: 28px; height: 28px; flex: none;
-  border-radius: var(--radius-md); background: var(--accent-deep);
-  color: #fff; font-size: 11px; font-weight: 700; letter-spacing: -0.02em;
+  display: grid; place-items: center; width: 30px; height: 30px; flex: none;
+  border-radius: var(--radius-md); background: var(--accent);
+  color: var(--accent-ink); font-family: var(--ff-display);
+  font-size: 12px; font-weight: 700; letter-spacing: -0.02em;
 }
-.masthead-name { font-size: 14px; font-weight: 650; letter-spacing: -0.01em; }
-.masthead-sub { font-size: 11.5px; color: var(--muted); }
-.masthead-right { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+.masthead-name {
+  font-family: var(--ff-display); font-size: 15px; font-weight: 600;
+  letter-spacing: var(--ls-heading); color: var(--text);
+}
+.masthead-sub { font-size: 12px; color: var(--muted); }
+.masthead-right {
+  margin-left: auto; font-family: var(--ff-mono); font-size: 12px; color: var(--muted);
+}
 
-.section { margin-bottom: 22px; scroll-margin-top: 16px; }
-.section-head {
-  display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;
-}
+/* Sections are spaced by the brand's 4pt scale in its larger jumps. The old value was 22px and
+   the page read as one undifferentiated column; the whole hierarchy problem was that a section
+   heading looked exactly like a caption. */
+.section { margin-bottom: 48px; scroll-margin-top: 16px; }
+.section-head { margin-bottom: 16px; max-width: 84ch; }
+
+/* A real heading: the display face at h3, sentence case, tightly tracked. The template had this as
+   an 11px uppercase grey eyebrow, which is a label rather than a heading — and a page whose every
+   line is between 11 and 14px has no hierarchy for a reader to use. */
 .section-title {
-  font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--muted);
+  display: block; margin: 0;
+  font-family: var(--ff-display); font-size: 26px; font-weight: 600;
+  line-height: 1.15; letter-spacing: var(--ls-heading); color: var(--text);
 }
-.section-note { font-size: 12px; color: var(--muted); }
+.section-note {
+  display: block; margin-top: 6px;
+  font-size: 13.5px; line-height: 1.55; color: var(--muted); max-width: 78ch;
+}
 
 /* The mark `?focus=` leaves. Long enough to be seen, short enough not to become a state —
    the class is removed after a couple of seconds by the shell's FocusOnLoad. */
@@ -190,30 +233,46 @@ a { color: inherit; }
 
 /* A group of cards, not a stack of boxes: one pane, hairlines between the cells. On a narrow
    screen it becomes one column and the hairlines turn to face the other way. */
+/* Numbers lead. The brand's own rule, and the figures were at 24px — smaller than the section
+   headings should have been, so nothing on the page was the thing a reader looks at first. */
 .cards {
   display: grid; grid-template-columns: repeat(4, 1fr);
   border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--lift); overflow: hidden;
+  background: var(--surface); overflow: hidden;
 }
-.card { padding: 14px 16px; }
+.card { display: block; padding: 20px 22px 18px; }
 .card + .card { border-left: 1px solid var(--border); }
-.card-k { font-size: 11px; font-weight: 600; color: var(--muted); }
+.card-k {
+  display: block; font-size: 11px; font-weight: 500;
+  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--muted);
+}
 .card-v {
-  margin-top: 4px; font-size: 24px; font-weight: 600; letter-spacing: -0.02em;
+  display: block; margin-top: 12px;
+  font-family: var(--ff-display); font-size: 40px; font-weight: 600;
+  line-height: 1.02; letter-spacing: var(--ls-display); color: var(--text);
   font-variant-numeric: tabular-nums;
 }
-.card-d { margin-top: 3px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.card-d {
+  display: block; margin-top: 8px;
+  font-family: var(--ff-mono); font-size: 12px; color: var(--muted);
+}
 .card-d.pos { color: var(--pos); }
 .card-d.neg { color: var(--neg); }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .card:nth-child(3), .card:nth-child(4) { border-top: 1px solid var(--border); }
+  .card:nth-child(3) { border-left: 0; }
+}
+@media (max-width: 560px) {
   .cards { grid-template-columns: 1fr; }
   .card + .card { border-left: 0; border-top: 1px solid var(--border); }
+  .card-v { font-size: 34px; }
 }
 
 .pane {
-  padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--lift);
+  padding: 20px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
 }
 
 /* The chart. Sized by its viewBox and stretched by CSS, so it holds its shape at every
@@ -248,8 +307,11 @@ a { color: inherit; }
 
 /* The brief. Its provenance line is not a footnote — a reader who cannot tell which words a
    model wrote does not know what they are reading. */
-.brief-h { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; }
-.brief-b { margin: 8px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--label); max-width: 68ch; }
+.brief-h {
+  margin: 0; font-family: var(--ff-display); font-size: 20px; font-weight: 600;
+  letter-spacing: var(--ls-heading); line-height: 1.25; color: var(--text);
+}
+.brief-b { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--label); max-width: 72ch; }
 .brief-meta {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
@@ -257,9 +319,9 @@ a { color: inherit; }
 }
 .tag {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 2px 8px; border-radius: 999px;
-  border: 1px solid var(--border); background: var(--surface-2);
-  font-size: 11px; font-weight: 600; color: var(--label);
+  padding: 3px 8px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong); background: transparent;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em; color: var(--muted);
 }
 
 /* ------------------------------------------------------------------------ asking it */
@@ -271,23 +333,26 @@ a { color: inherit; }
   background: var(--surface); color: var(--text); font: inherit; font-size: 13px;
 }
 .ask-send {
-  padding: 9px 16px; border: 0; border-radius: var(--radius-md);
-  background: var(--accent); color: #fff; font: inherit; font-size: 13px; font-weight: 600;
-  cursor: pointer;
+  padding: 10px 20px; border: 0; border-radius: var(--radius-md);
+  background: var(--accent); color: var(--accent-ink);
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 120ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.ask-send:disabled { opacity: .55; cursor: default; }
+.ask-send:hover { background: var(--accent-bright); }
+.ask-send:disabled { opacity: .5; cursor: default; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+/* No pills: 4px, per the brand. A suggestion is a button and reads as one. */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chip {
-  padding: 5px 10px; border-radius: 999px;
+  padding: 6px 11px; border-radius: var(--radius-md);
   border: 1px solid var(--border); background: var(--surface-2);
-  font: inherit; font-size: 11.5px; color: var(--label); cursor: pointer; text-align: left;
+  font: inherit; font-size: 12px; color: var(--label); cursor: pointer; text-align: left;
 }
-.chip:hover { border-color: var(--control-border); color: var(--text); }
+.chip:hover { border-color: var(--accent); color: var(--text); }
 
 .answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-.answer-q { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
-.answer-a { margin: 0; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
+.answer-q { margin: 0 0 8px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.answer-a { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: var(--label); }
 .answer.unavailable .answer-a { color: var(--label); }
 
 /* The audit trail under an answer: every figure the tools returned, and where to go and see
@@ -298,7 +363,9 @@ a { color: inherit; }
   background: var(--surface-2); font-size: 11.5px; text-decoration: none;
 }
 .cite-k { color: var(--muted); }
-.cite-v { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cite-v {
+  margin-left: auto; font-family: var(--ff-mono); font-weight: 500; color: var(--text);
+}
 
 /* ---------------------------------------------------------------------- tour extras */
 
@@ -313,221 +380,295 @@ a { color: inherit; }
 /* ==========================================================================
    The finance surfaces
    ==========================================================================
-   Added for the workbench. The token layer above is unchanged and is the reason these can be
-   short: nothing below picks a colour, and the two direction tokens are the only ones that
-   carry meaning. --accent stays interactive-only, which is why a board item's action is blue
-   and its figure never is. */
+   Written against the Deeplight tokens above. Four rules from the brand do most of the work
+   here, and each replaces something the first version of this file did:
+
+     Flat, always. Depth is surface lightness plus a hairline — never a shadow. The first
+     version lifted every pane, which on a near-black canvas reads as smudge.
+
+     4px on controls, 8px on cards, no pills. Rounded chips read as consumer software.
+
+     Amber is the action colour and lands on nothing that is a value. Every direction here
+     comes from --pos and --neg, which are the brand's own GO/NO-GO pair.
+
+     Data is mono, prose is not. A reader comparing a column of figures needs them to line
+     up; a reader reading a sentence does not.
+   ========================================================================== */
 
 /* ------------------------------------------------------------------ navigation */
 
-.masthead-nav { display: flex; gap: 2px; margin-left: 18px; }
+.masthead-nav { display: flex; gap: 4px; margin-left: 24px; }
 .nav-link {
-  padding: 5px 11px; border-radius: var(--radius-md);
-  font-size: 12.5px; font-weight: 600; color: var(--label); text-decoration: none;
+  padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid transparent;
+  font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none;
 }
-.nav-link:hover { background: var(--surface-2); color: var(--text); }
-.nav-link.is-active { background: var(--accent-soft); color: var(--accent-deep); }
+.nav-link:hover { opacity: 1; color: var(--text); border-color: var(--border); }
+/* The active surface is bordered rather than filled: amber is for what a reader can do next,
+   and "you are here" is not an action. */
+.nav-link.is-active { color: var(--text); border-color: var(--border-strong); }
 
 /* ------------------------------------------------------------------- selectors
 
-   Links rather than dropdowns, so the address bar and the screen cannot disagree. The cost is
-   width, which is why the label column is fixed and narrow and the chips wrap. */
+   Links rather than dropdowns, so the address bar and the screen cannot disagree.
+
+   One row, not five. The first version stacked a labelled row per dimension and took the top
+   third of the page before a figure appeared — the controls were louder than the content they
+   controlled. Now they sit on one wrapping line under the masthead, small and quiet, with the
+   active value the only thing carrying colour. */
 
 .selectors {
-  display: grid; gap: 1px; margin: 0 0 18px;
-  border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--border); overflow: hidden;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;
+  padding: 0 0 20px; margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
 }
-.sel-row {
-  display: grid; grid-template-columns: 82px 1fr; align-items: baseline; gap: 12px;
-  padding: 7px 12px; background: var(--surface);
-}
+.sel-row { display: flex; align-items: center; gap: 8px; }
 .sel-label {
-  font-size: 10.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--muted);
+  font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: var(--ls-label);
+  text-transform: uppercase; color: var(--faint); white-space: nowrap;
 }
-.sel-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.sel-chips { display: flex; flex-wrap: wrap; gap: 2px; }
 .chip-link {
-  padding: 3px 9px; border-radius: 999px; border: 1px solid transparent;
-  font-size: 11.5px; color: var(--label); text-decoration: none; white-space: nowrap;
+  padding: 4px 9px; border-radius: var(--radius-md); border: 1px solid transparent;
+  font-size: 12.5px; color: var(--muted); text-decoration: none; white-space: nowrap;
 }
-.chip-link:hover { background: var(--surface-2); color: var(--text); }
+.chip-link:hover { opacity: 1; color: var(--text); background: var(--surface-2); }
 .chip-link.is-active {
-  background: var(--accent-soft); border-color: var(--accent); color: var(--accent-deep);
-  font-weight: 600;
+  color: var(--accent); border-color: var(--accent); font-weight: 500;
 }
-/* The trend's mark. Small, and always present rather than only on hover: a reader who has
-   already drawn a conclusion from a fitted line has drawn it. */
 .chip-mark {
-  margin-left: 5px; padding: 0 4px; border-radius: 3px;
-  background: var(--surface-2); font-size: 9.5px; font-weight: 700;
-  letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+  margin-left: 6px; font-family: var(--ff-mono); font-size: 9.5px;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
 }
 
 /* --------------------------------------------------------------------- banners
 
    Above the figures, never below. A note at the foot saying the numbers may move is a note
-   nobody reads before reading the numbers. */
+   nobody reads before reading the numbers. A left rule rather than a tinted panel: the brand
+   has no decorative washes, and a coloured block behind body text is the first thing that
+   makes a dark interface look like a dashboard template. */
 
 .banner {
-  margin: 0 0 16px; padding: 9px 13px; border-radius: var(--radius-md);
-  border: 1px solid var(--border); background: var(--surface-2);
-  font-size: 12.5px; line-height: 1.55; color: var(--label);
+  margin: 0 0 24px; padding: 12px 0 12px 16px;
+  border-left: 2px solid var(--border-strong);
+  font-size: 13.5px; line-height: 1.55; color: var(--muted);
 }
-.banner-warn { border-color: var(--neg); background: color-mix(in srgb, var(--neg) 7%, var(--surface)); }
-.banner-ok { color: var(--muted); }
+.banner strong { color: var(--text); font-weight: 600; }
+.banner-warn { border-left-color: var(--warn); }
+.banner-ok { border-left-color: var(--border); color: var(--faint); }
 
 /* --------------------------------------------------------------------- headline */
 
-.card-basis { color: var(--muted); font-weight: 400; }
-.card-link { text-decoration: none; color: inherit; display: block; }
-.card-link:hover { background: var(--surface-2); }
+.card-basis { color: var(--faint); }
+.card-link { text-decoration: none; color: inherit; }
+.card-link:hover { opacity: 1; background: var(--surface-2); }
+.card-d.pos { color: var(--pos); }
+.card-d.neg { color: var(--neg); }
 
+/* Commentary. Set as prose at a readable measure, not boxed — it is the one paragraph on the
+   page a person actually reads rather than scans. */
 .narration {
-  margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radius-md);
-  background: var(--surface-2); border: 1px solid var(--border);
-  font-size: 13.5px; line-height: 1.6; color: var(--label); max-width: 78ch;
+  margin: 20px 0 0; padding-left: 16px; border-left: 2px solid var(--accent);
+  font-size: 15px; line-height: 1.6; color: var(--label); max-width: 74ch;
 }
+.narration strong { color: var(--text); font-weight: 600; }
 
 /* ----------------------------------------------------------------- the 2x2 boards
 
-   Two by two on a wide screen, because the partition is the point and a 1x4 column reads as a
-   ranked list — which is exactly the shape the boards exist to replace. */
+   Two by two on a wide screen, because the partition is the point: a 1x4 column reads as a
+   ranked list, which is the shape the boards exist to replace. */
 
-.boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 900px) { .boards { grid-template-columns: 1fr; } }
 
 .board {
   display: flex; flex-direction: column;
   border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--lift); overflow: hidden;
+  background: var(--surface); overflow: hidden;
 }
-.board-head { padding: 12px 14px 10px; border-bottom: 1px solid var(--border); }
-.board-title { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: -0.01em; }
-.board-question { margin: 3px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.board-head { padding: 18px 20px 14px; }
+.board-title {
+  margin: 0; font-family: var(--ff-display); font-size: 19px; font-weight: 600;
+  line-height: 1.2; letter-spacing: var(--ls-heading); color: var(--text);
+}
+.board-question { margin: 5px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
 .board-items { display: grid; gap: 1px; background: var(--border); }
 /* An empty board says so rather than collapsing: a panel that vanishes leaves a reader unable
    to tell "nothing to report" from "not built". On the healthy twin all four are empty. */
-.board-empty { margin: 0; padding: 16px 14px; font-size: 12.5px; color: var(--muted); }
+.board-empty {
+  margin: 0; padding: 0 20px 20px; font-size: 13.5px; color: var(--faint); line-height: 1.55;
+}
 .board-note {
-  margin: 0; padding: 9px 14px; border-top: 1px solid var(--border);
-  background: var(--surface-2); font-size: 11px; color: var(--muted); line-height: 1.5;
+  margin: 0; padding: 12px 20px; border-top: 1px solid var(--border);
+  background: var(--surface-2); font-size: 11.5px; color: var(--faint); line-height: 1.5;
 }
 
 /* -------------------------------------------------------------------- a finding */
 
-.finding { padding: 12px 14px; background: var(--surface); }
-.finding-head { display: flex; align-items: baseline; gap: 8px; }
-.finding-title { margin: 0; font-size: 13px; font-weight: 650; line-height: 1.35; flex: 1; }
+.finding { padding: 18px 20px; background: var(--surface); }
+.finding-head { display: flex; align-items: flex-start; gap: 10px; }
+.finding-title {
+  flex: 1; margin: 0; font-family: var(--ff-display); font-size: 15.5px; font-weight: 600;
+  line-height: 1.3; letter-spacing: var(--ls-heading); color: var(--text);
+}
 .finding-statement {
-  margin: 7px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--label); max-width: 70ch;
+  margin: 9px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); max-width: 66ch;
 }
+
+/* The figures are the evidence, so they are set as data: mono, right-aligned to their own
+   column, larger than the prose around them. */
 .finding-figures {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px;
-  margin: 10px 0 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px;
+  margin: 16px 0 0; padding: 14px 0 0; border-top: 1px solid var(--border);
 }
-.finding-figure dt { font-size: 10.5px; color: var(--muted); }
+.finding-figure dt {
+  font-size: 10.5px; letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--faint);
+}
 .finding-figure dd {
-  margin: 1px 0 0; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+  margin: 4px 0 0; font-family: var(--ff-mono); font-size: 15px; font-weight: 500;
+  color: var(--text);
 }
 /* A draft input is disclosed where the finding is shown. It is the reason the action is
    "model it" rather than "raise the forecast". */
 .finding-caveat {
-  margin: 10px 0 0; padding: 7px 9px; border-radius: var(--radius-md);
-  background: var(--surface-2); font-size: 11px; line-height: 1.5; color: var(--muted);
+  margin: 14px 0 0; padding-left: 12px; border-left: 2px solid var(--border-strong);
+  font-size: 12px; line-height: 1.5; color: var(--faint);
 }
 .finding-foot {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px;
 }
-.finding-action { font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; }
-.finding-action:hover { text-decoration: underline; }
-.finding-owner { margin-left: auto; font-size: 11px; color: var(--muted); }
-.finding-materiality { margin: 7px 0 0; font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+/* The one amber thing in a finding: what a reader can do next. */
+.finding-action {
+  padding: 6px 12px; border: 1px solid var(--accent); border-radius: var(--radius-md);
+  font-size: 12.5px; font-weight: 500; color: var(--accent); text-decoration: none;
+}
+.finding-action:hover { opacity: 1; background: var(--accent); color: var(--accent-ink); }
+.finding-owner {
+  margin-left: auto; font-family: var(--ff-mono); font-size: 11.5px; color: var(--faint);
+}
+.finding-materiality {
+  margin: 12px 0 0; font-family: var(--ff-mono); font-size: 10.5px; color: var(--faint);
+  line-height: 1.5;
+}
 
-/* Priority is a rank, not a direction, so it is grey — the board it sits on already says
-   whether it is good news. Colouring a chip red on the favourable board would be the same
-   error as colouring by arithmetic sign. */
+/* Priority is a rank, not a direction, so it carries no colour — the board it sits on already
+   says whether it is good news, and a red chip on the favourable board would be the same error
+   as colouring a movement by its arithmetic sign. High gets weight instead of hue. */
 .chip-high, .chip-medium, .chip-low, .chip-draft {
-  padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border);
-  background: var(--surface-2); font-size: 10px; font-weight: 700;
-  letter-spacing: .03em; text-transform: uppercase; color: var(--muted);
+  flex: none; padding: 2px 7px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong); background: transparent;
+  font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
 }
-.chip-high { border-color: var(--border-strong); color: var(--text); }
-.chip-draft { margin-left: 6px; }
+.chip-high { border-color: var(--text); color: var(--text); }
+.chip-draft { margin-left: 8px; vertical-align: middle; }
 
 /* ---------------------------------------------------------------------- charts
 
-   Hand-written SVG. Sized by viewBox and stretched by CSS, so every one holds its shape at
-   each device width the tour's window offers — including a 402pt phone. */
+   Hand-written SVG. Sized by viewBox and stretched by CSS, so each holds its shape at every
+   device width the tour's window offers — including a 402pt phone. */
 
-.chart-title { font-size: 12px; font-weight: 650; color: var(--label); margin-bottom: 8px; }
-.chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
-.chart-tick { fill: var(--muted); font-size: 9.5px; font-variant-numeric: tabular-nums; }
-.chart-note { margin: 9px 0 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
-.chart-note-inline { margin-left: auto; font-size: 11px; color: var(--muted); }
-.chart-empty { margin: 0; padding: 20px 0; font-size: 12.5px; color: var(--muted); }
-.chart-legend {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px;
-  margin: 10px 0 0; font-size: 11.5px; color: var(--label);
+.chart-title {
+  font-family: var(--ff-display); font-size: 14px; font-weight: 600; color: var(--text);
+  margin-bottom: 12px;
 }
-.key { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-.key-actual { background: var(--accent); }
-.key-comparative { background: var(--muted); }
+.chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-tick { fill: var(--faint); font-family: var(--ff-mono); font-size: 9.5px; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-axis { stroke: var(--border-strong); stroke-width: 1; }
+.chart-note { margin: 12px 0 0; font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+.chart-note-inline { margin-left: auto; font-size: 11.5px; color: var(--faint); }
+.chart-empty { margin: 0; padding: 24px 0; font-size: 13.5px; color: var(--faint); }
+.chart-legend {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px;
+  margin: 14px 0 0; font-family: var(--ff-mono); font-size: 11px; color: var(--muted);
+}
+.key { width: 14px; height: 2px; display: inline-block; }
+.key-actual { background: var(--series-1); }
+.key-comparative { background: var(--series-2); }
 .key-receipt { background: var(--pos); }
 .key-payment { background: var(--neg); }
-.key-balance { background: var(--accent); }
+.key-balance { background: var(--series-1); }
 
-/* The waterfall. Terminals are solid and neutral; contributions carry direction. The residual
-   is drawn in outline so it reads as "unexplained" rather than as another cause. */
-.wf-terminal { fill: var(--chart-3, var(--label)); }
+/* The waterfall. Terminals are neutral and solid; contributions carry direction. The residual
+   is an outline so it reads as "unexplained" rather than as another cause. */
+.wf-terminal { fill: var(--series-4); }
 .wf-pos { fill: var(--pos); }
 .wf-neg { fill: var(--neg); }
-.wf-residual { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1; }
+.wf-residual { fill: transparent; stroke: var(--border-strong); stroke-width: 1; }
 .wf-link { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 2 2; }
 .wf-value {
-  fill: var(--label); font-size: 9.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+  fill: var(--text); font-family: var(--ff-mono); font-size: 10px; font-weight: 500;
 }
-.wf-label { fill: var(--muted); font-size: 9.5px; }
+.wf-label { fill: var(--muted); font-size: 10px; }
 
-.line-actual { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
-/* Dashed and grey: the comparative is context, and two equal lines make a reader decide which
-   is the subject. */
+.line-actual { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; }
+/* Dashed and grey: the comparative is context, and two equal lines make a reader work out
+   which one is the subject. */
 .line-comparative {
-  fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3;
+  fill: none; stroke: var(--series-2); stroke-width: 1.5; stroke-dasharray: 4 3;
 }
-.line-dot { fill: var(--accent); }
+.line-dot { fill: var(--series-1); }
 
 .cash-receipt { fill: var(--pos); }
 .cash-payment { fill: var(--neg); }
-.cash-balance { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.cash-balance { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; }
 /* A line, not a band. A band reads as a tolerance; this is a board minute. */
 .cash-floor { stroke: var(--neg); stroke-width: 1.5; stroke-dasharray: 5 3; }
-.cash-floor-label { fill: var(--neg); font-size: 9.5px; font-weight: 600; }
-.cash-breach-band { fill: color-mix(in srgb, var(--neg) 8%, transparent); }
+.cash-floor-label {
+  fill: var(--neg); font-family: var(--ff-mono); font-size: 10px; font-weight: 500;
+}
+.cash-breach-band { fill: rgba(192, 74, 63, 0.10); }
 
 /* ----------------------------------------------------------------------- tables
 
    Every row computed independently, so the table is a set of measurements rather than one
-   figure divided up. Figures right-aligned and tabular, which is what makes a column
-   scannable. */
+   figure divided up. Values are mono and right-aligned, which is what makes a column scan. */
 
-.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
 .grid caption {
-  text-align: left; padding-bottom: 9px; font-size: 12px; font-weight: 650; color: var(--label);
+  text-align: left; padding-bottom: 14px;
+  font-family: var(--ff-display); font-size: 14px; font-weight: 600; color: var(--text);
 }
-.grid th, .grid td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.grid th, .grid td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .grid thead th {
-  font-size: 10.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase;
-  color: var(--muted); border-bottom-color: var(--border-strong);
+  font-family: var(--ff-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--faint);
+  border-bottom-color: var(--border-strong);
 }
-.grid tbody th { text-align: left; font-weight: 600; }
+.grid tbody th { text-align: left; font-weight: 500; color: var(--label); }
 .grid tbody th a { color: var(--accent); text-decoration: none; }
-.grid tbody th a:hover { text-decoration: underline; }
-.grid .num { text-align: right; font-variant-numeric: tabular-nums; }
+.grid .num { text-align: right; font-family: var(--ff-mono); color: var(--text); }
 .grid tbody tr:hover { background: var(--surface-2); }
 .grid .pos { color: var(--pos); }
 .grid .neg { color: var(--neg); }
-.grid + .chart-note { margin-top: 10px; }
+.grid tbody tr:last-child th, .grid tbody tr:last-child td { border-bottom: 0; }
 
-.pane + .pane { margin-top: 14px; }
+.pane + .pane { margin-top: 16px; }
+
+/* The bridge's floor label. The axis is truncated on purpose and this is the disclosure, so it is
+   readable rather than tucked away — a truncated axis that announces itself is a reading aid, one
+   that hides is the commonest way a chart lies. */
+.wf-floor { fill: var(--faint); font-family: var(--ff-mono); font-size: 9.5px; }
+
+/* The period stepper. Two links and the window they move, which replaced twelve month chips. */
+.sel-step { display: flex; align-items: center; gap: 2px; }
+.step-link, .step-end {
+  display: grid; place-items: center; width: 22px; height: 22px;
+  border-radius: var(--radius-md); font-size: 13px; text-decoration: none;
+}
+.step-link { color: var(--accent); }
+.step-link:hover { opacity: 1; background: var(--surface-2); }
+/* An end of the range is a dead arrow, not a disabled control that has to explain itself. */
+.step-end { color: var(--border-strong); }
+.step-now {
+  min-width: 9ch; text-align: center;
+  font-family: var(--ff-mono); font-size: 12.5px; color: var(--text);
+}
+
+/* Boards size to their content and the note sits at the foot. A grid row stretches its cells to the
+   tallest, so a board with two findings beside one with four grew a panel of empty surface with the
+   summary line stranded in the middle of it. */
+.boards { align-items: start; }
+.board-items { flex: 1; }
+.board-note { margin-top: auto; }

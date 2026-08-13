@@ -25,6 +25,7 @@ import {
   SELECTABLE_MONTHS,
   hrefFor,
   monthLabel,
+  scopeLabel,
   selectableEntities,
 } from '../lib/world';
 
@@ -75,6 +76,12 @@ const LENS_LABELS: Readonly<Record<CurrencyLens, string>> = {
 };
 
 export function Selectors({ path, view }: { readonly path: string; readonly view: View }) {
+  /* `SELECTABLE_MONTHS` is newest-first, so "older" is the next index and "newer" the previous one.
+     Undefined at either end, which is what the stepper renders as a dead arrow. */
+  const at = SELECTABLE_MONTHS.indexOf(view.through);
+  const older = at === -1 ? undefined : SELECTABLE_MONTHS[at + 1];
+  const newer = at <= 0 ? undefined : SELECTABLE_MONTHS[at - 1];
+
   return (
     <div className="selectors">
       <Row label="Period">
@@ -89,13 +96,47 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
         ))}
       </Row>
 
-      <Row label="Through">
-        {SELECTABLE_MONTHS.map((month) => (
-          <Chip key={month} href={hrefFor(path, view, { month })} active={view.through === month}>
-            {monthLabel(month)}
-          </Chip>
-        ))}
-      </Row>
+      {/* A stepper, not twelve chips.
+
+          Twelve month chips is the single widest thing on the page, and it pushed the whole control
+          block to four stacked rows — the controls were louder than the content they controlled, and a
+          reader met a wall of dates before a figure. A stepper is two links and a label, and it is also
+          how somebody actually moves through months: one at a time, in order.
+
+          The ends are rendered as plain text rather than disabled links, because a link that cannot be
+          followed is a control that has to explain itself. */}
+      <div className="sel-row">
+        <span className="sel-label">Through</span>
+        <div className="sel-step">
+          {older === undefined ? (
+            <span className="step-end" aria-hidden>
+              ←
+            </span>
+          ) : (
+            <a
+              className="step-link"
+              href={hrefFor(path, view, { month: older })}
+              aria-label={`Back to ${monthLabel(older)}`}
+            >
+              ←
+            </a>
+          )}
+          <span className="step-now">{scopeLabel(view.periodKind, view.scope)}</span>
+          {newer === undefined ? (
+            <span className="step-end" aria-hidden>
+              →
+            </span>
+          ) : (
+            <a
+              className="step-link"
+              href={hrefFor(path, view, { month: newer })}
+              aria-label={`Forward to ${monthLabel(newer)}`}
+            >
+              →
+            </a>
+          )}
+        </div>
+      </div>
 
       <Row label="Entity">
         {selectableEntities().map((e) => (

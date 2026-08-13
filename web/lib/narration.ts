@@ -109,7 +109,38 @@ function findingSentence(month: FiscalMonth): string {
   if (first === undefined) {
     return `Nothing adverse cleared the materiality policy in ${monthLabel(month)}.`;
   }
+  /* The title and statement, which is what the card renders — and deliberately NOT what goes in the
+     commentary. See `briefPack`. */
   return `${first.title}. ${first.statement}`;
+}
+
+/**
+ * The sentence the *commentary* falls back to, which is a different job from the one above.
+ *
+ * The first version used the same string for both, and the page then read the top board item twice in
+ * four inches: once as a paragraph under the figures and again, verbatim, as the first card. Two
+ * renderings of one sentence is worse than one, because a reader who notices assumes the product has
+ * nothing else to say.
+ *
+ * So this counts across the boards instead. It is the one thing a card cannot say, because a card is
+ * one finding and this is the shape of all of them — which is also the only summary worth a paragraph.
+ */
+function overviewSentence(month: FiscalMonth): string {
+  const brief = briefFor(viewOf({ month }));
+  const counted = brief.boards
+    .filter((b) => b.triage.kept.length > 0)
+    .map((b) => `${b.triage.kept.length} on ${b.title.toLowerCase()}`);
+  const total = brief.boards.reduce((sum, b) => sum + b.triage.kept.length, 0);
+  if (total === 0) {
+    return `Nothing cleared the materiality policy in ${monthLabel(month)}.`;
+  }
+  const forward = brief.boards
+    .filter((b) => b.horizon === 'forward')
+    .reduce((sum, b) => sum + b.triage.kept.length, 0);
+  return (
+    `${total} findings in ${monthLabel(month)}: ${counted.join(', ')}. ` +
+    `${forward} of them are forward items, where a decision is still available.`
+  );
 }
 
 /**
@@ -159,7 +190,11 @@ function briefPack(month: FiscalMonth): NarrationPack {
   const headlines = headlinesFor(ctx, view.comparator);
   const brief = briefFor(view);
   const completeness = closeCompleteness(world().closePositions, month);
+  /* Two sentences with different jobs: `finding` is the pinned evidence line the freshness test
+     compares, and `summary` is what the commentary paragraph says. They must not be the same string —
+     the paragraph sits directly above the card that renders `finding`. */
   const sentence = findingSentence(month);
+  const summary = overviewSentence(month);
 
   const findings = brief.boards.flatMap((b) => b.triage.kept);
 
@@ -215,7 +250,7 @@ function briefPack(month: FiscalMonth): NarrationPack {
          fallback, which then fails the very check that guards it. Naming the version instead is more precise
          anyway: "against version v6" cannot be misread as a prediction, which is what the rule is for. */
       body:
-        `${sentence} ` +
+        `${summary} ` +
         `Revenue was ${formatValue(headlines[0]?.value ?? null, 'currency')} and EBITDA ` +
         `${formatValue(headlines[2]?.value ?? null, 'currency')}, measured against version ` +
         `${view.version.id}. ${completeness.closed} of ${completeness.total} ledgers are closed.`,
