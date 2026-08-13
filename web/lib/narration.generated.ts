@@ -9,22 +9,28 @@
 import type { BriefRecord } from './narration';
 
 export const NARRATION: Readonly<Record<string, BriefRecord>> = {
-  "network": {
-    "title": "Jun 26 operations brief",
-    "month": "2026-06",
-    "figures": {
-      "networkVolume": 5004,
-      "siteCount": 4,
-      "volumeBefore": 1099,
-      "volumeNow": 963,
-      "changeRate": -0.124
+  'overview:2026-07': {
+    title: 'Jul 2026 commentary',
+    month: '2026-07',
+    figures: {
+      revenue: 1239322034,
+      gross_margin: 0.4180426134503794,
+      ebitda: 209554568,
+      cash: 479485248,
+      revenue_movement: 0.05247724884508832,
+      gross_margin_movement: -194.19172508795103,
+      ebitda_movement: -0.004756698594180022,
+      cash_movement: -0.18095939260143273,
+      ledgersClosed: 4,
+      ledgersTotal: 5,
     },
-    "finding": "East fell in each of the three months to Jun 26, from 1,099 units to 963, -12.4%.",
-    "narration": {
-      "headline": "Volume is falling at East",
-      "body": "East fell in each of the three months to Jun 26, from 1,099 units to 963, -12.4%. Across all 4 sites the network dispatched 5,004 units in Jun 26.",
-      "narratedBy": "template",
-      "generatedAt": "2026-08-12T11:30:09.709Z"
-    }
-  }
+    finding:
+      "Projects margin 404bps behind forecast. Projects gross margin of 27.4% is 404bps behind forecast, which is £62k of gross profit on the segment's £1.5m of revenue.",
+    narration: {
+      headline: '9 items need a decision in Jul 2026',
+      body: "Projects margin 404bps behind forecast. Projects gross margin of 27.4% is 404bps behind forecast, which is £62k of gross profit on the segment's £1.5m of revenue. Revenue was £12.4m and EBITDA £2.1m, measured against version v6. 4 of 5 ledgers are closed.",
+      narratedBy: 'template',
+      generatedAt: '2026-08-13T06:49:09.491Z',
+    },
+  },
 };

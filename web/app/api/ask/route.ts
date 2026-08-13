@@ -25,7 +25,10 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => ({}));
   const question =
-    typeof body === 'object' && body !== null && 'question' in body && typeof body.question === 'string'
+    typeof body === 'object' &&
+    body !== null &&
+    'question' in body &&
+    typeof body.question === 'string'
       ? body.question.trim()
       : '';
 

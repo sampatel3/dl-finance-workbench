@@ -1,51 +1,73 @@
 import { FocusOnLoad, resolveView } from '@demo-kit/shell';
+import { closeCompleteness, entity, monthScope } from '@kestrel/model';
+import { computeMeasure } from '@kestrel/measures';
+
 import { Ask } from '../../components/Ask';
-import { Bars } from '../../components/Bars';
-import { SeriesChart } from '../../components/SeriesChart';
-import { IconCalendar, IconInfo, IconSparkle, IconTrendDown, IconTrendUp } from '../../components/Icons';
+import { BoardPanel, CompletenessBanner, HeadlineCard } from '../../components/Figures';
+import { LineChart } from '../../components/LineChart';
+import { Selectors } from '../../components/Selectors';
 import { DEMO_MARK, DEMO_NAME } from '../../lib/demo';
-import { findings, monthLabel } from '../../lib/findings';
-import { money, moneyRate, percent, units } from '../../lib/format';
-import { NETWORK_BRIEF } from '../../lib/narration';
+import { headlinesFor } from '../../lib/headline';
 import { NARRATION } from '../../lib/narration.generated';
 import { SUGGESTIONS } from '../../lib/tools';
-import { LATEST_MONTH, MONTHS, networkCost, networkVolume, ranked, world } from '../../lib/world';
+import type { Params } from '../../lib/world';
+import {
+  ALL_MONTHS,
+  briefFor,
+  contextOf,
+  hrefFor,
+  monthLabel,
+  scopeLabel,
+  viewOf,
+  world,
+} from '../../lib/world';
 
 /**
- * The product. Nothing on this page is demo furniture.
+ * Overview — the executive surface.
  *
- * The tour frames it, explains it and drives it; none of that leaks in here. The one
- * concession is `?view=inner`, which says this render is inside the tour's window and so
- * drops the page header the window's own title bar already provides — and `?focus=`, which
- * lets a tour step land the reader's eye on the section its note is about.
+ * The four priority boards are the centre of it, and that is the argument this page makes. An executive
+ * dashboard is usually a wall of figures with the findings underneath, and it should be the other way
+ * round: a figure tells a reader what happened, a finding tells them what to decide, and only the second
+ * is worth the top of a page. So the headline row is four figures one line tall, and everything below it
+ * is something that fired.
  *
- * Everything is server-rendered from the memoised world, so there is no loading state, no
- * client fetch and nothing for a screenshot to catch half-drawn. Only the question box is a
- * client component, because a question has to be typed.
+ * Everything is server-rendered from the memoised world. Nothing fetches, so there is no loading state
+ * and nothing for a screenshot or a deck slide to catch half-drawn. Only the question box is a client
+ * component, because a question has to be typed.
+ *
+ * The tour frames this page and drives it; none of that leaks in here. The two concessions are
+ * `?view=inner`, which drops the header the tour window's own title bar already provides, and `?focus=`,
+ * which lets a tour step land a reader's eye on the section its note is about.
  */
 
 export const dynamic = 'force-dynamic';
 
-export default async function Product({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string; focus?: string }>;
-}) {
-  const { view, focus } = await searchParams;
-  const inner = resolveView(view) === 'inner';
+export default async function Overview({ searchParams }: { searchParams: Promise<Params> }) {
+  const params = await searchParams;
+  const inner = resolveView(typeof params.view === 'string' ? params.view : undefined) === 'inner';
+  const focus = typeof params.focus === 'string' ? params.focus : undefined;
 
-  const source = world();
-  const month = LATEST_MONTH;
-  const previous = MONTHS[month.index - 1];
+  const view = viewOf(params);
+  const ctx = contextOf(view);
+  const headlines = headlinesFor(ctx, view.comparator);
+  const brief = briefFor(view);
 
-  const volume = networkVolume(source, month.id);
-  const cost = networkCost(source, month.id);
-  const priorVolume = previous === undefined ? volume : networkVolume(source, previous.id);
-  const change = priorVolume === 0 ? 0 : (volume - priorVolume) / priorVolume;
+  const completeness = closeCompleteness(world().closePositions, view.scope.endMonth);
+  const openNames = completeness.open.map((p) => entity(p.entityId).name);
 
-  const leader = ranked(source, month.id)[0];
-  const finding = findings(source)[0];
-  const brief = NARRATION[NETWORK_BRIEF];
+  /* Twelve months of revenue against the same month a year earlier. Read through the measure layer once
+     per month rather than out of the store, so the series and the headline above it cannot disagree —
+     two paths to the same figure is two figures. */
+  const series = ALL_MONTHS.slice(-12).map((month) => {
+    const priorMonth = `${Number(month.slice(0, 4)) - 1}-${month.slice(5)}`;
+    return {
+      month,
+      value: computeMeasure('revenue', { ...ctx, scope: monthScope(month) }).value,
+      comparative: computeMeasure('revenue', { ...ctx, scope: monthScope(priorMonth) }).value,
+    };
+  });
+
+  const narration = NARRATION[`overview:${view.scope.endMonth}`];
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
@@ -59,97 +81,118 @@ export default async function Product({
           <span>
             <span className="masthead-name">{DEMO_NAME}</span>
             <br />
-            <span className="masthead-sub">Operations</span>
+            <span className="masthead-sub">{entity(view.entityId).name}</span>
           </span>
-          <span className="masthead-right">
-            <IconCalendar /> {month.label}
-          </span>
+          <nav className="masthead-nav" aria-label="Surfaces">
+            <a className="nav-link is-active" href={hrefFor('/app', view)} aria-current="page">
+              Overview
+            </a>
+            <a className="nav-link" href={hrefFor('/app/performance', view)}>
+              Performance
+            </a>
+          </nav>
+          <span className="masthead-right">{scopeLabel(view.periodKind, view.scope)}</span>
         </header>
       )}
 
-      <section className="section focusable" id="section-summary" aria-label="This month">
+      <Selectors path="/app" view={view} />
+
+      {/* Said before the figures rather than after them: it is a statement about every number on this
+          page, and a note at the foot is a note nobody reads before reading the numbers. */}
+      <CompletenessBanner
+        closed={completeness.closed}
+        total={completeness.total}
+        openNames={openNames}
+        {...(completeness.open[0]?.note === undefined ? {} : { note: completeness.open[0].note })}
+      />
+
+      {view.fellBack ? (
+        <p className="banner banner-warn">
+          Part of this address could not be read, so a default was used — showing{' '}
+          {scopeLabel(view.periodKind, view.scope)} for {entity(view.entityId).name}. Said out loud
+          because silently showing a different period is how a screenshot gets the wrong caption.
+        </p>
+      ) : null}
+
+      <section className="section focusable" id="section-headline" aria-label="Headline measures">
         <div className="section-head">
-          <h2 className="section-title">{month.label}</h2>
-          <span className="section-note">Four sites, twelve closed months, one seed.</span>
+          <h2 className="section-title">{scopeLabel(view.periodKind, view.scope)}</h2>
+          <span className="section-note">
+            {entity(view.entityId).name} · against {brief.comparator.basis}
+          </span>
         </div>
         <div className="cards">
-          <div className="card">
-            <div className="card-k">Network volume</div>
-            <div className="card-v">{units(volume)}</div>
-            <div className={`card-d ${change < 0 ? 'neg' : 'pos'}`}>
-              {change < 0 ? <IconTrendDown /> : <IconTrendUp />} {percent(change)} on{' '}
-              {previous?.label ?? 'the prior month'}
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-k">Network cost</div>
-            <div className="card-v">{money(cost)}</div>
-            <div className="card-d">{moneyRate(cost / volume)} per unit</div>
-          </div>
-          <div className="card">
-            <div className="card-k">Largest site</div>
-            <div className="card-v">{leader?.site.name ?? '—'}</div>
-            <div className="card-d">{units(leader?.row.volume ?? 0)} units</div>
-          </div>
-          <div className="card">
-            <div className="card-k">Sites falling</div>
-            <div className="card-v">{findings(source).length}</div>
-            <div className="card-d">three months running</div>
-          </div>
+          {headlines.map((headline) => (
+            <HeadlineCard
+              key={headline.measureId}
+              headline={headline}
+              href={hrefFor('/app/performance', view)}
+            />
+          ))}
         </div>
+        {narration === undefined ? null : (
+          <p className="narration">
+            <strong>{narration.narration.headline}.</strong> {narration.narration.body}
+          </p>
+        )}
       </section>
 
-      <section className="section focusable" id="section-series" aria-label="Twelve months">
+      <section className="section focusable" id="section-boards" aria-label="Priority boards">
         <div className="section-head">
-          <h2 className="section-title">Volume by site</h2>
-          <span className="section-note">Units dispatched, {MONTHS[0]?.label} to {month.label}.</span>
+          <h2 className="section-title">What needs a decision</h2>
+          <span className="section-note">
+            Partitioned by direction and horizon, so each finding has exactly one home. Ranked
+            within a board by the materiality policy — never across them, because a £48k
+            reconciliation break and a £0.8m opportunity are not comparable quantities.
+          </span>
         </div>
-        <div className="pane">
-          <SeriesChart world={source} months={MONTHS} />
+        <div className="boards">
+          {brief.boards.map((board) => (
+            <BoardPanel
+              key={board.id}
+              title={board.title}
+              question={board.question}
+              findings={board.triage.kept}
+              emptyNote={board.emptyNote}
+              note={board.triage.note}
+            />
+          ))}
         </div>
+        {brief.errors.length === 0 ? null : (
+          <p className="banner banner-warn">
+            {brief.errors.length} detector{brief.errors.length === 1 ? '' : 's'} failed to run:{' '}
+            {brief.errors.map((e) => e.detectorId).join(', ')}. The boards above are incomplete,
+            which is said rather than hidden — a silently missing board item is the worst of the
+            three outcomes.
+          </p>
+        )}
       </section>
 
-      <section className="section focusable" id="section-brief" aria-label="The brief">
+      <section className="section focusable" id="section-trend" aria-label="Revenue over time">
         <div className="section-head">
-          <h2 className="section-title">Brief</h2>
+          <h2 className="section-title">Revenue, twelve months</h2>
+          <span className="section-note">
+            Against the same month a year earlier. A gap in a line is a month with no data, not a
+            zero.
+          </span>
         </div>
         <div className="pane">
-          <h3 className="brief-h">{brief?.narration.headline ?? 'No brief has been generated.'}</h3>
-          <p className="brief-b">{brief?.narration.body ?? ''}</p>
-          <div className="brief-meta">
-            <span className="tag">
-              <IconSparkle />
-              {brief?.narration.narratedBy === 'claude' ? 'Written by Claude at build time' : 'Template prose'}
-            </span>
-            {finding === undefined ? (
-              <span>
-                <IconInfo /> No site fell three months running.
-              </span>
-            ) : (
-              <span>
-                {/* The run's ends, not every month in it: "Apr to May to Jun" reads as three
-                    separate things happening rather than as one continuous fall. */}
-                <IconTrendDown /> {finding.site}, {monthLabel(finding.months[0] ?? '')} to{' '}
-                {monthLabel(finding.months[finding.months.length - 1] ?? '')}
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="section focusable" id="section-ranked" aria-label="This month by site">
-        <div className="section-head">
-          <h2 className="section-title">{month.label} by site</h2>
-        </div>
-        <div className="pane">
-          <Bars world={source} month={month.id} />
+          <LineChart
+            points={series}
+            unit="currency"
+            label="Revenue"
+            comparativeLabel="Same month last year"
+          />
         </div>
       </section>
 
       <section className="section focusable" id="section-ask" aria-label="Ask a question">
         <div className="section-head">
           <h2 className="section-title">Ask</h2>
-          <span className="section-note">Answered from the figures above, or not at all.</span>
+          <span className="section-note">
+            Every figure in an answer comes from a tool that read the measure layer. None is written
+            by the model.
+          </span>
         </div>
         <div className="pane">
           <Ask suggestions={SUGGESTIONS} />

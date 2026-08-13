@@ -113,6 +113,15 @@ importers:
       '@demo-kit/shell':
         specifier: workspace:*
         version: link:../vendor/demo-kit/packages/shell
+      '@kestrel/analysis':
+        specifier: workspace:*
+        version: link:../packages/analysis
+      '@kestrel/measures':
+        specifier: workspace:*
+        version: link:../packages/measures
+      '@kestrel/model':
+        specifier: workspace:*
+        version: link:../packages/model
       next:
         specifier: ^15.5.4
         version: 15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8)

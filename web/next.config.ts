@@ -5,7 +5,18 @@ const nextConfig: NextConfig = {
      anywhere in demo-kit. Next compiles them along with the app. A package added to a demo's
      workspace has to be added here too, or the first import of it fails at build time with a
      syntax error in someone else's file. The postgres overlay adds `@demo-kit/db`. */
-  transpilePackages: ['@demo-kit/data', '@demo-kit/gate', '@demo-kit/llm', '@demo-kit/shell'],
+  /* The kit's packages and this demo's own, all shipped as TypeScript source with no build step —
+     so Next has to be told to compile them. The demo's three are the model, the measure layer and the
+     analysis engines; the app imports nothing else that is not published. */
+  transpilePackages: [
+    '@demo-kit/data',
+    '@demo-kit/gate',
+    '@demo-kit/llm',
+    '@demo-kit/shell',
+    '@kestrel/model',
+    '@kestrel/measures',
+    '@kestrel/analysis',
+  ],
 
   reactStrictMode: true,
 

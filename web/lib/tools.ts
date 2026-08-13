@@ -1,54 +1,137 @@
 /**
  * What the model is allowed to look up.
  *
- * Two tools, and between them they are the only source of numbers in an answer. That is the
- * grounding guarantee, and it is structural rather than instructional: the model cannot
- * produce a figure, it can only ask for one, and `@demo-kit/llm` then checks every numeral
- * in the finished answer against everything the tools returned.
+ * Five tools, and between them they are the only source of numbers in an answer. That is the grounding
+ * guarantee, and it is structural rather than instructional: the model cannot produce a figure, it can
+ * only ask for one, and `@demo-kit/llm` then checks every numeral in the finished answer against
+ * everything the tools returned.
  *
- * `compare_sites` exists because of the second half of that rule. Subtraction the model does
- * in its head is a figure no tool returned, so it fails the grounding check and the whole
- * answer is refused — correctly. Moving the arithmetic into a tool is what makes comparison
- * a question the demo can answer at all.
+ * ## Why `compare_measures` exists
  *
- * A tool's `content` is what grounds the answer, so anything the reader may see quoted has
- * to be in the text. A citation on its own grounds nothing.
+ * Because of the second half of that rule. A subtraction the model does in its head is a figure no tool
+ * returned, so it fails the grounding check and the whole answer is refused — correctly, and uselessly,
+ * since "how does revenue compare to forecast" is the commonest question there is. Moving the arithmetic
+ * into a tool is what makes comparison answerable at all. Every difference, every percentage and every
+ * variance in an answer was computed by the measure layer, not by a language model.
+ *
+ * ## Why the tools return prose and not JSON
+ *
+ * A tool's `content` is what grounds the answer, so anything a reader may see quoted has to be in the
+ * text. It also solves a problem the grounding check cannot: the check compares unsigned numerals, so it
+ * cannot catch a *direction* error — a model saying revenue fell 5.4% when it rose 5.4% passes. Returning
+ * the movement already worded gives the model a sentence to quote rather than a sign to interpret.
+ *
+ * ## What the tools refuse
+ *
+ * `explain_finding` will answer about a finding that fired and will not invent one. And nothing here
+ * projects: there is no tool that takes a future period, so a question inviting a forecast has no tool
+ * that can serve it and the loop says so in words. That refusal is a designed capability, not a gap —
+ * the product's own position is that a model may explain a forecast and may not make one.
  */
 
 import type { ToolCall, ToolOutcome, ToolSpec } from '@demo-kit/llm';
-import { money, percent, units } from './format';
-import { LATEST_MONTH, MONTHS, monthOf, siteByName, world } from './world';
+import { MONTHS, SEGMENTS, entity, tradingEntities } from '@kestrel/model';
+import {
+  COMPARATORS,
+  MEASURES,
+  compareMeasure,
+  computeMeasure,
+  formatValue,
+  measureIds,
+} from '@kestrel/measures';
+import { buildBridge, principalDriver, runDetectors } from '@kestrel/analysis';
 
-const SITE_NAMES = ['North', 'South', 'East', 'Central'];
+import { LATEST_MONTH, contextOf, detectorContextOf, monthLabel, viewOf } from './world';
+
+const MEASURE_IDS = measureIds();
+const ENTITY_IDS = ['group', ...tradingEntities().map((e) => e.id)];
+const SEGMENT_CODES = SEGMENTS.map((s) => s.code);
 
 export const TOOLS: readonly ToolSpec[] = [
   {
-    name: 'site_series',
+    name: 'get_measure',
     description:
-      'Monthly dispatched volume and cost for one site, across all twelve months held by the demo. Use this for any question about how one site has moved.',
+      'One measure for one period, for the group or one entity, optionally sliced to a segment. Returns the value, what it is made of, and who owns the definition. Use this for any "what was X" question.',
     input_schema: {
       type: 'object',
       properties: {
-        site: { type: 'string', enum: SITE_NAMES, description: 'The site name.' },
+        measure: { type: 'string', enum: [...MEASURE_IDS], description: 'The measure id.' },
+        month: {
+          type: 'string',
+          description: `A month, e.g. "${LATEST_MONTH}". Defaults to the latest closed month.`,
+        },
+        entity: { type: 'string', enum: ENTITY_IDS, description: 'Defaults to the whole group.' },
+        segment: {
+          type: 'string',
+          enum: [...SEGMENT_CODES],
+          description: 'Optional segment slice.',
+        },
       },
-      required: ['site'],
+      required: ['measure'],
     },
   },
   {
-    name: 'compare_sites',
+    name: 'compare_measures',
     description:
-      'Two sites side by side in one month, with the difference already calculated. Use this rather than subtracting figures yourself — a difference you worked out is a figure no tool returned, and the answer will be refused.',
+      'One measure against a comparator, with the variance already calculated. Use this rather than subtracting two figures yourself — a difference you worked out is a figure no tool returned, and the answer will be refused.',
     input_schema: {
       type: 'object',
       properties: {
-        a: { type: 'string', enum: SITE_NAMES, description: 'The first site.' },
-        b: { type: 'string', enum: SITE_NAMES, description: 'The second site.' },
-        month: {
+        measure: { type: 'string', enum: [...MEASURE_IDS] },
+        against: {
           type: 'string',
-          description: `A month id, e.g. "${LATEST_MONTH.id}". Defaults to the latest month held.`,
+          enum: [...COMPARATORS],
+          description:
+            'prior_period, prior_year, budget, forecast, or trend. Trend is a fitted line and nothing is material against it.',
+        },
+        month: { type: 'string' },
+        entity: { type: 'string', enum: ENTITY_IDS },
+        segment: { type: 'string', enum: [...SEGMENT_CODES] },
+      },
+      required: ['measure', 'against'],
+    },
+  },
+  {
+    name: 'list_findings',
+    description:
+      'Everything the detectors found for a period, with each finding’s board, priority and the figures behind it. Use this for "what should I look at", "what went wrong" or "what are the risks".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        month: { type: 'string' },
+        entity: { type: 'string', enum: ENTITY_IDS },
+        board: {
+          type: 'string',
+          enum: ['attention', 'performance', 'risks', 'opportunities'],
+          description: 'Optional: one board rather than all four.',
         },
       },
-      required: ['a', 'b'],
+      required: [],
+    },
+  },
+  {
+    name: 'explain_variance',
+    description:
+      'The bridge behind a revenue or cost-of-sales variance: price, volume, mix, currency and the unsegmented remainder, summing to the total. Use this for any "why" question about revenue or cost.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        measure: { type: 'string', enum: ['revenue', 'cost_of_sales'] },
+        against: { type: 'string', enum: ['prior_period', 'prior_year', 'budget', 'forecast'] },
+        month: { type: 'string' },
+        entity: { type: 'string', enum: ENTITY_IDS },
+      },
+      required: ['measure', 'against'],
+    },
+  },
+  {
+    name: 'describe_measure',
+    description:
+      'What a measure means: its formula, its owner, whether the definition is approved or still draft, and which accounts it reads. Use this for "how is X calculated" or "who owns X".',
+    input_schema: {
+      type: 'object',
+      properties: { measure: { type: 'string', enum: [...MEASURE_IDS] } },
+      required: ['measure'],
     },
   },
 ];
@@ -56,21 +139,25 @@ export const TOOLS: readonly ToolSpec[] = [
 /**
  * The questions offered whenever the loop cannot answer.
  *
- * Each one has to genuinely resolve, which with these two tools means naming the site it is
- * about — a chip the demo will then refuse is worse than no chip.
+ * Every one has to genuinely resolve against the tools above. A chip the demo then refuses is worse than
+ * no chip — it turns a limitation into a broken promise.
  */
 export const SUGGESTIONS: readonly string[] = [
-  'How has East moved over the year?',
-  'Compare Central and North in the latest month.',
-  'Which dispatched more in June, East or South?',
+  'What should I look at first this month?',
+  'Why is revenue ahead of forecast?',
+  'How is gross margin calculated, and who owns it?',
+  'What is the cash position, and are there any risks to it?',
 ];
 
 export const SYSTEM = [
-  'You answer questions about a small operations demo covering four sites over twelve months.',
-  'Every figure you state must come from a tool call in this conversation. Never calculate,',
-  'combine or estimate a number yourself — ask for it. If the tools cannot answer the',
-  'question, say so plainly and stop.',
-  'Two or three sentences. British English. No preamble.',
+  'You answer questions about a group finance workbench: five entities, a governed measure layer, and',
+  'twelve detectors that run over it.',
+  'Every figure you state must come from a tool call in this conversation. Never calculate, combine or',
+  'estimate a number yourself — ask for it. `compare_measures` does the arithmetic for you.',
+  'If a question asks you to forecast, project or predict, say plainly that you can explain a forecast',
+  'the product holds but cannot make one, and stop.',
+  'Quote the movement in the words the tool used, so a direction is never yours to interpret.',
+  'Two to four sentences. British English. No preamble.',
 ].join('\n');
 
 function readString(input: Record<string, unknown>, key: string): string {
@@ -78,64 +165,211 @@ function readString(input: Record<string, unknown>, key: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-/** The href a reader follows to see the same figure on the page it is shown on. */
-const seriesHref = '/app?focus=section-series';
-
-function siteSeries(input: Record<string, unknown>): ToolOutcome {
-  const site = siteByName(world(), readString(input, 'site'));
-  if (site === undefined) {
-    return { content: `No site called that. The sites are ${SITE_NAMES.join(', ')}.` };
-  }
-  const rows = site.months.map((row) => {
-    const label = MONTHS.find((m) => m.id === row.month)?.label ?? row.month;
-    return `${label}: ${units(row.volume)} units, ${money(row.cost)}`;
+/** The view a tool call resolves against, so a tool reads exactly what a page would. */
+function viewFor(input: Record<string, unknown>) {
+  const month = readString(input, 'month');
+  const entityId = readString(input, 'entity');
+  return viewOf({
+    ...(MONTHS.includes(month) ? { month } : {}),
+    ...(ENTITY_IDS.includes(entityId) ? { entity: entityId } : {}),
   });
-  const first = site.months[0];
-  const last = site.months[site.months.length - 1];
-  const change =
-    first === undefined || last === undefined
-      ? ''
-      : ` Across the twelve months the change is ${percent((last.volume - first.volume) / first.volume)}.`;
+}
+
+const focusHref = (section: string): string => `/app?focus=${section}`;
+
+function getMeasure(input: Record<string, unknown>): ToolOutcome {
+  const id = readString(input, 'measure');
+  if (!MEASURE_IDS.includes(id)) {
+    return { content: `No measure called "${id}".` };
+  }
+  const view = viewFor(input);
+  const segment = readString(input, 'segment');
+  const ctx = {
+    ...contextOf(view),
+    ...(SEGMENT_CODES.includes(segment as (typeof SEGMENT_CODES)[number])
+      ? { segmentId: segment as (typeof SEGMENT_CODES)[number] }
+      : {}),
+  };
+  const value = computeMeasure(id, ctx);
+  const where = entity(view.entityId).name;
+  const slice = segment === '' ? '' : ` for the ${segment} segment`;
 
   return {
-    content: `${site.name}, month by month — ${rows.join('; ')}.${change}`,
+    content:
+      `${value.label} for ${where}${slice} in ${monthLabel(view.scope.endMonth)} is ` +
+      `${formatValue(value.value, value.unit)}. It is defined as ${value.formula}, owned by ` +
+      `${value.owner}${value.status === 'draft' ? ', and the definition is still draft' : ''}. ` +
+      `${value.consolidated ? 'Consolidated, with intercompany eliminated.' : 'A combined slice, not consolidated.'}`,
     citations: [
-      { label: `${site.name}, ${LATEST_MONTH.label}`, value: `${units(last?.volume ?? 0)} units`, href: seriesHref },
+      {
+        label: `${value.label}, ${monthLabel(view.scope.endMonth)}`,
+        value: formatValue(value.value, value.unit),
+        href: focusHref('section-headline'),
+      },
     ],
   };
 }
 
-function compareSites(input: Record<string, unknown>): ToolOutcome {
-  const monthId = readString(input, 'month') || LATEST_MONTH.id;
-  const month = MONTHS.find((m) => m.id === monthId);
-  if (month === undefined) {
-    return { content: `No month called "${monthId}". The demo holds ${MONTHS[0]?.id} to ${LATEST_MONTH.id}.` };
+function compareMeasures(input: Record<string, unknown>): ToolOutcome {
+  const id = readString(input, 'measure');
+  const against = readString(input, 'against');
+  if (!MEASURE_IDS.includes(id)) return { content: `No measure called "${id}".` };
+  if (!COMPARATORS.includes(against as (typeof COMPARATORS)[number])) {
+    return { content: `No comparator called "${against}". They are ${COMPARATORS.join(', ')}.` };
   }
 
-  const a = siteByName(world(), readString(input, 'a'));
-  const b = siteByName(world(), readString(input, 'b'));
-  if (a === undefined || b === undefined) {
-    return { content: `Both sites must be named. The sites are ${SITE_NAMES.join(', ')}.` };
-  }
+  const view = viewFor(input);
+  const segment = readString(input, 'segment');
+  const ctx = {
+    ...contextOf(view),
+    ...(SEGMENT_CODES.includes(segment as (typeof SEGMENT_CODES)[number])
+      ? { segmentId: segment as (typeof SEGMENT_CODES)[number] }
+      : {}),
+  };
+  const choice =
+    against === 'forecast'
+      ? { id: 'forecast' as const, versionId: view.version.id }
+      : against === 'budget'
+        ? { id: 'budget' as const, versionId: 'budget-fy26' }
+        : { id: against as 'prior_period' | 'prior_year' | 'trend' };
 
-  const rowA = monthOf(a, month.id);
-  const rowB = monthOf(b, month.id);
-  if (rowA === undefined || rowB === undefined) {
-    return { content: `No figures for ${month.label}.` };
-  }
-
+  const c = compareMeasure(id, ctx, choice);
   // The difference is calculated HERE so the model never has to. See the header.
-  const gap = rowA.volume - rowB.volume;
-  const rate = rowB.volume === 0 ? 0 : gap / rowB.volume;
+  const money =
+    c.current.value === null || c.comparativeValue === null
+      ? null
+      : c.current.value - c.comparativeValue;
+  const direction =
+    c.favourable === null ? 'a movement of' : c.favourable ? 'ahead by' : 'behind by';
 
   return {
     content:
-      `In ${month.label}, ${a.name} dispatched ${units(rowA.volume)} units at ${money(rowA.cost)} and ` +
-      `${b.name} dispatched ${units(rowB.volume)} units at ${money(rowB.cost)}. ` +
-      `${a.name} is ahead by ${units(Math.abs(gap))} units, ${percent(rate)} against ${b.name}.`,
+      `${c.current.label} for ${entity(view.entityId).name} in ${monthLabel(view.scope.endMonth)} is ` +
+      `${formatValue(c.current.value, c.current.unit)} against ` +
+      `${formatValue(c.comparativeValue, c.current.unit)} — ${direction} ` +
+      `${formatValue(money === null ? null : Math.abs(money), c.current.unit)}, ` +
+      `${formatValue(c.movement === null ? null : Math.abs(c.movement), c.movementUnit)} in relative terms. ` +
+      `The comparison is against ${c.comparator.basis}.` +
+      (c.comparator.admissibleForMateriality
+        ? ''
+        : ' This is a fitted expectation rather than a plan anybody committed to, so nothing is measured as material against it.'),
     citations: [
-      { label: `${a.name}, ${month.label}`, value: `${units(rowA.volume)} units`, href: seriesHref },
-      { label: `${b.name}, ${month.label}`, value: `${units(rowB.volume)} units`, href: seriesHref },
+      {
+        label: `${c.current.label} vs ${c.comparator.label}`,
+        value: formatValue(c.current.value, c.current.unit),
+        href: focusHref('section-headline'),
+      },
+    ],
+  };
+}
+
+function listFindings(input: Record<string, unknown>): ToolOutcome {
+  const view = viewFor(input);
+  const board = readString(input, 'board');
+  const run = runDetectors(detectorContextOf(view));
+  const wanted =
+    board === ''
+      ? run.findings
+      : run.findings.filter((f) => {
+          const id =
+            f.direction === 'adverse'
+              ? f.horizon === 'current'
+                ? 'attention'
+                : 'risks'
+              : f.horizon === 'current'
+                ? 'performance'
+                : 'opportunities';
+          return id === board;
+        });
+
+  if (wanted.length === 0) {
+    return {
+      content: `Nothing cleared the materiality policy for ${monthLabel(view.scope.endMonth)}${board === '' ? '' : ` on the ${board} board`}.`,
+    };
+  }
+
+  const lines = wanted.map(
+    (f) =>
+      `${f.title} (${f.priority} priority, ${f.direction}/${f.horizon}, owner ${f.action.owner}): ${f.statement}`,
+  );
+  return {
+    content: `${wanted.length} findings for ${monthLabel(view.scope.endMonth)}. ${lines.join(' ')}`,
+    citations: wanted.slice(0, 4).map((f) => ({
+      label: f.title,
+      value: f.priority,
+      href: f.action.href,
+    })),
+  };
+}
+
+function explainVariance(input: Record<string, unknown>): ToolOutcome {
+  const id = readString(input, 'measure');
+  if (id !== 'revenue' && id !== 'cost_of_sales') {
+    return {
+      content:
+        'Only revenue and cost of sales can be bridged: a decomposition into price, volume and mix needs ' +
+        'quantities, and the other measures are not held by segment with a unit.',
+    };
+  }
+  const against = readString(input, 'against');
+  const view = viewFor(input);
+  const choice =
+    against === 'forecast'
+      ? { id: 'forecast' as const, versionId: view.version.id }
+      : against === 'budget'
+        ? { id: 'budget' as const, versionId: 'budget-fy26' }
+        : {
+            id: (against === 'prior_year' ? 'prior_year' : 'prior_period') as
+              'prior_year' | 'prior_period',
+          };
+
+  const bridge = buildBridge({ measureId: id, ctx: contextOf(view), comparator: choice });
+  const principal = principalDriver(bridge);
+  const bars = bridge.bars
+    .filter((b) => b.kind !== 'opening' && b.kind !== 'closing')
+    .map(
+      (b) => `${b.label} ${b.value < 0 ? '−' : '+'}${formatValue(Math.abs(b.value), 'currency')}`,
+    );
+
+  return {
+    content:
+      `${bridge.label} moved from ${formatValue(bridge.from, 'currency')} to ` +
+      `${formatValue(bridge.to, 'currency')} against ${bridge.comparator.basis}. ` +
+      `The decomposition is: ${bars.join(', ')}. ` +
+      (principal === undefined
+        ? ''
+        : `The largest single component is ${principal.label.toLowerCase()} at ${formatValue(Math.abs(principal.value), 'currency')}. `) +
+      (bridge.sums
+        ? 'These sum to the movement exactly.'
+        : 'These do not sum to the movement, so the decomposition is incomplete.'),
+    citations: [
+      {
+        label: `${bridge.label} bridge`,
+        value: formatValue(bridge.to - bridge.from, 'currency'),
+        href: '/app/performance',
+      },
+    ],
+  };
+}
+
+function describeMeasure(input: Record<string, unknown>): ToolOutcome {
+  const id = readString(input, 'measure');
+  const definition = MEASURES.find((m) => m.id === id);
+  if (definition === undefined) return { content: `No measure called "${id}".` };
+
+  const view = viewOf({});
+  const value = computeMeasure(id, contextOf(view));
+  const accounts = value.inputs.map((i) => i.accountId).join(', ');
+
+  return {
+    content:
+      `${definition.label} is ${definition.formula}. It is owned by ${definition.owner} and the ` +
+      `definition is ${definition.status}. ` +
+      `${definition.polarity === 'neutral' ? 'It is neither good nor bad on its own.' : definition.polarity === 'higher_is_better' ? 'Higher is better.' : 'Lower is better.'} ` +
+      `It reads these accounts: ${accounts}.` +
+      (definition.note === undefined ? '' : ` ${definition.note}`),
+    citations: [
+      { label: definition.label, value: definition.formula, href: focusHref('section-headline') },
     ],
   };
 }
@@ -143,10 +377,16 @@ function compareSites(input: Record<string, unknown>): ToolOutcome {
 /** The one entry point `ask` calls. An unknown name is a named answer, never a throw. */
 export async function runTool(call: ToolCall): Promise<ToolOutcome> {
   switch (call.name) {
-    case 'site_series':
-      return siteSeries(call.input);
-    case 'compare_sites':
-      return compareSites(call.input);
+    case 'get_measure':
+      return getMeasure(call.input);
+    case 'compare_measures':
+      return compareMeasures(call.input);
+    case 'list_findings':
+      return listFindings(call.input);
+    case 'explain_variance':
+      return explainVariance(call.input);
+    case 'describe_measure':
+      return describeMeasure(call.input);
     default:
       return { content: `No tool called "${call.name}".` };
   }

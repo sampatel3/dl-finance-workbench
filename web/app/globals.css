@@ -309,3 +309,225 @@ a { color: inherit; }
   padding-top: 10px; border-top: 1px solid var(--border);
   font-size: 11px; color: var(--muted);
 }
+
+/* ==========================================================================
+   The finance surfaces
+   ==========================================================================
+   Added for the workbench. The token layer above is unchanged and is the reason these can be
+   short: nothing below picks a colour, and the two direction tokens are the only ones that
+   carry meaning. --accent stays interactive-only, which is why a board item's action is blue
+   and its figure never is. */
+
+/* ------------------------------------------------------------------ navigation */
+
+.masthead-nav { display: flex; gap: 2px; margin-left: 18px; }
+.nav-link {
+  padding: 5px 11px; border-radius: var(--radius-md);
+  font-size: 12.5px; font-weight: 600; color: var(--label); text-decoration: none;
+}
+.nav-link:hover { background: var(--surface-2); color: var(--text); }
+.nav-link.is-active { background: var(--accent-soft); color: var(--accent-deep); }
+
+/* ------------------------------------------------------------------- selectors
+
+   Links rather than dropdowns, so the address bar and the screen cannot disagree. The cost is
+   width, which is why the label column is fixed and narrow and the chips wrap. */
+
+.selectors {
+  display: grid; gap: 1px; margin: 0 0 18px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--border); overflow: hidden;
+}
+.sel-row {
+  display: grid; grid-template-columns: 82px 1fr; align-items: baseline; gap: 12px;
+  padding: 7px 12px; background: var(--surface);
+}
+.sel-label {
+  font-size: 10.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted);
+}
+.sel-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip-link {
+  padding: 3px 9px; border-radius: 999px; border: 1px solid transparent;
+  font-size: 11.5px; color: var(--label); text-decoration: none; white-space: nowrap;
+}
+.chip-link:hover { background: var(--surface-2); color: var(--text); }
+.chip-link.is-active {
+  background: var(--accent-soft); border-color: var(--accent); color: var(--accent-deep);
+  font-weight: 600;
+}
+/* The trend's mark. Small, and always present rather than only on hover: a reader who has
+   already drawn a conclusion from a fitted line has drawn it. */
+.chip-mark {
+  margin-left: 5px; padding: 0 4px; border-radius: 3px;
+  background: var(--surface-2); font-size: 9.5px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+}
+
+/* --------------------------------------------------------------------- banners
+
+   Above the figures, never below. A note at the foot saying the numbers may move is a note
+   nobody reads before reading the numbers. */
+
+.banner {
+  margin: 0 0 16px; padding: 9px 13px; border-radius: var(--radius-md);
+  border: 1px solid var(--border); background: var(--surface-2);
+  font-size: 12.5px; line-height: 1.55; color: var(--label);
+}
+.banner-warn { border-color: var(--neg); background: color-mix(in srgb, var(--neg) 7%, var(--surface)); }
+.banner-ok { color: var(--muted); }
+
+/* --------------------------------------------------------------------- headline */
+
+.card-basis { color: var(--muted); font-weight: 400; }
+.card-link { text-decoration: none; color: inherit; display: block; }
+.card-link:hover { background: var(--surface-2); }
+
+.narration {
+  margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radius-md);
+  background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 13.5px; line-height: 1.6; color: var(--label); max-width: 78ch;
+}
+
+/* ----------------------------------------------------------------- the 2x2 boards
+
+   Two by two on a wide screen, because the partition is the point and a 1x4 column reads as a
+   ranked list — which is exactly the shape the boards exist to replace. */
+
+.boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .boards { grid-template-columns: 1fr; } }
+
+.board {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--lift); overflow: hidden;
+}
+.board-head { padding: 12px 14px 10px; border-bottom: 1px solid var(--border); }
+.board-title { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: -0.01em; }
+.board-question { margin: 3px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.board-items { display: grid; gap: 1px; background: var(--border); }
+/* An empty board says so rather than collapsing: a panel that vanishes leaves a reader unable
+   to tell "nothing to report" from "not built". On the healthy twin all four are empty. */
+.board-empty { margin: 0; padding: 16px 14px; font-size: 12.5px; color: var(--muted); }
+.board-note {
+  margin: 0; padding: 9px 14px; border-top: 1px solid var(--border);
+  background: var(--surface-2); font-size: 11px; color: var(--muted); line-height: 1.5;
+}
+
+/* -------------------------------------------------------------------- a finding */
+
+.finding { padding: 12px 14px; background: var(--surface); }
+.finding-head { display: flex; align-items: baseline; gap: 8px; }
+.finding-title { margin: 0; font-size: 13px; font-weight: 650; line-height: 1.35; flex: 1; }
+.finding-statement {
+  margin: 7px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--label); max-width: 70ch;
+}
+.finding-figures {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px;
+  margin: 10px 0 0;
+}
+.finding-figure dt { font-size: 10.5px; color: var(--muted); }
+.finding-figure dd {
+  margin: 1px 0 0; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+/* A draft input is disclosed where the finding is shown. It is the reason the action is
+   "model it" rather than "raise the forecast". */
+.finding-caveat {
+  margin: 10px 0 0; padding: 7px 9px; border-radius: var(--radius-md);
+  background: var(--surface-2); font-size: 11px; line-height: 1.5; color: var(--muted);
+}
+.finding-foot {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--border);
+}
+.finding-action { font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; }
+.finding-action:hover { text-decoration: underline; }
+.finding-owner { margin-left: auto; font-size: 11px; color: var(--muted); }
+.finding-materiality { margin: 7px 0 0; font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+
+/* Priority is a rank, not a direction, so it is grey — the board it sits on already says
+   whether it is good news. Colouring a chip red on the favourable board would be the same
+   error as colouring by arithmetic sign. */
+.chip-high, .chip-medium, .chip-low, .chip-draft {
+  padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); font-size: 10px; font-weight: 700;
+  letter-spacing: .03em; text-transform: uppercase; color: var(--muted);
+}
+.chip-high { border-color: var(--border-strong); color: var(--text); }
+.chip-draft { margin-left: 6px; }
+
+/* ---------------------------------------------------------------------- charts
+
+   Hand-written SVG. Sized by viewBox and stretched by CSS, so every one holds its shape at
+   each device width the tour's window offers — including a 402pt phone. */
+
+.chart-title { font-size: 12px; font-weight: 650; color: var(--label); margin-bottom: 8px; }
+.chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-tick { fill: var(--muted); font-size: 9.5px; font-variant-numeric: tabular-nums; }
+.chart-note { margin: 9px 0 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.chart-note-inline { margin-left: auto; font-size: 11px; color: var(--muted); }
+.chart-empty { margin: 0; padding: 20px 0; font-size: 12.5px; color: var(--muted); }
+.chart-legend {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px;
+  margin: 10px 0 0; font-size: 11.5px; color: var(--label);
+}
+.key { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.key-actual { background: var(--accent); }
+.key-comparative { background: var(--muted); }
+.key-receipt { background: var(--pos); }
+.key-payment { background: var(--neg); }
+.key-balance { background: var(--accent); }
+
+/* The waterfall. Terminals are solid and neutral; contributions carry direction. The residual
+   is drawn in outline so it reads as "unexplained" rather than as another cause. */
+.wf-terminal { fill: var(--chart-3, var(--label)); }
+.wf-pos { fill: var(--pos); }
+.wf-neg { fill: var(--neg); }
+.wf-residual { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1; }
+.wf-link { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 2 2; }
+.wf-value {
+  fill: var(--label); font-size: 9.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.wf-label { fill: var(--muted); font-size: 9.5px; }
+
+.line-actual { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+/* Dashed and grey: the comparative is context, and two equal lines make a reader decide which
+   is the subject. */
+.line-comparative {
+  fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3;
+}
+.line-dot { fill: var(--accent); }
+
+.cash-receipt { fill: var(--pos); }
+.cash-payment { fill: var(--neg); }
+.cash-balance { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+/* A line, not a band. A band reads as a tolerance; this is a board minute. */
+.cash-floor { stroke: var(--neg); stroke-width: 1.5; stroke-dasharray: 5 3; }
+.cash-floor-label { fill: var(--neg); font-size: 9.5px; font-weight: 600; }
+.cash-breach-band { fill: color-mix(in srgb, var(--neg) 8%, transparent); }
+
+/* ----------------------------------------------------------------------- tables
+
+   Every row computed independently, so the table is a set of measurements rather than one
+   figure divided up. Figures right-aligned and tabular, which is what makes a column
+   scannable. */
+
+.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.grid caption {
+  text-align: left; padding-bottom: 9px; font-size: 12px; font-weight: 650; color: var(--label);
+}
+.grid th, .grid td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.grid thead th {
+  font-size: 10.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); border-bottom-color: var(--border-strong);
+}
+.grid tbody th { text-align: left; font-weight: 600; }
+.grid tbody th a { color: var(--accent); text-decoration: none; }
+.grid tbody th a:hover { text-decoration: underline; }
+.grid .num { text-align: right; font-variant-numeric: tabular-nums; }
+.grid tbody tr:hover { background: var(--surface-2); }
+.grid .pos { color: var(--pos); }
+.grid .neg { color: var(--neg); }
+.grid + .chart-note { margin-top: 10px; }
+
+.pane + .pane { margin-top: 14px; }

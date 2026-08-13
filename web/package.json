@@ -21,6 +21,9 @@
     "@demo-kit/gate": "workspace:*",
     "@demo-kit/llm": "workspace:*",
     "@demo-kit/shell": "workspace:*",
+    "@kestrel/analysis": "workspace:*",
+    "@kestrel/measures": "workspace:*",
+    "@kestrel/model": "workspace:*",
     "next": "^15.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

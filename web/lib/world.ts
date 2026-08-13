@@ -1,220 +1,336 @@
 /**
- * The demo's world: four sites, twelve months, two measures.
+ * The world, and the one place a URL becomes a measure context.
  *
- * This is placeholder data and is meant to be replaced — the schema, the entities and the
- * planted conditions are what a demo *is*, and the kit does not own them. What is not
- * placeholder is the shape of the file, and there are three rules in it worth keeping:
+ * Two jobs, and they belong together.
  *
- *   1. **The world is a pure function of its seed.** No `Math.random`, and no wall clock:
- *      the months are written down below rather than counted back from today, because a
- *      demo whose figures move a month after the screenshots were taken is a demo whose
- *      screenshots are wrong.
- *   2. **Every figure's seed text names every dimension it varies by** — the site, the
- *      month, the measure. Two figures built from the same text are the same figure.
- *   3. **The curve carries the story, the noise is only texture.** Growth is a rate written
- *      into the site's spec; `noise` is scaled to a couple of percent on top of it. A story
- *      told by randomness is a story that changes when the seed does.
+ * **The world is memoised.** `buildWorld` walks 43 months × 5 entities × 5 versions, and it is a pure
+ * function of its seed, so it is built once per process and never invalidated — there is nothing to
+ * invalidate. Every surface in a request reads the same object, which is what makes server rendering
+ * with no loading state possible: nothing on these pages fetches, so nothing can be caught half-drawn
+ * by a screenshot or a deck slide.
  *
- * The whole cache a memory-tier demo needs is the `memoise` at the foot: every request in
- * this process reads one object, a new process builds an identical one, and nothing is ever
- * invalidated because nothing ever changes.
+ * **A view is resolved from the URL, and only from the URL.** Period, comparator, entity, currency lens
+ * and forecast version all arrive as search params, and every surface reads the same resolver. That is
+ * the mechanism behind two of the plan's harder commitments:
+ *
+ *   *Any view's URL reproduces it in a clean browser.* There is no client state to fall out of step
+ *   with the address bar, because there is no client state. A screenshot, a deck slide, a tour step and
+ *   a link pasted into a message all resolve through this one function.
+ *
+ *   *Expanding a commentary headline leaves the period, version and comparator byte-identical.* Drill
+ *   is a property of a computed figure rather than a page that refetches, so expanding cannot change
+ *   the context — the context *is* the URL, and expanding does not navigate.
+ *
+ * An unreadable parameter falls back to the default rather than throwing, and `fellBack` records that
+ * it happened. A demo that 500s because somebody hand-edited a query string dies on stage; one that
+ * silently shows June when the URL said `month=Jorbuary` is how a screenshot gets the wrong caption.
  */
 
-import { memoise, noise, seededUuid } from '@demo-kit/data';
+import { memoise } from '@demo-kit/data';
+import type { CurrencyLens, FiscalMonth, PeriodScope, VersionSpec } from '@kestrel/model';
+import {
+  ACTUAL_VERSION,
+  CALENDAR_YEAR,
+  MONTHS,
+  SEED_END,
+  VERSIONS,
+  buildWorld,
+  entity,
+  fiscalQuarterOf,
+  fiscalYearOf,
+  monthScope,
+  quarterScope,
+  subtree,
+  tradingEntities,
+  ytdScope,
+} from '@kestrel/model';
+import type { ComparatorChoice, ComparatorId, MeasureContext } from '@kestrel/measures';
+import { COMPARATORS } from '@kestrel/measures';
+import type { Boards, Brief, DetectorContext } from '@kestrel/analysis';
+import { activeApprovedForecast, brief, priorityBoards } from '@kestrel/analysis';
+
 import { DEMO_SEED } from './demo';
 
-export interface Month {
-  readonly id: string;
-  readonly label: string;
-  /** Position in the series. Used by the growth curve, so it is part of the data. */
-  readonly index: number;
-}
+/** The world, built once per process. */
+export const world = memoise(() => buildWorld({ seed: DEMO_SEED }));
+
+/** The last closed month. Written down in the model, never counted back from a clock. */
+export const LATEST_MONTH: FiscalMonth = SEED_END;
+
+export const ALL_MONTHS: readonly FiscalMonth[] = MONTHS;
+
+/** The months a selector offers: the closing year, newest first. Not all forty-three. */
+export const SELECTABLE_MONTHS: readonly FiscalMonth[] = [...MONTHS].slice(-12).reverse();
+
+// ---------------------------------------------------------------------------
+// Periods
+// ---------------------------------------------------------------------------
 
 /**
- * Written down, not derived. Twelve closed months; nothing here is "this month", so the
- * demo reads the same in August as it did in March.
- */
-const MONTH_LIST = [
-  { id: '2025-07', label: 'Jul 25', index: 0 },
-  { id: '2025-08', label: 'Aug 25', index: 1 },
-  { id: '2025-09', label: 'Sep 25', index: 2 },
-  { id: '2025-10', label: 'Oct 25', index: 3 },
-  { id: '2025-11', label: 'Nov 25', index: 4 },
-  { id: '2025-12', label: 'Dec 25', index: 5 },
-  { id: '2026-01', label: 'Jan 26', index: 6 },
-  { id: '2026-02', label: 'Feb 26', index: 7 },
-  { id: '2026-03', label: 'Mar 26', index: 8 },
-  { id: '2026-04', label: 'Apr 26', index: 9 },
-  { id: '2026-05', label: 'May 26', index: 10 },
-  { id: '2026-06', label: 'Jun 26', index: 11 },
-] as const satisfies readonly Month[];
-
-export const MONTHS: readonly Month[] = MONTH_LIST;
-
-/* Indexed off the tuple rather than off `MONTHS.at(-1)`: a fixed-length list has a last
-   element the compiler can see, so the demo needs no runtime check for an empty calendar. */
-export const LATEST_MONTH: Month = MONTH_LIST[11];
-
-/** What a site is before the seed touches it. */
-export interface SiteSpec {
-  readonly name: string;
-  /** Units dispatched in the first month, before noise. */
-  readonly base: number;
-  /** Month-on-month growth, as a rate. */
-  readonly growth: number;
-  /** Cost per unit, in pounds. */
-  readonly unitCost: number;
-  /**
-   * The planted condition: from this month index on, the site loses ground every month. Undefined
-   * means nothing is wrong with this site.
-   */
-  readonly declineFrom?: number;
-}
-
-/** How hard one monthly decline bites. Larger than the noise band, so a decline is a decline. */
-const DECLINE_RATE = 0.055;
-
-/**
- * The demo's own sites, with one condition planted in East from March.
+ * The period shapes a reader can choose.
  *
- * A demo needs something true to find, or the detector below, the brief and the chat have
- * nothing to be right about.
+ * Three, not the model's six. Half-year and trailing-twelve exist in the model and are not offered
+ * here: a selector with six options is a selector nobody reads, and those two are the shapes an
+ * executive asks for least. The model keeps them so the analyst surfaces can offer them.
  */
-export const SITES: readonly SiteSpec[] = [
-  { name: 'North', base: 1180, growth: 0.011, unitCost: 4.4 },
-  { name: 'South', base: 940, growth: 0.008, unitCost: 5.1 },
-  { name: 'East', base: 1075, growth: 0.01, unitCost: 4.8, declineFrom: 8 },
-  { name: 'Central', base: 1560, growth: 0.006, unitCost: 4.05 },
-];
+export const PERIOD_KINDS = ['month', 'quarter', 'ytd'] as const;
+export type PeriodKind = (typeof PERIOD_KINDS)[number];
 
-/**
- * The healthy twin: the same four sites with nothing wrong in any of them.
- *
- * Growth comfortably clears the noise band (see `HEALTHY_NOISE` below), so no site can
- * stumble into a run of declines by accident — which is the difference between a fixture
- * that proves the detector stays quiet and one that happens to.
- */
-export const HEALTHY_SITES: readonly SiteSpec[] = [
-  { name: 'North', base: 1180, growth: 0.014, unitCost: 4.4 },
-  { name: 'South', base: 940, growth: 0.013, unitCost: 5.1 },
-  { name: 'East', base: 1075, growth: 0.015, unitCost: 4.8 },
-  { name: 'Central', base: 1560, growth: 0.012, unitCost: 4.05 },
-];
-
-/** Texture, at a couple of percent. Anything louder starts telling the story itself. */
-const NOISE = 0.022;
-/** The healthy fixture's band, held under its slowest growth rate so every month rises. */
-const HEALTHY_NOISE = 0.004;
-
-export interface SiteMonth {
-  readonly month: string;
-  /** Units dispatched. */
-  readonly volume: number;
-  /** What dispatching them cost, in pounds. */
-  readonly cost: number;
-}
-
-export interface Site {
-  readonly id: string;
-  readonly name: string;
-  readonly months: readonly SiteMonth[];
-}
-
-export interface World {
-  readonly seed: string;
-  readonly sites: readonly Site[];
-}
-
-export interface WorldSpec {
-  readonly seed: string;
-  readonly sites: readonly SiteSpec[];
-  readonly noiseScale: number;
-}
-
-/** Two decimals for money, whole units for counts — rounded here so every reader agrees. */
-const round = (value: number, places: number): number => {
-  const factor = 10 ** places;
-  return Math.round(value * factor) / factor;
+export const PERIOD_LABELS: Readonly<Record<PeriodKind, string>> = {
+  month: 'Month',
+  quarter: 'Quarter',
+  ytd: 'Year to date',
 };
 
-export function buildWorld(spec: WorldSpec): World {
-  const sites = spec.sites.map((site): Site => ({
-    id: seededUuid(spec.seed, 'site', site.name),
-    name: site.name,
-    months: MONTHS.map((month): SiteMonth => {
-      const curve = site.base * (1 + site.growth) ** month.index;
-      const decline =
-        site.declineFrom !== undefined && month.index >= site.declineFrom
-          ? (1 - DECLINE_RATE) ** (month.index - site.declineFrom + 1)
-          : 1;
-      const texture = 1 + noise(`${spec.seed}|${site.name}|${month.id}|volume`) * spec.noiseScale;
-      const volume = Math.round(curve * decline * texture);
-      const costTexture =
-        1 + noise(`${spec.seed}|${site.name}|${month.id}|cost`) * (spec.noiseScale / 2);
-      return {
-        month: month.id,
-        volume,
-        cost: round(volume * site.unitCost * costTexture, 2),
-      };
-    }),
-  }));
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
 
-  return { seed: spec.seed, sites };
+/** `2026-07` → `Jul 2026`. What a header prints; never a locale call, which would vary by machine. */
+export function monthLabel(month: FiscalMonth): string {
+  const [year, index] = month.split('-');
+  return `${MONTH_NAMES[Number(index) - 1] ?? month} ${year}`;
 }
 
-/** The demo's world. Built once per process; identical in every process. */
-export const world = memoise(() =>
-  buildWorld({ seed: DEMO_SEED, sites: SITES, noiseScale: NOISE }),
-);
+/** `2026-07` → `Jul 26`. For an axis, where the century is noise. */
+export function shortMonthLabel(month: FiscalMonth): string {
+  const [year, index] = month.split('-');
+  return `${MONTH_NAMES[Number(index) - 1] ?? month} ${(year ?? '').slice(2)}`;
+}
+
+export function scopeFor(kind: PeriodKind, through: FiscalMonth): PeriodScope {
+  switch (kind) {
+    case 'month':
+      return monthScope(through);
+    case 'quarter':
+      return quarterScope(
+        fiscalYearOf(through, CALENDAR_YEAR),
+        fiscalQuarterOf(through, CALENDAR_YEAR),
+        CALENDAR_YEAR,
+      );
+    case 'ytd':
+      return ytdScope(through, CALENDAR_YEAR);
+  }
+}
 
 /**
- * The second fixture, from a different seed, with none of the planted conditions in it.
+ * What the header prints for a resolved scope.
  *
- * Its job is the one the demo's own world cannot do: prove the detectors stay QUIET. A
- * false positive in front of a reader destroys trust in everything else on the screen, so a
- * detector that fires on a healthy book is worse than no detector at all. It is also the
- * cheapest place to catch a seed function that is not actually a function of its seed —
- * two seeds producing the same world are two seeds ignoring their seed.
- *
- * It is a first-class artefact, not a test helper: `pnpm test` asserts against it, and it is
- * exported so a demo can render it side by side with the real world when explaining itself.
+ * The window in full rather than the shape's name. "YTD" alone is a label a reader has to decode, and
+ * decoding it wrongly by one month is exactly the mistake this product exists not to make.
  */
-export const HEALTHY_SEED = 'demo-kit-template-healthy';
-
-export const healthyWorld = memoise(() =>
-  buildWorld({ seed: HEALTHY_SEED, sites: HEALTHY_SITES, noiseScale: HEALTHY_NOISE }),
-);
-
-// --------------------------------------------------------------------------- reading it
-
-export function siteByName(source: World, name: string): Site | undefined {
-  const wanted = name.trim().toLowerCase();
-  return source.sites.find((s) => s.name.toLowerCase() === wanted);
+export function scopeLabel(kind: PeriodKind, scope: PeriodScope): string {
+  switch (kind) {
+    case 'month':
+      return monthLabel(scope.endMonth);
+    case 'quarter':
+      return `Q${fiscalQuarterOf(scope.endMonth, CALENDAR_YEAR)} ${fiscalYearOf(scope.endMonth, CALENDAR_YEAR)}`;
+    case 'ytd':
+      return `${monthLabel(scope.startMonth)} – ${monthLabel(scope.endMonth)}`;
+  }
 }
 
-export function monthOf(site: Site, monthId: string): SiteMonth | undefined {
-  return site.months.find((m) => m.month === monthId);
+// ---------------------------------------------------------------------------
+// A view
+// ---------------------------------------------------------------------------
+
+export interface View {
+  readonly periodKind: PeriodKind;
+  readonly through: FiscalMonth;
+  readonly scope: PeriodScope;
+  readonly comparator: ComparatorChoice;
+  readonly entityId: string;
+  readonly lens: CurrencyLens;
+  /** The forecast version this view reads, and the one a `forecast` comparator compares against. */
+  readonly version: VersionSpec;
+  /** True where a parameter was unreadable and a default was used. Surfaced, never swallowed. */
+  readonly fellBack: boolean;
 }
 
-/** Every site's figure for one month, largest first. */
-export function ranked(source: World, monthId: string): readonly { site: Site; row: SiteMonth }[] {
-  return source.sites
-    .flatMap((site) => {
-      const row = monthOf(site, monthId);
-      return row === undefined ? [] : [{ site, row }];
-    })
-    .sort((a, b) => b.row.volume - a.row.volume);
+/** What search params arrive as in Next 15. */
+export type Params = Readonly<Record<string, string | string[] | undefined>>;
+
+const first = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+export function viewOf(params: Params = {}): View {
+  let fellBack = false;
+  /** Record that a parameter was present and unreadable, then use the default. */
+  const fallback = <T>(value: T): T => {
+    fellBack = true;
+    return value;
+  };
+
+  const periodRaw = first(params.period);
+  const periodKind: PeriodKind = PERIOD_KINDS.includes(periodRaw as PeriodKind)
+    ? (periodRaw as PeriodKind)
+    : periodRaw === undefined
+      ? 'month'
+      : fallback<PeriodKind>('month');
+
+  const monthRaw = first(params.month);
+  const through: FiscalMonth = MONTHS.includes(monthRaw ?? '')
+    ? (monthRaw as FiscalMonth)
+    : monthRaw === undefined
+      ? LATEST_MONTH
+      : fallback(LATEST_MONTH);
+
+  const approved = activeApprovedForecast();
+  const versionRaw = first(params.version);
+  const found = VERSIONS.find((v) => v.id === versionRaw);
+  const version = found ?? (versionRaw === undefined ? approved : fallback<VersionSpec>(approved));
+
+  const comparatorRaw = first(params.comparator);
+  const comparatorId: ComparatorId = COMPARATORS.includes(comparatorRaw as ComparatorId)
+    ? (comparatorRaw as ComparatorId)
+    : comparatorRaw === undefined
+      ? 'forecast'
+      : fallback<ComparatorId>('forecast');
+
+  // Only the two version-bearing comparators carry a version. Attaching one to "prior year" would put a
+  // parameter in the URL that the resolver ignores, and an ignored parameter is a claim about what is on
+  // screen that is not true.
+  const comparator: ComparatorChoice =
+    comparatorId === 'forecast'
+      ? { id: 'forecast', versionId: version.id }
+      : comparatorId === 'budget'
+        ? { id: 'budget', versionId: 'budget-fy26' }
+        : { id: comparatorId };
+
+  const entityRaw = first(params.entity);
+  const known = ['group', ...tradingEntities().map((e) => e.id)];
+  const entityId = known.includes(entityRaw ?? '')
+    ? (entityRaw as string)
+    : entityRaw === undefined
+      ? 'group'
+      : fallback('group');
+
+  const lensRaw = first(params.lens);
+  const lens: CurrencyLens =
+    lensRaw === 'constant' || lensRaw === 'functional' || lensRaw === 'reported'
+      ? lensRaw
+      : lensRaw === undefined
+        ? 'reported'
+        : fallback<CurrencyLens>('reported');
+
+  return {
+    periodKind,
+    through,
+    scope: scopeFor(periodKind, through),
+    comparator,
+    entityId,
+    lens,
+    version,
+    fellBack,
+  };
 }
 
-/** The whole network's volume in one month. */
-export function networkVolume(source: World, monthId: string): number {
-  return ranked(source, monthId).reduce((total, entry) => total + entry.row.volume, 0);
+/**
+ * The measure context a view resolves to.
+ *
+ * `comparativeScope` is set only for the constant-currency lens, because that is the one lens whose
+ * definition needs a second window: constant currency is *this* period's trading at the comparative
+ * period's rates, so with no comparative window there is nothing to hold constant and the lens quietly
+ * returns the reported figure. That happened while building the currency detector — every
+ * constant-currency figure read identical to reported, and every one of them looked plausible.
+ */
+export function contextOf(view: View): MeasureContext {
+  return {
+    store: world().store,
+    rates: world().rates,
+    scope: view.scope,
+    scenario: 'ACTUAL',
+    versionId: ACTUAL_VERSION,
+    lens: view.lens,
+    entityIds: subtree(view.entityId),
+    ...(view.lens === 'constant' ? { comparativeScope: priorYearOf(view.scope) } : {}),
+  };
 }
 
-/** The whole network's cost in one month, to the penny. */
-export function networkCost(source: World, monthId: string): number {
-  return round(
-    ranked(source, monthId).reduce((total, entry) => total + entry.row.cost, 0),
-    2,
-  );
+/** The same window a year earlier. Local so `contextOf` does not depend on import order. */
+function priorYearOf(scope: PeriodScope): PeriodScope {
+  const shift = (m: FiscalMonth): FiscalMonth => {
+    const [year, month] = m.split('-');
+    return `${Number(year) - 1}-${month}`;
+  };
+  return { ...scope, startMonth: shift(scope.startMonth), endMonth: shift(scope.endMonth) };
+}
+
+export function detectorContextOf(view: View): DetectorContext {
+  return { world: world(), ctx: contextOf(view), comparator: view.comparator };
+}
+
+/** The four boards for a view, uncapped. */
+export function boardsFor(view: View): Boards {
+  return priorityBoards(detectorContextOf(view));
+}
+
+/** The capped brief: what an executive surface shows above the fold, and what it left out. */
+export function briefFor(view: View, capPerBoard = 3): Brief {
+  return brief(detectorContextOf(view), capPerBoard);
+}
+
+// ---------------------------------------------------------------------------
+// URLs
+// ---------------------------------------------------------------------------
+
+/**
+ * A URL for a view, with one dimension changed.
+ *
+ * Built here rather than in each surface, so a selector, a board item's deep link and a tour step all
+ * produce the same address for the same view — which is what makes "any URL reproduces its view"
+ * testable rather than aspirational.
+ *
+ * Defaults are omitted, so the tidy URL and the explicit one resolve identically and a reader is never
+ * shown `?period=month&lens=reported&entity=group`. It also means the canonical address for the demo's
+ * opening view is the bare path, which is the one a deck slide should carry.
+ */
+export function hrefFor(
+  path: string,
+  view: View,
+  changes: Partial<{
+    period: PeriodKind;
+    month: FiscalMonth;
+    comparator: ComparatorId;
+    entity: string;
+    lens: CurrencyLens;
+    version: string;
+  }> = {},
+): string {
+  const merged = {
+    period: changes.period ?? view.periodKind,
+    month: changes.month ?? view.through,
+    comparator: changes.comparator ?? view.comparator.id,
+    entity: changes.entity ?? view.entityId,
+    lens: changes.lens ?? view.lens,
+    version: changes.version ?? view.version.id,
+  };
+  const params = new URLSearchParams();
+  if (merged.period !== 'month') params.set('period', merged.period);
+  if (merged.month !== LATEST_MONTH) params.set('month', merged.month);
+  if (merged.comparator !== 'forecast') params.set('comparator', merged.comparator);
+  if (merged.entity !== 'group') params.set('entity', merged.entity);
+  if (merged.lens !== 'reported') params.set('lens', merged.lens);
+  if (merged.version !== activeApprovedForecast().id) params.set('version', merged.version);
+  const query = params.toString();
+  return query === '' ? path : `${path}?${query}`;
+}
+
+/** The entities a selector offers, group first. */
+export function selectableEntities(): readonly { readonly id: string; readonly name: string }[] {
+  return [
+    { id: 'group', name: entity('group').name },
+    ...tradingEntities().map((e) => ({ id: e.id, name: e.name })),
+  ];
 }

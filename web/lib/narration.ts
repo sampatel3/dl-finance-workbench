@@ -1,38 +1,61 @@
 /**
- * The build-time brief: what code found, written down by a model, cached in a committed file.
+ * Commentary, written at build time and cached in a committed file.
  *
  * Three properties come from that arrangement and all three are the reason for it:
  *
- *   - **A page load never waits on a model.** The prose is already on disk.
- *   - **A keyless build still ships.** With no key the ladder in `@demo-kit/llm` returns the
- *     deterministic fallback below, so there is no state in which the demo renders nothing.
- *   - **Stale prose is a failing test, not a quiet lie.** The numbers in the committed file
- *     came from the seed; change a threshold, a rate or the seed and they move. The pinned
- *     projection at the foot is what `narration.test.ts` compares, so the wording may float
- *     and the figures may not.
+ *   **A page load never waits on a model.** The prose is already on disk when the server starts.
  *
- * `buildBriefs` is shared by `scripts/narrate.ts` and by that test, deliberately: a test
- * that reconstructs what the generator does is a test of a second implementation.
+ *   **A keyless build still ships.** With no key the ladder in `@demo-kit/llm` returns the deterministic
+ *   sentence code wrote, so there is no state in which the demo renders nothing. That is the designed
+ *   fallback, not a degraded mode — and it is also what any non-default period renders, since the cache
+ *   holds one narration per period rather than one per combination of period and comparator.
+ *
+ *   **Stale prose is a failing test, not a quiet lie.** The figures in the committed file came from the
+ *   seed; change a threshold, a rate or the seed and they move. `narration.test.ts` compares the pinned
+ *   projection at the foot, so the wording may float and the figures may not.
+ *
+ * ## Only the headline is written by a model
+ *
+ * The *detail* under a board item is an evidence chain — the figures the detector recorded, its
+ * materiality verdict, its owner, its action — and code writes those, because they are a list rather
+ * than a paragraph. A model asked to prose them would add connective tissue that reads as reasoning and
+ * is not. So the model gets one job: a sentence naming what moved. Everything a reader drills into is
+ * code's.
+ *
+ * ## What the model is allowed to say
+ *
+ * `facts` is not decoration. `@demo-kit/llm` builds the numeral allow-list from it, so a figure the
+ * model quotes that is not derivable from one of these is rejected and the narration falls back to the
+ * sentence code wrote. The list is assembled from the findings' own closed figure sets, which is why the
+ * detectors carry them: the same array that renders on the card is the array that bounds the prose.
  */
 
-import { narrate, type AnthropicLike, type NarrationPack, type NarrationResult } from '@demo-kit/llm';
+import {
+  narrate,
+  type AnthropicLike,
+  type NarrationPack,
+  type NarrationResult,
+  type NumberUnit,
+} from '@demo-kit/llm';
+import type { FiscalMonth } from '@kestrel/model';
+import { closeCompleteness, entity } from '@kestrel/model';
+import type { Unit } from '@kestrel/measures';
+import { formatValue } from '@kestrel/measures';
+
 import { DEMO_NAME } from './demo';
-import { findings, monthLabel, type Finding } from './findings';
-import { percent, units } from './format';
-import { LATEST_MONTH, networkVolume, world, type World } from './world';
+import { headlinesFor } from './headline';
+import { LATEST_MONTH, briefFor, contextOf, monthLabel, viewOf, world } from './world';
 
-/** The key every brief is filed under. One brief today; a demo will grow more. */
-export const NETWORK_BRIEF = 'network';
+/** The key a period's brief is filed under. One per closed month the demo offers. */
+export function briefKey(month: FiscalMonth): string {
+  return `overview:${month}`;
+}
 
-/**
- * One cached brief: the figures it was written from, and the sentences a model wrote about
- * them. The split is the whole mechanism — everything above `narration` is pinned.
- */
 export interface BriefRecord {
   readonly title: string;
   readonly month: string;
   /** The deterministic figures behind the prose, pinned by the freshness test. */
-  readonly figures: Readonly<Record<string, number>>;
+  readonly figures: Readonly<Record<string, number | null>>;
   /** The sentence code wrote, which is also what ships when the model is not available. */
   readonly finding: string;
   readonly narration: NarrationResult;
@@ -49,69 +72,153 @@ export function pinned(record: BriefRecord): unknown {
 }
 
 /**
- * The demo's voice. The kit appends its own rules — no invented numbers, no causation, no
- * forecasts, no superlatives — so this says only who is reading and how it should sound.
+ * The demo's voice. The kit appends its own rules — no invented numbers, no causation, no forecasts, no
+ * superlatives — so this says only who is reading and how it should sound.
  */
 const SYSTEM = [
-  `You are writing one short brief for the operations lead of ${DEMO_NAME}.`,
+  `You are writing one short commentary for the chief financial officer of ${DEMO_NAME}.`,
   'They already know the business. Say what moved and by how much, in plain words.',
-  'British English. No jargon, no adjectives that are not doing work.',
+  'British English. No jargon, no adjectives that are not doing work, no advice.',
 ].join('\n');
 
-/** The sentence code writes: true, complete, and what ships when there is no model. */
-function findingSentence(finding: Finding | undefined, month: string): string {
-  if (finding === undefined) {
-    return `No site fell for three consecutive months to ${monthLabel(month)}.`;
+/**
+ * The sentence code writes: true, complete, and what ships when there is no model.
+ *
+ * It quotes the highest-priority adverse finding — the detector's own title and statement, the same words
+ * the card renders — rather than summarising all of them, because a summary of six findings is a sentence
+ * that says nothing. If nothing fired it says so plainly: an empty month is a real answer, and the healthy
+ * twin is a world in which every month is one.
+ *
+ * ## It quotes the detector, and briefly could not
+ *
+ * The kit's claims validator treated "forecast" as predictive language and would not allow it to be
+ * echoed. In this domain the word is a *noun* — it names the comparator a variance is measured against —
+ * so a detector saying "margin 404bps behind forecast" was saying the only correct thing, and prose
+ * repeating it was rejected. Including this fallback, which then failed the check that exists to guard it.
+ *
+ * The workaround was to compose a sentence from the finding's figures and avoid the word. That worked
+ * until the word turned up in a figure *label* and a detector id, at which point it was clear the product
+ * was being made less accurate to satisfy a validator. Fixed upstream instead: the pattern is now
+ * echoable, exactly as superlatives already were, so a model may repeat what code wrote and still cannot
+ * invent "revenue will reach £14m". Recorded in the verification log as finding 30.
+ */
+function findingSentence(month: FiscalMonth): string {
+  const brief = briefFor(viewOf({ month }));
+  const attention = brief.boards.find((b) => b.id === 'attention')?.triage.kept ?? [];
+  const first = attention[0];
+  if (first === undefined) {
+    return `Nothing adverse cleared the materiality policy in ${monthLabel(month)}.`;
   }
-  return (
-    `${finding.site} fell in each of the three months to ${monthLabel(month)}, ` +
-    `from ${units(finding.from)} units to ${units(finding.to)}, ${percent(finding.change)}.`
-  );
+  return `${first.title}. ${first.statement}`;
 }
 
 /**
- * The closed set of facts the model is given, and the only numbers it may use.
+ * One measure-layer value, converted into a fact the numeral allow-list can ground.
  *
- * `facts` is not decoration: `@demo-kit/llm` builds the numeral allow-list from it, and a
- * figure the model quotes that is not derivable from one of these is rejected and the brief
- * falls back. So a number that belongs in the prose belongs here.
+ * Two conversions, and the second one is a defect that took a failing test to find.
+ *
+ * **The unit is narrowed.** The kit's `NumberUnit` is deliberately smaller than a measure's `Unit`,
+ * because the allow-list only needs to know how a value may legitimately be *rescaled* by a writer.
+ * Hours and days rescale like counts; a per-unit rate rescales like money. Writing the mapping out as a
+ * switch means a new unit in the measure layer fails the typecheck here rather than silently widening
+ * what the model is allowed to say.
+ *
+ * **The value is converted out of minor units.** This is the one that bit. `scaleVariants` in the kit
+ * offers a currency value divided by a thousand, a million and a billion — because a writer says "12.4
+ * million" for 12,393,220. The measure layer holds money in *minor* units, so revenue is 1,239,322,000,
+ * whose variants are 1,239,322 and 1,239.32 and 1.24 — and `£12.4m`, the figure on every card on the
+ * page, grounds against none of them. Every currency figure the product displays would have been
+ * rejected as fabricated, and the narration would have fallen back on every build while looking like a
+ * model that could not be trusted with numbers.
+ *
+ * Minor units are right for the model layer — integer arithmetic is why the balance sheet reconciles to
+ * the penny — and wrong at this boundary. The conversion belongs here, at the seam, rather than in either
+ * layer.
  */
-function briefPack(source: World, finding: Finding | undefined): NarrationPack {
-  const month = LATEST_MONTH.id;
-  const total = networkVolume(source, month);
-  const sentence = findingSentence(finding, month);
+function fact(value: number, unit: Unit): { value: number; unit: NumberUnit } {
+  switch (unit) {
+    case 'currency':
+    case 'rate':
+      return { value: value / 100, unit: 'currency' };
+    case 'percent':
+      return { value, unit: 'percent' };
+    case 'bps':
+      return { value, unit: 'bps' };
+    case 'ratio':
+      return { value, unit: 'ratio' };
+    case 'count':
+    case 'hours':
+    case 'days':
+      return { value, unit: 'count' };
+  }
+}
+
+function briefPack(month: FiscalMonth): NarrationPack {
+  const view = viewOf({ month });
+  const ctx = contextOf(view);
+  const headlines = headlinesFor(ctx, view.comparator);
+  const brief = briefFor(view);
+  const completeness = closeCompleteness(world().closePositions, month);
+  const sentence = findingSentence(month);
+
+  const findings = brief.boards.flatMap((b) => b.triage.kept);
 
   return {
     content: {
       period: monthLabel(month),
-      networkVolume: total,
-      siteCount: source.sites.length,
-      finding:
-        finding === undefined
-          ? null
-          : {
-              site: finding.site,
-              months: finding.months.map(monthLabel),
-              volumeBefore: finding.from,
-              volumeNow: finding.to,
-              changeRate: finding.change,
-            },
+      basis: brief.comparator.basis,
+      headlines: headlines.map((h) => ({
+        measure: h.label,
+        value: formatValue(h.value, h.unit),
+        movement: formatValue(h.movement, h.movementUnit),
+        favourable: h.favourable,
+      })),
+      findingCount: findings.length,
+      boards: brief.boards.map((b) => ({ board: b.title, count: b.triage.kept.length })),
+      ledgersClosed: `${completeness.closed} of ${completeness.total}`,
+      openLedgers: completeness.open.map((p) => entity(p.entityId).name),
     },
+    // Every numeral the model may use, drawn from the same figure sets the cards render.
     facts: [
-      { value: total, unit: 'count' },
-      { value: source.sites.length, unit: 'count' },
-      ...(finding === undefined
-        ? []
-        : ([
-            { value: finding.from, unit: 'count' },
-            { value: finding.to, unit: 'count' },
-            { value: finding.change, unit: 'ratio' },
-          ] as const)),
+      ...headlines.flatMap((h) =>
+        h.value === null
+          ? []
+          : [
+              fact(h.value, h.unit),
+              ...(h.movement === null ? [] : [fact(h.movement, h.movementUnit)]),
+            ],
+      ),
+      ...findings.flatMap((f) =>
+        f.figures.flatMap((figure) =>
+          figure.value === null ? [] : [fact(figure.value, figure.unit)],
+        ),
+      ),
+      { value: completeness.closed, unit: 'count' as const },
+      { value: completeness.total, unit: 'count' as const },
+      { value: findings.length, unit: 'count' as const },
     ],
-    codeWritten: [sentence],
+    /* Two strings, and the second is why: `codeWritten` numerals are quotable because code wrote them,
+       and the period label carries a year. Without it "Jul 2026" is an ungrounded 2026 — a date rejected
+       as a fabricated figure, which is the sort of false positive that gets a grounding check switched
+       off. */
+    codeWritten: [
+      sentence,
+      `Period: ${monthLabel(month)}. Comparative: version ${view.version.id}.`,
+    ],
     fallback: {
-      headline: finding === undefined ? 'Every site held or grew' : `Volume is falling at ${finding.site}`,
-      body: `${sentence} Across all ${source.sites.length} sites the network dispatched ${units(total)} units in ${monthLabel(month)}.`,
+      headline:
+        findings.length === 0
+          ? `${monthLabel(month)} closed with nothing above the threshold`
+          : `${findings.length} items need a decision in ${monthLabel(month)}`,
+      /* Worded to avoid "forecast" deliberately. The kit's claims validator treats the word as predictive
+         language and does not allow it to be echoed, so prose containing it is rejected — including this
+         fallback, which then fails the very check that guards it. Naming the version instead is more precise
+         anyway: "against version v6" cannot be misread as a prediction, which is what the rule is for. */
+      body:
+        `${sentence} ` +
+        `Revenue was ${formatValue(headlines[0]?.value ?? null, 'currency')} and EBITDA ` +
+        `${formatValue(headlines[2]?.value ?? null, 'currency')}, measured against version ` +
+        `${view.version.id}. ${completeness.closed} of ${completeness.total} ledgers are closed.`,
     },
   };
 }
@@ -125,44 +232,51 @@ export interface BuildOptions {
 }
 
 /**
- * The pack behind the committed brief, so a test can run the kit's own validators over the
- * prose that shipped. The generator checks the model's output before it writes; this is what
- * makes a hand edit to the generated file checkable too.
+ * The months a brief is cached for.
+ *
+ * The latest closed month only. One narration per period and comparator combination would be four
+ * periods × five comparators × twelve months of model calls at every build, for prose almost nobody
+ * reads — and the non-default combinations render the deterministic sentence, which is honest and is
+ * what the fallback exists for.
  */
-export function networkPack(): NarrationPack {
-  const source = world();
-  return briefPack(source, findings(source)[0]);
+export const NARRATED_MONTHS: readonly FiscalMonth[] = [LATEST_MONTH];
+
+/** The pack behind a committed brief, so a test can run the kit's validators over the prose that shipped. */
+export function packFor(month: FiscalMonth): NarrationPack {
+  return briefPack(month);
 }
 
-/** Build every brief this demo caches. One today. */
 export async function buildBriefs(
   options: BuildOptions = {},
 ): Promise<Record<string, BriefRecord>> {
-  const source = world();
-  const month = LATEST_MONTH.id;
-  const finding = findings(source)[0];
-  const pack = briefPack(source, finding);
+  const out: Record<string, BriefRecord> = {};
 
-  const narration = await narrate(pack, {
-    system: SYSTEM,
-    ...(options.client === undefined ? {} : { client: options.client }),
-    ...(options.now === undefined ? {} : { now: options.now }),
-    ...(options.onReject === undefined ? {} : { onReject: options.onReject }),
-  });
+  for (const month of NARRATED_MONTHS) {
+    const view = viewOf({ month });
+    const headlines = headlinesFor(contextOf(view), view.comparator);
+    const completeness = closeCompleteness(world().closePositions, month);
+    const pack = briefPack(month);
 
-  return {
-    [NETWORK_BRIEF]: {
-      title: `${monthLabel(month)} operations brief`,
+    const narration = await narrate(pack, {
+      system: SYSTEM,
+      ...(options.client === undefined ? {} : { client: options.client }),
+      ...(options.now === undefined ? {} : { now: options.now }),
+      ...(options.onReject === undefined ? {} : { onReject: options.onReject }),
+    });
+
+    out[briefKey(month)] = {
+      title: `${monthLabel(month)} commentary`,
       month,
       figures: {
-        networkVolume: networkVolume(source, month),
-        siteCount: source.sites.length,
-        ...(finding === undefined
-          ? {}
-          : { volumeBefore: finding.from, volumeNow: finding.to, changeRate: finding.change }),
+        ...Object.fromEntries(headlines.map((h) => [h.measureId, h.value])),
+        ...Object.fromEntries(headlines.map((h) => [`${h.measureId}_movement`, h.movement])),
+        ledgersClosed: completeness.closed,
+        ledgersTotal: completeness.total,
       },
       finding: pack.codeWritten[0] ?? '',
       narration,
-    },
-  };
+    };
+  }
+
+  return out;
 }
