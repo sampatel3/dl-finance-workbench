@@ -13,3 +13,4 @@ export * from './cash.ts';
 export * from './quality.ts';
 export * from './detectors.ts';
 export * from './priority.ts';
+export * from './pivot.ts';

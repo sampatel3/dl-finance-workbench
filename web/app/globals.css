@@ -672,3 +672,44 @@ a:hover { opacity: 0.72; }
 .boards { align-items: start; }
 .board-items { flex: 1; }
 .board-note { margin-top: auto; }
+
+/* ------------------------------------------------------- the analyst surfaces */
+
+/* Nine surfaces do not fit on one line beside a wordmark and a date, so the nav wraps and the masthead
+   becomes two rows on a narrow screen. It stays a flat list rather than becoming a menu: a nav a reader
+   has to open is a nav that hides how much of the product exists. */
+.masthead { flex-wrap: wrap; row-gap: 10px; }
+.masthead-id { flex: none; }
+.masthead-nav { flex-wrap: wrap; margin-left: 18px; }
+@media (max-width: 1100px) {
+  .masthead-nav { margin-left: 0; order: 3; width: 100%; }
+  .masthead-right { order: 2; }
+}
+
+/* A grid wider than the pane scrolls inside it rather than pushing the page sideways. */
+.pane-scroll { overflow-x: auto; }
+.grid-pivot { min-width: 720px; }
+.grid-pivot .total { border-left: 1px solid var(--border-strong); color: var(--text); }
+
+/* A cell is a link, and looks like a figure until it is hovered. Underlining every cell in a grid of
+   sixty turns the grid into a mesh. */
+.cell-link { color: inherit; text-decoration: none; }
+.cell-link:hover { opacity: 1; color: var(--accent); }
+/* A refused total, not a missing one. The title attribute carries the reason. */
+.cell-none { color: var(--faint); cursor: help; }
+/* The point count under a horizon's error: present so a reader never trusts the least-supported
+   figure most. */
+.cell-sub { display: block; font-size: 9.5px; color: var(--faint); }
+.mono-cell { font-family: var(--ff-mono); font-size: 11px; color: var(--muted); }
+.muted-cell { color: var(--muted); }
+.row-note { display: block; margin-top: 3px; font-size: 11px; color: var(--faint); font-weight: 400; }
+
+/* A row that breaches something, and one that is the selected version. Both are a left rule rather
+   than a fill: a tinted row in a table of twenty reads as a selection the reader did not make. */
+.row-warn th[scope='row'] { box-shadow: inset 2px 0 0 var(--neg); padding-left: 10px; }
+.row-active th[scope='row'] { box-shadow: inset 2px 0 0 var(--accent); padding-left: 10px; }
+.warn-note { color: var(--neg); }
+
+/* The scenario library: the same card as a finding, two across. */
+.library { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; }
+@media (max-width: 720px) { .library { grid-template-columns: 1fr; } }

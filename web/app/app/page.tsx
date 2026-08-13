@@ -3,10 +3,10 @@ import { closeCompleteness, entity, monthScope } from '@kestrel/model';
 import { computeMeasure } from '@kestrel/measures';
 
 import { Ask } from '../../components/Ask';
+import { Masthead } from '../../components/Chrome';
 import { BoardPanel, CompletenessBanner, HeadlineCard } from '../../components/Figures';
 import { LineChart } from '../../components/LineChart';
 import { Selectors } from '../../components/Selectors';
-import { DEMO_MARK, DEMO_NAME } from '../../lib/demo';
 import { headlinesFor } from '../../lib/headline';
 import { NARRATION } from '../../lib/narration.generated';
 import { SUGGESTIONS } from '../../lib/tools';
@@ -73,27 +73,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
 
-      {inner ? null : (
-        <header className="masthead">
-          <span className="masthead-mark" aria-hidden>
-            {DEMO_MARK}
-          </span>
-          <span>
-            <span className="masthead-name">{DEMO_NAME}</span>
-            <br />
-            <span className="masthead-sub">{entity(view.entityId).name}</span>
-          </span>
-          <nav className="masthead-nav" aria-label="Surfaces">
-            <a className="nav-link is-active" href={hrefFor('/app', view)} aria-current="page">
-              Overview
-            </a>
-            <a className="nav-link" href={hrefFor('/app/performance', view)}>
-              Performance
-            </a>
-          </nav>
-          <span className="masthead-right">{scopeLabel(view.periodKind, view.scope)}</span>
-        </header>
-      )}
+      {inner ? null : <Masthead path="/app" view={view} />}
 
       <Selectors path="/app" view={view} />
 

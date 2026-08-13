@@ -4,9 +4,9 @@ import { compareMeasure, computeMeasure, formatValue } from '@kestrel/measures';
 import { buildBridge, directForecast, grossProfitBridge, principalDriver } from '@kestrel/analysis';
 
 import { CashColumns } from '../../../components/CashColumns';
+import { Masthead } from '../../../components/Chrome';
 import { Selectors } from '../../../components/Selectors';
 import { Waterfall } from '../../../components/Waterfall';
-import { DEMO_MARK, DEMO_NAME } from '../../../lib/demo';
 import { directionClass, movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
 import { contextOf, hrefFor, scopeLabel, viewOf } from '../../../lib/world';
@@ -83,31 +83,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
 
-      {inner ? null : (
-        <header className="masthead">
-          <span className="masthead-mark" aria-hidden>
-            {DEMO_MARK}
-          </span>
-          <span>
-            <span className="masthead-name">{DEMO_NAME}</span>
-            <br />
-            <span className="masthead-sub">{entity(view.entityId).name}</span>
-          </span>
-          <nav className="masthead-nav" aria-label="Surfaces">
-            <a className="nav-link" href={hrefFor('/app', view)}>
-              Overview
-            </a>
-            <a
-              className="nav-link is-active"
-              href={hrefFor('/app/performance', view)}
-              aria-current="page"
-            >
-              Performance
-            </a>
-          </nav>
-          <span className="masthead-right">{scopeLabel(view.periodKind, view.scope)}</span>
-        </header>
-      )}
+      {inner ? null : <Masthead path="/app/performance" view={view} />}
 
       <Selectors path="/app/performance" view={view} />
 
