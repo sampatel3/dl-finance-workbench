@@ -1,11 +1,6 @@
 import { resolveView } from '@demo-kit/shell';
-import { SEGMENTS, addMonths, entity, monthScope, segment as segmentSpec } from '@kestrel/model';
-import {
-  compareMeasure,
-  contextAtScope,
-  formatValue,
-  measureSeries,
-} from '@kestrel/measures';
+import { SEGMENTS, entity, segment as segmentSpec } from '@kestrel/model';
+import { compareMeasure, formatValue } from '@kestrel/measures';
 import {
   buildBridge,
   buildThreeWaySplit,
@@ -16,13 +11,15 @@ import {
 
 import { Masthead } from '../../../components/Chrome';
 import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { LineChart } from '../../../components/LineChart';
+import { MultiTrend } from '../../../components/MultiTrend';
 import { Selectors } from '../../../components/Selectors';
 import { ThreeWaySplit } from '../../../components/ThreeWaySplit';
 import { Waterfall } from '../../../components/Waterfall';
 import { directionClass, movement } from '../../../lib/format';
+import { DIVERGENCE_POINTS, TREND_MEASURES, buildTrend, selectedTrend } from '../../../lib/trend';
 import type { Params } from '../../../lib/world';
 import {
+  ALL_MONTHS,
   contextForEntity,
   contextOf,
   hrefFor,
@@ -46,22 +43,25 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const TREND_METRICS = [
-  { id: 'revenue', label: 'Revenue' },
-  { id: 'gross_profit', label: 'Gross profit' },
-  { id: 'gross_margin', label: 'Gross margin %' },
-  { id: 'ebitda', label: 'EBITDA' },
-  { id: 'ebitda_margin', label: 'EBITDA %' },
-  { id: 'opex', label: 'Opex' },
-  { id: 'cash', label: 'Cash' },
-] as const;
-
-type TrendMetric = (typeof TREND_METRICS)[number];
-
-/** Keep the selected performance metric in the URL so back, refresh and shared links reproduce it. */
-function trendHref(view: ReturnType<typeof viewOf>, metric: TrendMetric['id']): string {
+/**
+ * The href that adds or removes one measure from the trend.
+ *
+ * A toggle rather than a selector, because the review's question — *is growth converting into profit?* —
+ * is about two lines at once, and a control that shows one at a time cannot ask it. Held in the URL like
+ * every other selection here, so a reader who finds the divergence can send the chart that shows it.
+ *
+ * Removing the last remaining series is not offered: an empty chart is not a view anybody wanted, and a
+ * toggle that can break the page is a toggle somebody will break the page with.
+ */
+function trendHref(
+  view: ReturnType<typeof viewOf>,
+  selected: readonly string[],
+  measureId: string,
+): string {
+  const on = selected.includes(measureId);
+  const next = on ? selected.filter((id) => id !== measureId) : [...selected, measureId];
   const target = new URL(hrefFor('/app/performance', view), 'https://finance-workbench.invalid');
-  target.searchParams.set('metric', metric);
+  target.searchParams.set('trend', (next.length === 0 ? selected : next).join(','));
   target.searchParams.set('focus', 'section-trend');
   return `${target.pathname}${target.search}`;
 }
@@ -134,7 +134,6 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
   const selectedMeasure = typeof params.measure === 'string' ? params.measure : undefined;
   const selectedSegment = typeof params.segment === 'string' ? params.segment : undefined;
-  const requestedMetric = typeof params.metric === 'string' ? params.metric : undefined;
 
   const view = viewOf(params);
   const ctx = contextOf(view);
@@ -151,21 +150,12 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const principal = revenueBridge === null ? undefined : principalDriver(revenueBridge);
   const revenueSplit = buildThreeWaySplit({ measureId: 'revenue', ctx });
 
-  const trendMetric =
-    TREND_METRICS.find((candidate) => candidate.id === requestedMetric) ?? TREND_METRICS[0];
-  const trendStart = addMonths(view.through, -11);
-  const trendPoints = measureSeries(trendMetric.id, ctx, trendStart, view.through).map((point) => {
-    const monthCtx = contextAtScope(ctx, monthScope(point.month));
-    return {
-      ...point,
-      comparative: compareMeasure(trendMetric.id, monthCtx, view.comparator).comparativeValue,
-    };
-  });
-  const trendComparison = compareMeasure(
-    trendMetric.id,
-    contextAtScope(ctx, monthScope(view.through)),
-    view.comparator,
-  );
+  /* Four measures on one indexed axis. See `lib/trend.ts`: revenue is £12.4m and margin is 41.8%, so
+     they cannot share a value axis, and a second axis on the right is the chart that makes any two
+     series look however the author wants. Rebasing to 100 is the only honest way to answer whether
+     they moved together. */
+  const trendSelection = selectedTrend(params.trend);
+  const trend = buildTrend(ctx, ALL_MONTHS, view.through, trendSelection);
 
   const basis = compareMeasure('revenue', ctx, view.comparator).comparator.basis;
 
@@ -201,9 +191,8 @@ export default async function Performance({ searchParams }: { searchParams: Prom
                 </div>
                 {principal === undefined ? null : (
                   <p className="narration">
-                    The largest single component is{' '}
-                    <strong>{principal.label.toLowerCase()}</strong> at{' '}
-                    {formatValue(Math.abs(principal.value), 'currency')}
+                    The largest single component is <strong>{principal.label.toLowerCase()}</strong>{' '}
+                    at {formatValue(Math.abs(principal.value), 'currency')}
                     {principal.bySegment === undefined || principal.bySegment.size === 0
                       ? '.'
                       : `, and within it ${[...principal.bySegment.entries()]
@@ -245,11 +234,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         )}
       </section>
 
-      <section
-        className="section focusable"
-        id="section-ebitda"
-        aria-label="EBITDA bridge"
-      >
+      <section className="section focusable" id="section-ebitda" aria-label="EBITDA bridge">
         <div className="section-head">
           <h2 className="section-title">EBITDA, decomposed</h2>
           <span className="section-note">
@@ -342,31 +327,45 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         aria-label="Performance over twelve months"
       >
         <div className="section-head">
-          <h2 className="section-title">{trendMetric.label}, twelve months</h2>
+          <h2 className="section-title">Is growth converting into profit?</h2>
           <span className="section-note">
-            Monthly actual against {trendComparison.comparator.basis}. Choose a metric below; the
-            selection is retained in the URL so this view can be shared and reproduced.
+            Twelve months to {scopeLabel(view.periodKind, view.scope)}, every series rebased to 100
+            at the opening month. Toggle a measure to add or remove its line; the selection is in
+            the URL, so a chart that shows a divergence is a link you can send.
           </span>
         </div>
         <div className="pane">
-          <nav className="sel-chips" aria-label="Twelve-month metric">
-            {TREND_METRICS.map((metric) => (
-              <a
-                key={metric.id}
-                className={`chip-link${metric.id === trendMetric.id ? ' is-active' : ''}`}
-                href={trendHref(view, metric.id)}
-                {...(metric.id === trendMetric.id ? { 'aria-current': 'true' as const } : {})}
-              >
-                {metric.label}
-              </a>
-            ))}
+          <nav className="sel-chips" aria-label="Measures on the trend">
+            {TREND_MEASURES.map((entry) => {
+              const on = trendSelection.includes(entry.id);
+              return (
+                <a
+                  key={entry.id}
+                  className={`chip-link${on ? ' is-active' : ''}`}
+                  href={trendHref(view, trendSelection, entry.id)}
+                  {...(on ? { 'aria-current': 'true' as const } : {})}
+                >
+                  {entry.short}
+                </a>
+              );
+            })}
           </nav>
-          <LineChart
-            points={trendPoints}
-            unit={trendComparison.current.unit}
-            label="Actual"
-            comparativeLabel={trendComparison.comparator.label}
-          />
+
+          <MultiTrend trend={trend} />
+
+          {/* The answer to the section's own question, stated rather than left to the eye. A reader
+              scanning four lines sees divergence where the gap is widest, which is not where it
+              opened — so the month the lines parted is named. */}
+          {trend.divergence === null ? (
+            <p className="narration">
+              The measures on this chart have moved together over the window, within{' '}
+              {DIVERGENCE_POINTS} index points. Growth is converting.
+            </p>
+          ) : (
+            <p className="narration">
+              <strong>{trend.divergence.statement}</strong>
+            </p>
+          )}
         </div>
       </section>
 
@@ -459,7 +458,6 @@ export default async function Performance({ searchParams }: { searchParams: Prom
           </p>
         </div>
       </section>
-
     </main>
   );
 }

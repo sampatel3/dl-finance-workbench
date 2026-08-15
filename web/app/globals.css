@@ -1279,3 +1279,15 @@ a:hover { opacity: 0.72; }
 }
 .decision-cell dd { margin: 2px 0 0; font-size: 12.5px; color: var(--label); }
 .decision-impact { font-family: var(--ff-mono); font-weight: 600; }
+
+/* --------------------------------------------------------------------- indexed trend */
+
+/* The baseline every series starts from. Drawn rather than implied, because "above or below where it
+   began" is the whole question this chart answers. */
+.chart-base { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* Series labelled at the end of their own line rather than in a legend. A legend at four series makes a
+   reader look away, hold a colour, and look back — four times. */
+.trend-tag { font-family: var(--ff-mono); font-size: 10.5px; }
+
+.trend-table { margin-top: 14px; font-size: 12.5px; }
