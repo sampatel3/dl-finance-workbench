@@ -514,7 +514,7 @@ export function hrefFor(
   if (merged.entity !== targetPrincipal.grant.entityRootId) params.set('entity', merged.entity);
   if (merged.lens !== 'reported') params.set('lens', merged.lens);
   if (merged.version !== activeApprovedForecast().id) params.set('version', merged.version);
-  if (path === '/app/explore' && merged.scenario !== 'actual') {
+  if (path === '/explore' && merged.scenario !== 'actual') {
     params.set('scenario', merged.scenario);
   }
   if (view.inner) params.set('view', 'inner');
@@ -537,7 +537,7 @@ export function hrefForTarget(target: string, view: View): string {
 
   for (const [key, value] of requested.searchParams) {
     if (key === 'as' || key === 'view' || key === 'shell') continue;
-    if (key === 'scenario' && requested.pathname !== '/app/explore') continue;
+    if (key === 'scenario' && requested.pathname !== '/explore') continue;
     if (key === 'entity' && !resolvePermissionScope(view.principal, value).allowed) continue;
     resolved.searchParams.set(key, value);
   }

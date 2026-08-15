@@ -97,7 +97,7 @@ describe('a step is a movement against the approved forecast', () => {
 describe('the governance stamp', () => {
   it('is never approved, and names the version that is', () => {
     const result = runScenario(view(), { volume: '0.9' });
-    const governance = governanceOf(view(), result, '/app/scenarios?volume=0.9');
+    const governance = governanceOf(view(), result, '/scenarios?volume=0.9');
     expect(governance.approved).toBe(false);
     expect(governance.label).toContain('Not the approved forecast');
     expect(governance.label).toContain(activeApprovedForecast().label);
@@ -107,13 +107,13 @@ describe('the governance stamp', () => {
     /* Stamping a name and a timestamp on a lever drag would be inventing a governance record rather
        than keeping one. An unsaved run says so. */
     const adhoc = runScenario(view(), { price: '0.98' });
-    const unsaved = governanceOf(view(), adhoc, '/app/scenarios?price=0.98');
+    const unsaved = governanceOf(view(), adhoc, '/scenarios?price=0.98');
     expect(unsaved.saved).toBe(false);
     expect(unsaved.preparedAt).toBeUndefined();
     expect(unsaved.author).toContain('this session');
 
     const saved = runScenario(view(), { dsoDays: '10' });
-    const stamped = governanceOf(view(), saved, '/app/scenarios?dsoDays=10');
+    const stamped = governanceOf(view(), saved, '/scenarios?dsoDays=10');
     expect(stamped.saved).toBe(true);
     expect(stamped.preparedAt).toBeDefined();
     expect(stamped.author).toBe('Group Treasurer');

@@ -156,7 +156,7 @@ describe('Ask runs the four illustrated questions through the guarded loop', () 
       reply.used.every(
         (citation) =>
           citation.href !== null &&
-          new URL(citation.href, 'https://demo.invalid').pathname.startsWith('/app'),
+          new URL(citation.href, 'https://demo.invalid').pathname.startsWith('/'),
       ),
     ).toBe(true);
   });

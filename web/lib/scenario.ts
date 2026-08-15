@@ -564,7 +564,7 @@ export function scenarioHref(
   changes: Readonly<Record<string, string>>,
 ): string {
   const canonical = new URL(
-    hrefFor('/app/scenarios', view),
+    hrefFor('/scenarios', view),
     'https://finance-workbench.invalid',
   );
   const next = canonical.searchParams;
@@ -593,7 +593,7 @@ export function scenarioHref(
     if (value !== '') next.set(key, value);
   }
   const query = next.toString();
-  return query === '' ? '/app/scenarios' : `/app/scenarios?${query}`;
+  return query === '' ? '/scenarios' : `/scenarios?${query}`;
 }
 
 /** The approved forecast's own value for a lever, which is where every step is measured from. */

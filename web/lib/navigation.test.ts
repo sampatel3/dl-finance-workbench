@@ -67,11 +67,11 @@ describe('finance-native navigation', () => {
   });
 
   it('treats forecast quality and controller evidence as one finance domain', () => {
-    expect(surfaceFor('/app/quality')?.label).toBe('Quality & Controls');
-    expect(surfaceFor('/app/controls')?.label).toBe('Quality & Controls');
+    expect(surfaceFor('/quality')?.label).toBe('Quality & Controls');
+    expect(surfaceFor('/controls')?.label).toBe('Quality & Controls');
     // Both specialist paths resolve to the same group, so the rail highlights one entry either way.
-    expect(groupFor('/app/quality')?.id).toBe('assurance');
-    expect(groupFor('/app/controls')?.id).toBe('assurance');
+    expect(groupFor('/quality')?.id).toBe('assurance');
+    expect(groupFor('/controls')?.id).toBe('assurance');
   });
 
   it('and puts the money sections together, because they are three kinds of commitment', () => {

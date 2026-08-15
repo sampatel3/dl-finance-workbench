@@ -9,13 +9,13 @@ import {
   directForecast,
 } from '@kestrel/analysis';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { QualityControlsNav } from '../../../components/QualityControlsNav';
-import { movement } from '../../../lib/format';
-import type { Params } from '../../../lib/world';
-import { LATEST_MONTH, contextOf, monthLabel, viewOf } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { QualityControlsNav } from '../../components/QualityControlsNav';
+import { movement } from '../../lib/format';
+import type { Params } from '../../lib/world';
+import { LATEST_MONTH, contextOf, monthLabel, viewOf } from '../../lib/world';
 
 /**
  * Quality — the surface that holds the product accountable for its own output.
@@ -68,8 +68,8 @@ export default async function Quality({ searchParams }: { searchParams: Promise<
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/quality" view={view} />
-      <Selectors path="/app/quality" view={view} />
+      <Masthead path="/quality" view={view} />
+      <Selectors path="/quality" view={view} />
       <QualityControlsNav active="quality" view={view} />
 
       <section className="section focusable" id="section-bias" aria-label="Bias">

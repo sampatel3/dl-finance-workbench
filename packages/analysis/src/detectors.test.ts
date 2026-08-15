@@ -134,25 +134,25 @@ describe('what a finding carries', () => {
       'open_mapping',
     ];
     const routeByDetector: Readonly<Record<string, string>> = {
-      revenue_ahead_of_forecast: '/app/commentary',
-      segment_margin_behind_forecast: '/app/commentary',
-      driver_above_assumption: '/app/forecast',
-      currency_distorts_growth: '/app/commentary',
-      collections_slipping: '/app/scenarios',
-      cash_floor_breach: '/app/scenarios',
-      unmapped_accounts: '/app/controls',
-      intercompany_mismatch: '/app/controls',
-      forecast_bias: '/app/quality',
-      close_incomplete: '/app/controls',
-      restatement_in_load: '/app/controls',
-      pipeline_ahead_of_assumption: '/app/scenarios',
+      revenue_ahead_of_forecast: '/commentary',
+      segment_margin_behind_forecast: '/commentary',
+      driver_above_assumption: '/forecast',
+      currency_distorts_growth: '/commentary',
+      collections_slipping: '/scenarios',
+      cash_floor_breach: '/scenarios',
+      unmapped_accounts: '/controls',
+      intercompany_mismatch: '/controls',
+      forecast_bias: '/quality',
+      close_incomplete: '/controls',
+      restatement_in_load: '/controls',
+      pipeline_ahead_of_assumption: '/scenarios',
     };
     for (const finding of run.findings) {
       expect(allowed).toContain(finding.action.kind);
       const url = new URL(finding.action.href, 'https://demo.invalid');
       expect(url.pathname).toBe(routeByDetector[finding.detectorId]);
-      expect(url.pathname.startsWith('/app/')).toBe(true);
-      if (url.pathname !== '/app/controls') {
+      expect(url.pathname.startsWith('/')).toBe(true);
+      if (url.pathname !== '/controls') {
         expect(url.searchParams.get('focus')).toMatch(/^section-/);
         expect(url.searchParams.get('month')).toBe(SEED_END);
       }

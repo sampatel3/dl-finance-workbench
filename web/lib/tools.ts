@@ -298,7 +298,7 @@ function sectionHref(
 /** Evidence for a finding is its closed figure set; its action remains a separate decision link. */
 function findingEvidenceHref(fingerprint: string, view: View): string {
   const origin = 'https://finance-workbench.invalid';
-  const url = new URL(hrefFor('/app', view), origin);
+  const url = new URL(hrefFor('/', view), origin);
   url.searchParams.set('finding', fingerprint);
   url.searchParams.set('focus', 'section-finding-evidence');
   return `${url.pathname}${url.search}`;
@@ -513,7 +513,7 @@ function explainVariance(input: Record<string, unknown>, base: View): ToolOutcom
       {
         label: `${bridge.label}, current`,
         value: formatValue(bridge.to, 'currency'),
-        href: sectionHref('/app/performance', 'section-bridge', view, {
+        href: sectionHref('/performance', 'section-bridge', view, {
           comparator: choice.id,
         }),
       },
@@ -584,7 +584,7 @@ function explainEbitda(input: Record<string, unknown>, base: View): ToolOutcome 
       {
         label: 'Gross profit bridge',
         value: formatValue(grossProfit.to, 'currency'),
-        href: sectionHref('/app/performance', 'section-margin', view, {
+        href: sectionHref('/performance', 'section-margin', view, {
           comparator: choice.id,
         }),
       },
@@ -631,7 +631,7 @@ function cashSensitivityAnswer(input: Record<string, unknown>, base: View): Tool
       {
         label: `${sensitivity.horizonWeeks}-week cash sensitivity`,
         value: formatValue(sensitivity.netCashEffect, 'currency'),
-        href: sectionHref('/app/cash', 'section-sensitivity', base),
+        href: sectionHref('/cash', 'section-sensitivity', base),
       },
     ],
   };
@@ -662,7 +662,7 @@ function compareVersions(input: Record<string, unknown>, base: View): ToolOutcom
       `${formatValue(impact.movement, impact.movementUnit)}`,
   );
 
-  const hrefBase = hrefFor('/app/forecast', base, { version: toId });
+  const hrefBase = hrefFor('/forecast', base, { version: toId });
   const hrefParams = new URLSearchParams();
   hrefParams.set('from', fromId);
   hrefParams.set('focus', 'section-diff');

@@ -13,7 +13,7 @@ export function measureEvidenceHref(
   const origin = 'https://finance-workbench.invalid';
   const url = new URL(
     hrefFor(
-      '/app/explore',
+      '/explore',
       view,
       options.comparatorId === undefined ? {} : { comparator: options.comparatorId },
     ),

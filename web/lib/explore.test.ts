@@ -40,7 +40,7 @@ describe('Explore axes are an unambiguous URL', () => {
   it('moves a dimension to the axis the reader just chose in generated links', () => {
     const href = exploreHref({ rows: 'entity', cols: 'period', drill: '2:1' }, 'cols', 'entity');
     const url = new URL(href, 'https://demo.invalid');
-    expect(url.pathname).toBe('/app/explore');
+    expect(url.pathname).toBe('/explore');
     expect(url.searchParams.get('rows')).toBe('measure');
     expect(url.searchParams.get('cols')).toBe('entity');
     expect(url.searchParams.has('drill')).toBe(false);
