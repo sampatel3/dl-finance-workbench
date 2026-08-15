@@ -59,13 +59,22 @@
   --on-a: #000000;
   --on-b: #000000;
   --on-field: #ffffff;
+  --field-mix: 58%;
 
   /* THE DEVICE'S ONE SIZE, WRITTEN ONCE. Every iPad in the deck is this wide, on every slide,
      in every layout — full-bleed and paired alike — so turning a page never resizes the
-     product. The number is not chosen for looks: it is the largest width whose 1194x834 body
-     still clears a two-line headline inside the slide's height. Make it bigger and slide 3
-     overflows; `deck slides` says so rather than letting it crop. */
-  --device-w: 52.5cqi;
+     product.
+
+     The number is not chosen for looks. It is the largest width whose 1194x834 body still
+     clears the marker, a TWO-LINE headline and a two-line foot inside the slide's height:
+
+         50.65 available − 2.7 marker − 9.4 headline − 3.3 foot − 1.4 margin = 33.85 tall
+         33.85 × 1194/834 = 48.4 wide
+
+     It was 52.5 when the headline was 3cqi. Raising the headline to 4.7 took 2.4cqi of height
+     off every device slide, and the template deck overflowed on exactly the two slides that
+     carry a device — which `deck slides` said out loud rather than letting them crop. */
+  --device-w: 48cqi;
 
   --pos: #2fbf8f;
   --neg: #ef8b93;
@@ -156,13 +165,17 @@
   background:
     radial-gradient(58% 54% at 4% 6%, color-mix(in srgb, var(--brand-b) 84%, #fff) 0%, transparent 60%),
     radial-gradient(58% 54% at 96% 94%, color-mix(in srgb, var(--brand-a) 84%, #fff) 0%, transparent 60%),
-    radial-gradient(64% 58% at 78% 14%, color-mix(in srgb, var(--brand-a) 62%, var(--brand-ink)) 0%, transparent 66%),
-    radial-gradient(60% 62% at 18% 88%, color-mix(in srgb, var(--brand-b) 54%, var(--brand-ink)) 0%, transparent 64%),
-    /* The base the corner gradients are lit against. 58/42 is not a taste call: it is the most
-       brand and the least ink that still leaves white type above 4.5:1 for the LIGHTEST pair
-       any scheme has, which is Deeplight's yellow and sky. Raise it and the cover stops being
-       readable in one scheme; lower it and the field stops being saturated in all five. */
-    color-mix(in srgb, var(--brand-a) 58%, var(--brand-ink));
+    /* The two that cross the middle of the slide follow the scheme's own weight, not a fixed
+       one. At a fixed 62/54 a scheme asking for a dark page still got its centre filled in, so
+       Deeplight's black came out an olive brown — the corners were right and everything between
+       them was the problem. */
+    radial-gradient(64% 58% at 78% 14%, color-mix(in srgb, var(--brand-a) var(--field-mix), var(--brand-ink)) 0%, transparent 66%),
+    radial-gradient(60% 62% at 18% 88%, color-mix(in srgb, var(--brand-b) var(--field-mix), var(--brand-ink)) 0%, transparent 64%),
+    /* The base the corner gradients are lit against, at the share of brand THAT SCHEME states.
+       One number for all of them cannot work: at 58% a violet brand gives the saturated violet
+       page the reference has, and a yellow one gives a flat sheet of gold. Deeplight sets 14%
+       and comes out the black page with yellow on it that the brand actually is. */
+    color-mix(in srgb, var(--brand-a) var(--field-mix), var(--brand-ink));
 }
 
 /* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
@@ -263,72 +276,6 @@
     #f8f7fc;
 }
 
-/* ------------------------------------------------------------------------ flat ---- */
-/*
- * No gradient, anywhere. Copied from the Deeplight Accelerate deck: a black page, panes a
- * shade above it with a lit hairline, monospace register marks, and the brand arriving ONLY as
- * accent — a section number, a rule down the side of a list, a highlighted word in the
- * headline, one button.
- *
- * This is the system that inverts the pane rule. In `aurora` and `drift` a pane is lighter than
- * its ground and therefore takes dark ink; here it is a lift within the dark and takes light
- * ink. Every ground states `--pane-ink` and `--pane-accent` for exactly this reason.
- *
- * The pill has no fill: the reference sets its numbers as bare amber monospace, and a filled
- * pill on a black page is a brighter object than anything else on the slide.
- */
-[data-style='flat'] {
-  --label-face: var(--mono);
-  --label-case: uppercase;
-  --label-track: .18em;
-  --label-weight: 500;
-  --pill-bg: transparent;
-  --pill-fg: color-mix(in srgb, var(--brand-a) 62%, #ffffff);
-  --pill-fg: oklch(from var(--brand-a) .8 c h);
-  --pill-weight: 600;
-  /* Tight. The reference’s cards are barely rounded, and it is most of why the deck reads as
-     technical rather than friendly. */
-  --radius: .5cqi;
-  --body-bg: var(--brand-ink);
-}
-
-[data-style='flat'] .vivid,
-[data-style='flat'] .deep {
-  --ink: #ffffff;
-  --mute: rgba(255, 255, 255, .72);
-  --faint: rgba(255, 255, 255, .34);
-  --pane-edge: rgba(255, 255, 255, .1);
-  --pane-ink: #ffffff;
-  --pane-mute: rgba(255, 255, 255, .72);
-  --pane-faint: rgba(255, 255, 255, .3);
-  /*
-   * THE PRIMARY AT A FIXED LIGHTNESS, KEEPING ITS HUE.
-   *
-   * Raw, the brand fails here for any scheme with a dark primary: Slate's navy is 1.95:1 on
-   * black, which is a section number nobody can see. Mixing toward white fixes Slate and ruins
-   * Deeplight — at the ratio Slate needs, the amber this system was drawn from washes out to a
-   * pale gold, and Deeplight's amber is the one colour in this file that has to stay exact.
-   *
-   * `oklch(from …)` takes the brand's own hue and chroma and states only the lightness, so
-   * every scheme lands at the same readable value while keeping its colour: Deeplight's amber
-   * stays amber, Slate's navy becomes the light blue it would have to be anyway. The srgb mix
-   * above it is the fallback for anything that cannot do relative colour — worse for Deeplight,
-   * but readable for everyone, which is the right way round for a fallback.
-   */
-  --accent-ink: color-mix(in srgb, var(--brand-a) 62%, #ffffff);
-  --accent-ink: oklch(from var(--brand-a) .8 c h);
-  --pane-accent: color-mix(in srgb, var(--brand-a) 62%, #ffffff);
-  --pane-accent: oklch(from var(--brand-a) .8 c h);
-  color: var(--ink);
-}
-/* The two grounds differ by one step of value rather than by construction, because the deck
-   this is taken from is black throughout and alternating it would be a different deck. */
-[data-style='flat'] .vivid { background: var(--brand-ink); --pane: var(--brand-grey); }
-[data-style='flat'] .deep  {
-  background: var(--brand-grey);
-  --pane: color-mix(in srgb, var(--brand-ink) 68%, var(--brand-grey));
-}
-
 /* ================================================================== THE PAGE ========== */
 
 body {
@@ -372,10 +319,45 @@ body {
  * lines has words in it that could go. Where a frame cannot fit under a two-line headline the
  * answer is a shorter headline or a shorter capture, never smaller type.
  */
+/*
+ * THE HEADLINE, AT THE SIZE THE REFERENCES ACTUALLY SET IT.
+ *
+ * This was 3cqi — 48px on a 1600 deck — which is a subheading. Both references run their
+ * headline at roughly half again that, as the largest thing on the page by a wide margin, and
+ * it is most of why a slide reads as a presentation rather than as a document. The two set it
+ * differently enough to be worth stating per style rather than averaging into one number.
+ *
+ * One size deck-wide inside each style. A headline that shrinks because a slide is busy is a
+ * deck that looks assembled by different people.
+ */
 h1 {
-  margin: 0; max-width: 32ch;
-  font-size: 3cqi; line-height: 1.08; letter-spacing: -0.03em; font-weight: 500;
+  margin: 0; max-width: 26ch;
+  font-size: 4.7cqi; line-height: 1.0; letter-spacing: -0.035em; font-weight: 450;
 }
+/* Aurora sets it top-left and tight, and lets the page below it stay empty. */
+[data-style='aurora'] h1 { max-width: 24ch; font-weight: 400; letter-spacing: -0.04em; }
+/* Drift sets it a shade smaller and narrower, because it sits beside its content rather than
+   above it, and takes three or four short lines rather than two long ones. */
+[data-style='drift'] h1 { max-width: 17ch; font-size: 4.4cqi; line-height: 1.04; font-weight: 500; }
+
+/*
+ * AURORA PUSHES ITS BODY TO THE FLOOR.
+ *
+ * The reference never fills the middle of a slide. The headline sits at the top, the content
+ * sits on the baseline, and the band between them is left empty — that void is the single
+ * loudest thing the design does, and centring the content kills it. `margin-top: auto` on the
+ * body block in a flex column is the whole mechanism.
+ */
+[data-style='aurora'] .slide > .grid,
+[data-style='aurora'] .slide > .quad,
+[data-style='aurora'] .slide > .opts,
+[data-style='aurora'] .slide > .tiles,
+[data-style='aurora'] .slide > .roster,
+[data-style='aurora'] .slide > .ruled,
+[data-style='aurora'] .slide > .rail,
+[data-style='aurora'] .slide > .mech,
+[data-style='aurora'] .slide > .box,
+[data-style='aurora'] .slide > .contents { margin-top: auto; }
 
 .stand { margin: 1.2cqi 0 0; max-width: 72ch; font-size: 1.18cqi; line-height: 1.58; color: var(--mute); }
 
@@ -525,9 +507,6 @@ h1 {
   box-shadow:
     inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
     0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 24%, transparent);
-}
-[data-style='flat'] .device {
-  box-shadow: inset 0 0 0 .09cqi rgba(255, 255, 255, .16);
 }
 /* The screen fills the bezel and takes the device's shape rather than the image's: a capture
    whose section is shorter than the glass letterboxes against the black, which is what a real
@@ -805,3 +784,62 @@ ul.plus li::before {
 .deck-st[aria-pressed='true'] { background: rgba(255, 255, 255, .16); color: #fff; }
 
 @media print { .deck-treat { display: none; } }
+
+/* ============================================== THE CONTENTS AND THE DIVIDERS ========= */
+/*
+ * Two things every reference has and this file did not, which is why a deck built from it read
+ * as a continuous document rather than as a deck with parts.
+ */
+
+/*
+ * THE CONTENTS. A reader handed a deck needs to know how long it is and what is in it before
+ * they start, and a reader who put it down needs a way back in.
+ *
+ * The two references build it differently enough that one rule would be neither: aurora runs
+ * full-width rows separated by hairlines with a black pill numeral at the END of each; drift
+ * runs two quiet columns with a small grey numeral BEFORE each name and no rules at all.
+ */
+.contents { display: grid; gap: 0; width: 100%; }
+.contents .item {
+  display: flex; align-items: baseline; gap: 1.4cqi;
+  font-size: 2.4cqi; letter-spacing: -0.02em; line-height: 1.1;
+}
+.contents .item .nm { flex: 1; }
+
+[data-style='aurora'] .contents .item {
+  padding: 1.15cqi 0; border-top: .07cqi solid var(--faint);
+  font-weight: 450;
+}
+[data-style='aurora'] .contents .item:first-child { border-top: 0; }
+/* The numeral goes last and is a filled black pill, which is aurora's one recurring object. */
+[data-style='aurora'] .contents .item .no {
+  order: 2; background: var(--brand-ink); color: #fff;
+  font-family: var(--mono); font-size: .82cqi; letter-spacing: .1em;
+  padding: .34cqi .72cqi; border-radius: .5cqi;
+}
+
+/* Drift: two columns, no rules, the numeral small and grey in front of the name. */
+[data-style='drift'] .contents {
+  grid-template-columns: 1fr 1fr; column-gap: 6cqi; row-gap: 2.1cqi;
+}
+[data-style='drift'] .contents .item { font-weight: 500; }
+[data-style='drift'] .contents .item .no {
+  font-size: 1cqi; color: var(--faint); font-weight: 500; min-width: 2.2cqi;
+}
+
+/*
+ * THE SECTION DIVIDER. A page carrying nothing but the name of the act it opens.
+ *
+ * It is the cheapest structure a deck can have and it is what makes a long one navigable: the
+ * reader gets a beat, and the slides after it are understood as belonging to something. Put it
+ * on a `vivid` ground and it is also the deck's only regular change of key.
+ *
+ * The title is set larger than a headline because it is not one — nothing else is on the page.
+ */
+.slide.divider { justify-content: center; }
+.divider .dtitle {
+  margin: 0; max-width: 20ch;
+  font-size: 7.2cqi; line-height: .98; letter-spacing: -0.04em; font-weight: 400;
+}
+.divider .dnote { margin: 1.6cqi 0 0; max-width: 46ch; font-size: 1.15cqi; line-height: 1.6; color: var(--mute); }
+[data-style='drift'] .divider .dtitle { font-weight: 500; font-size: 6.6cqi; }

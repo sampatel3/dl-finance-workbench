@@ -27,6 +27,13 @@
  * Deeplight than it does in Ember, and the reader has to learn the palette to read the
  * number. They are fixed in the consuming stylesheet, deliberately out of reach here.
  *
+ * HOW MUCH OF THE FIELD IS BRAND
+ * `--field-mix` is the share of `--brand-a` in `aurora`'s full-bleed ground, the rest being the
+ * scheme's own ink. It is stated per scheme because it is a fact about the brand rather than
+ * about the design system: a violet brand IS a violet page, and Deeplight is a BLACK page with
+ * yellow on it. Left at one number for everyone, Deeplight came out a flat sheet of gold —
+ * which is neither of its two colours.
+ *
  * TEXT LAID ON A FIELD OF THE BRAND
  * `--on-field` is the ink for `aurora`'s full-bleed gradient — a whole slide made of the brand
  * pair. It is separate from `--on-a` because a pill of one flat colour and a field that runs
@@ -65,26 +72,34 @@
   --on-a: #000000;
   --on-b: #000000;
   --on-field: #ffffff;
+  --field-mix: 58%;
 }
 
-/* Deeplight. Four colours, and the brand names all four: black, dark grey, yellow, blue.
-   These are read off the Accelerate deck rather than guessed at: the amber it sets section
-   numbers, the wordmark and its one CTA in, and the sky blue it sets secondary labels and rules
-   in. Two earlier attempts were both a half-step out — #f2a900/#58c7f3 read as gold-and-ice,
-   and #ffc629/#2ea3f2 as a highlighter yellow beside a UI blue. The pair below is the deck's.
+/* Deeplight. Black and yellow, and nothing else.
 
-   The CTA on that deck is solid amber with BLACK type, which is why --on-a is near-black: it is
-   how the brand itself sets text on its own yellow, and the alternative is the brown that comes
-   of darkening the amber until white will sit on it. */
+   It had a sky blue as its second colour, taken from the Accelerate deck's secondary labels.
+   Two things were wrong with that. The blue is a small accent in that deck and reading it as a
+   co-equal brand colour overstated it — and more practically, yellow and blue are opposite each
+   other on the wheel, so every construction that blends the pair had to be defended against
+   turning olive. That defence is why the gradients were built the way they were.
+
+   Two tones of the same yellow removes the problem rather than defending against it: a field
+   made of these two cannot go muddy at any ratio, because there is no second hue to muddy it
+   with. `aurora` becomes an amber field on black and `drift` a pale amber, and both are better
+   for it.
+
+   The grey is a near-black. It was #17171a and then read as a light grey wherever a surface
+   stepped up from it, which looked like a different product's chrome. */
 [data-scheme='deeplight'] {
   --brand-a: #f5a623;
-  --brand-b: #4fc3f7;
+  --brand-b: #ffd166;
   --brand-ink: #0d0d0d;
-  --brand-grey: #17171a;
+  --brand-grey: #141416;
   --brand-paper: #ffffff;
   --on-a: #0a0a0a;
   --on-b: #0a0a0a;
   --on-field: #ffffff;
+  --field-mix: 14%;
 }
 
 /* Signal. The cool one: a working blue against a warm coral, for a demo whose subject is an
@@ -98,6 +113,7 @@
   --on-a: #0b1020;
   --on-b: #0b1020;
   --on-field: #ffffff;
+  --field-mix: 58%;
 }
 
 /* Ember. The warm one. Orange leads and lavender answers it, which keeps the pair away from
@@ -111,6 +127,7 @@
   --on-a: #140f0c;
   --on-b: #140f0c;
   --on-field: #ffffff;
+  --field-mix: 52%;
 }
 
 /* Slate. The kit's own original palette, and the one two of its demos already wear: a working
@@ -127,4 +144,5 @@
   --on-a: #ffffff;
   --on-b: #0e1720;
   --on-field: #ffffff;
+  --field-mix: 62%;
 }

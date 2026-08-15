@@ -69,8 +69,10 @@
   /* ---- Surfaces. Depth is surface lightness plus a hairline, never a shadow. */
   --bg: #0a0a0a;          /* --dl-night */
   --surface: var(--brand-grey);                                            /* a pane, not a slab */
-  --surface-2: color-mix(in srgb, var(--brand-grey) 82%, var(--brand-paper));   /* wells and rows */
-  --surface-3: color-mix(in srgb, var(--brand-grey) 68%, var(--brand-paper));   /* hover and raised */
+  /* A dark surface steps up WITHIN the dark. Mixing toward paper at 82/68 produced a medium
+     grey that read as another product's chrome on a black page. */
+  --surface-2: color-mix(in srgb, #ffffff 5%, var(--brand-grey));    /* wells and rows */
+  --surface-3: color-mix(in srgb, #ffffff 10%, var(--brand-grey));   /* hover and raised */
 
   --border: #2a2a2a;         /* --dl-line */
   --border-strong: #3f3f3f;  /* --dl-line-strong */
