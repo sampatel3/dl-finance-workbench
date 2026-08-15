@@ -1,5 +1,5 @@
 import { resolveView } from '@demo-kit/shell';
-import { entity } from '@kestrel/model';
+import { entity, glCodeControl } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
 import { Masthead } from '../../../components/Chrome';
@@ -23,6 +23,7 @@ import { hrefFor, monthLabel, viewOf } from '../../../lib/world';
 export const dynamic = 'force-dynamic';
 
 const JUMPS = [
+  ['section-new-codes', 'New GL codes'],
   ['section-sources', 'Sources'],
   ['section-vintages', 'Loads & vintages'],
   ['section-close', 'Close'],
@@ -66,9 +67,7 @@ function statusTone(status: string): 'ok' | 'warn' | 'fail' | 'neutral' {
 
 function Status({ value }: { readonly value: string }) {
   return (
-    <span className={`control-status control-status-${statusTone(value)}`}>
-      {readable(value)}
-    </span>
+    <span className={`control-status control-status-${statusTone(value)}`}>{readable(value)}</span>
   );
 }
 
@@ -82,14 +81,18 @@ export default async function Controls({ searchParams }: { searchParams: Promise
   const requestedFocus = first(params.focus);
   const legacyPanel = first(params.panel);
   const focus =
-    requestedFocus ??
-    (legacyPanel === undefined ? undefined : LEGACY_PANEL_FOCUS[legacyPanel]);
+    requestedFocus ?? (legacyPanel === undefined ? undefined : LEGACY_PANEL_FOCUS[legacyPanel]);
   const selectedCheckId =
     first(params.check) ?? (legacyPanel === 'intercompany' ? 'intercompany_trading' : undefined);
   const selectedMappingSetId = first(params.set);
   const selectedVintageId = first(params.vintage);
   const view = viewOf(params);
   const controls = controlsFor(view);
+
+  /* New ledger codes created this month. A different control from the unmapped exception below: an
+     unmapped code is a problem being reported, a new code is a queue with a deadline. Scoped to what
+     this session can read, like every other list on this surface. */
+  const codes = glCodeControl(view.scope.endMonth, view.permission.entityIds);
 
   const failedChecks = controls.checks?.filter((check) => check.status === 'failed').length ?? 0;
   const passedChecks = controls.checks?.filter((check) => check.status === 'passed').length ?? 0;
@@ -121,6 +124,113 @@ export default async function Controls({ searchParams }: { searchParams: Promise
           <strong>Requested scope refused.</strong> {controls.requestedRefusal} The page has stayed
           inside {entity(view.permission.entityRootId).name}.
         </p>
+      )}
+
+      {codes.created === 0 ? null : (
+        <section className="section focusable" id="section-new-codes" aria-label="New GL codes">
+          <div className="section-head">
+            <h2 className="section-title">
+              {codes.created} new ledger {codes.created === 1 ? 'code' : 'codes'} this month
+              {codes.unauthorised === 0 ? '' : `, ${codes.unauthorised} outside the standard`}
+            </h2>
+            <span className="section-note">
+              At the top of this surface because it is the earliest signal there is. An unmapped
+              code is a problem already carrying value; a new code is one that may be about to. Most
+              are fine — what matters is that Finance sees them in the month they appear rather than
+              at year end, when a comparative stops agreeing with itself.
+            </span>
+          </div>
+
+          <div className="pane">
+            <table className="grid">
+              <thead>
+                <tr>
+                  <th scope="col">Code</th>
+                  <th scope="col">Label</th>
+                  <th scope="col">Entity</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Created</th>
+                  <th scope="col">By</th>
+                  <th scope="col">Authorised</th>
+                  <th scope="col">Mapping</th>
+                  <th scope="col" className="num">
+                    Posted
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {codes.codes.map((code) => (
+                  <tr
+                    key={code.sourceCode}
+                    className={!code.authorised || code.mapping === 'unmapped' ? 'row-warn' : ''}
+                  >
+                    <th scope="row" className="mono-cell">
+                      {code.sourceCode}
+                    </th>
+                    <td>
+                      {code.label}
+                      {code.note === undefined ? null : (
+                        <span className="row-note">{code.note}</span>
+                      )}
+                    </td>
+                    <td>{code.entityName}</td>
+                    <td className="mono-cell">{code.accountType.toUpperCase()}</td>
+                    <td className="mono-cell">{code.createdAt.slice(0, 10)}</td>
+                    <td>{code.createdBy}</td>
+                    <td className={code.authorised ? 'pos' : 'neg'}>
+                      {code.authorised ? 'yes' : 'no'}
+                    </td>
+                    <td className={code.mapping === 'mapped' ? 'pos' : 'neg'}>
+                      {readable(code.mapping)}
+                    </td>
+                    <td className="num">{formatValue(code.postedMinor, 'currency')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="chart-note">
+              {formatValue(codes.atRiskMinor, 'currency')} is posted to codes that are either
+              unauthorised or not yet mapped. Either failure on its own puts a balance somewhere a
+              reader cannot rely on, so the exposure counts both rather than only the codes that
+              fail both tests. The unmapped ones are the same two the mapping panel reports — one
+              fact, two readings.
+            </p>
+          </div>
+
+          {/* The alert, modelled. The fields are the ones that make it actionable: who acts, by when,
+              and what goes wrong if nobody does. An alert with no deadline is a notification. */}
+          <div className="pane">
+            <table className="grid">
+              <caption>Control alert · modelled, not sent</caption>
+              <tbody>
+                <tr>
+                  <th scope="row">To</th>
+                  <td>{codes.alert.recipient}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Raised</th>
+                  <td className="mono-cell">{codes.alert.raisedAt.slice(0, 10)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Review by</th>
+                  <td className="mono-cell">
+                    {codes.alert.dueBy.slice(0, 10)} · {codes.alert.reviewWindowDays} working days
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Risk if unreviewed</th>
+                  <td>{codes.alert.risk}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="chart-note">
+              <strong>No message is sent.</strong> This demo dials no mail server and holds no
+              mailbox. What is modelled is the shape of the alert — recipient, deadline and
+              consequence — because a demo that appeared to send email would be making a claim about
+              a system nobody has built.
+            </p>
+          </div>
+        </section>
       )}
 
       <section className="section focusable" id="section-control-room" aria-label="Control room">
@@ -354,7 +464,10 @@ export default async function Controls({ searchParams }: { searchParams: Promise
             </thead>
             <tbody>
               {controls.close.positions.map((position) => (
-                <tr key={position.entityId} className={position.state === 'closed' ? '' : 'row-warn'}>
+                <tr
+                  key={position.entityId}
+                  className={position.state === 'closed' ? '' : 'row-warn'}
+                >
                   <th scope="row">
                     {position.entityName}
                     {position.note === undefined ? null : (
@@ -457,8 +570,8 @@ export default async function Controls({ searchParams }: { searchParams: Promise
         <div className="section-head">
           <h2 className="section-title">Mappings</h2>
           <span className="section-note">
-            The amount at stake is summed from the exception register. It is the same amount used
-            by the mapped-P&amp;L reconciliation, not a second dashboard figure.
+            The amount at stake is summed from the exception register. It is the same amount used by
+            the mapped-P&amp;L reconciliation, not a second dashboard figure.
           </span>
         </div>
         {controls.mapping === null ? (
@@ -467,7 +580,9 @@ export default async function Controls({ searchParams }: { searchParams: Promise
           </div>
         ) : (
           <>
-            <p className={`banner ${controls.mapping.unmappedCount > 0 ? 'banner-warn' : 'banner-ok'}`}>
+            <p
+              className={`banner ${controls.mapping.unmappedCount > 0 ? 'banner-warn' : 'banner-ok'}`}
+            >
               <strong>
                 {controls.mapping.unmappedCount} unmapped account
                 {controls.mapping.unmappedCount === 1 ? '' : 's'} ·{' '}
@@ -555,7 +670,9 @@ export default async function Controls({ searchParams }: { searchParams: Promise
                     {mapping.totalCodes === null ? 'withheld' : mapping.mappingSet.mappedCodes}
                   </td>
                   <td className="num">
-                    {mapping.coverage === null ? 'withheld' : formatValue(mapping.coverage, 'percent')}
+                    {mapping.coverage === null
+                      ? 'withheld'
+                      : formatValue(mapping.coverage, 'percent')}
                   </td>
                   <td className="num">{mapping.unmappedCount}</td>
                 </tr>
@@ -700,8 +817,8 @@ export default async function Controls({ searchParams }: { searchParams: Promise
               <strong>{controls.lineage.load.source.name}</strong>
               <span className="mono-cell">{controls.lineage.snapshot.dataVintageId}</span>
               <span>
-                {controls.lineage.load.vintage.rowCount.toLocaleString('en-GB')} source rows · loaded{' '}
-                {timestamp(controls.lineage.load.vintage.loadedAt)}
+                {controls.lineage.load.vintage.rowCount.toLocaleString('en-GB')} source rows ·
+                loaded {timestamp(controls.lineage.load.vintage.loadedAt)}
               </span>
             </li>
             <li className="control-lineage-step control-lineage-later">
@@ -848,8 +965,8 @@ export default async function Controls({ searchParams }: { searchParams: Promise
         </div>
         {controls.groupRefusal === null ? (
           <p className="banner banner-ok">
-            <strong>Group scope granted.</strong> This principal may resolve the complete legal-entity
-            subtree; choosing an entity narrows that grant and never widens it.
+            <strong>Group scope granted.</strong> This principal may resolve the complete
+            legal-entity subtree; choosing an entity narrows that grant and never widens it.
           </p>
         ) : (
           <p className="banner banner-warn" role="status">
