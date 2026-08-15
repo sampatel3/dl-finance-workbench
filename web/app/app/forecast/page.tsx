@@ -5,6 +5,7 @@ import {
   ASSUMPTIONS,
   DRIVERS,
   activeApprovedForecast,
+  buildLanding,
   readDriver,
   versionDiff,
   versionList,
@@ -62,6 +63,12 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
 
   const diff = versionDiff(fromId, view.version.id, ctx);
 
+  /* Where the approved version lands for the full year, on the six lines a board reads. The diff above
+     answers *what changed*; this answers *where we end up*, and a reader needs the second before the
+     first is interesting. See `packages/analysis/landing.ts` for why it is read at the fiscal year and
+     why both comparators are shown. */
+  const landing = buildLanding({ ctx });
+
   const compareHref = (id: string): string => {
     const next = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
@@ -77,6 +84,77 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
       <FocusOnLoad elementId={focus} />
       <Masthead path="/app/forecast" view={view} />
       <Selectors path="/app/forecast" view={view} />
+
+      <section
+        className="section focusable"
+        id="section-landing"
+        aria-label="Approved forecast landing"
+      >
+        <div className="section-head">
+          <h2 className="section-title">
+            Where {landing.versionLabel} lands for FY{landing.fiscalYear}
+          </h2>
+          <span className="section-note">
+            The approved forecast&rsquo;s full-year outcome on the six lines a board reads, against
+            the budget it was committed to and against{' '}
+            {landing.priorVersionLabel === undefined
+              ? 'nothing — this is the first forecast version'
+              : `${landing.priorVersionLabel}, the last time this was forecast`}
+            . The two comparators answer different questions: budget is accountability, the prior
+            version is whether our own view has moved.
+          </span>
+        </div>
+        <div className="pane">
+          <table className="grid">
+            <caption>
+              {landing.versionLabel} · {landing.status} · full year to {landing.scope.endMonth}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Line</th>
+                <th scope="col" className="num">
+                  Lands at
+                </th>
+                <th scope="col" className="num">
+                  Budget
+                </th>
+                <th scope="col" className="num">
+                  vs Budget
+                </th>
+                <th scope="col" className="num">
+                  {landing.priorVersionLabel ?? 'Prior version'}
+                </th>
+                <th scope="col" className="num">
+                  vs prior
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {landing.lines.map((line) => (
+                <tr key={line.measureId}>
+                  <th scope="row">{line.label}</th>
+                  <td className="num strong-cell">{formatValue(line.landing, line.unit)}</td>
+                  <td className="num">{formatValue(line.budget, line.unit)}</td>
+                  <td className={`num ${directionClass(line.budgetFavourable)}`}>
+                    {movement(line.vsBudget, line.varianceUnit)}
+                  </td>
+                  <td className="num">{formatValue(line.priorVersion, line.unit)}</td>
+                  <td className={`num ${directionClass(line.priorFavourable)}`}>
+                    {movement(line.vsPrior, line.varianceUnit)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="chart-note">
+            Read at the fiscal year rather than the selected month: &ldquo;where the forecast
+            lands&rdquo; is a full-year statement, and answering it at a month would answer a
+            different question in a way that looks the same. Each line is computed under{' '}
+            {landing.versionLabel}&rsquo;s own assumptions through the same catalogue as every other
+            figure here — a version is this world believed differently, not a second dataset.
+          </p>
+        </div>
+      </section>
 
       <section className="section focusable" id="section-versions" aria-label="Versions">
         <div className="section-head">
