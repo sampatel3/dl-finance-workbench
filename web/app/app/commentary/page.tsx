@@ -5,7 +5,13 @@ import type {
   CommentaryState,
   PublishedCommentarySnapshot,
 } from '@kestrel/model';
-import { SEGMENTS, entity, seedCommentaryQueue, segment as segmentSpec } from '@kestrel/model';
+import {
+  SEGMENTS,
+  addMonths,
+  entity,
+  seedCommentaryQueue,
+  segment as segmentSpec,
+} from '@kestrel/model';
 import { formatValue, measure } from '@kestrel/measures';
 
 import { Masthead } from '../../../components/Chrome';
@@ -24,9 +30,10 @@ import {
   commentaryState,
 } from '../../../lib/commentary';
 import type { CommentaryEvidence } from '../../../lib/commentary';
-import { movement } from '../../../lib/format';
+import { directionClass, movement } from '../../../lib/format';
+import { buildMovements, buildStory } from '../../../lib/story';
 import type { Params, View } from '../../../lib/world';
-import { viewOf, world } from '../../../lib/world';
+import { monthLabel, viewOf, world } from '../../../lib/world';
 
 /**
  * Commentary — the governed narrative, never detached prose.
@@ -131,10 +138,7 @@ function EvidenceChain({ evidence }: { readonly evidence: CommentaryEvidence }) 
             {formatValue(evidence.comparison.current.value, evidence.comparison.current.unit)}{' '}
             <span>
               versus{' '}
-              {formatValue(
-                evidence.comparison.comparativeValue,
-                evidence.comparison.current.unit,
-              )}
+              {formatValue(evidence.comparison.comparativeValue, evidence.comparison.current.unit)}
             </span>
           </strong>
           <p>
@@ -171,7 +175,9 @@ function EvidenceChain({ evidence }: { readonly evidence: CommentaryEvidence }) 
                     </th>
                     <td>{driver.owner}</td>
                     <td className="mono-cell">
-                      {driver.accounts.map((accountId) => accountId.replaceAll('_', ' ')).join(', ')}
+                      {driver.accounts
+                        .map((accountId) => accountId.replaceAll('_', ' '))
+                        .join(', ')}
                     </td>
                     <td className="num">{movement(driver.value, driver.unit)}</td>
                   </tr>
@@ -312,7 +318,13 @@ function Actions({ item, view }: { readonly item: CommentaryItem; readonly view:
   );
 }
 
-function Provenance({ item, evidence }: { readonly item: CommentaryItem; readonly evidence: CommentaryEvidence }) {
+function Provenance({
+  item,
+  evidence,
+}: {
+  readonly item: CommentaryItem;
+  readonly evidence: CommentaryEvidence;
+}) {
   return (
     <dl className="commentary-provenance">
       <div>
@@ -400,6 +412,11 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
   const focus = typeof params.focus === 'string' ? params.focus : undefined;
   const selectedState = commentaryState(params.state);
   const view = viewOf(params);
+
+  /* The seven-paragraph board story and the balance-sheet movement below it. Both written by code from
+     the measure layer — see `lib/story.ts` for why that is the trade rather than a limitation. */
+  const story = buildStory(view);
+  const movements = buildMovements(view);
   const queue = seedCommentaryQueue(world());
   const measureRaw = Array.isArray(params.measure) ? params.measure[0] : params.measure;
   const measureId =
@@ -420,6 +437,112 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
       <FocusOnLoad elementId={focus} />
       <Masthead path="/app/commentary" view={view} />
       <Selectors path="/app/commentary" view={view} />
+
+      <section
+        className="section focusable"
+        id="section-story"
+        aria-label="Monthly executive story"
+      >
+        <div className="section-head">
+          <h2 className="section-title">{monthLabel(view.scope.endMonth)} in seven paragraphs</h2>
+          <span className="section-note">
+            The board narrative, profit and loss in order, each line against the selected
+            comparator, the prior month and the same month a year earlier. Three bases rather than
+            one, because each of them alone is a trap: a business that re-forecast downwards looks
+            on plan against forecast, seasonality reads as performance against last month, and a
+            re-shaped business reads as decline against last year.
+          </span>
+        </div>
+        <div className="pane">
+          {story.map((paragraph) => (
+            <article className="story-para" key={paragraph.measureId}>
+              <h3 className="story-heading">
+                {paragraph.heading}
+                <span className="story-value">{formatValue(paragraph.value, paragraph.unit)}</span>
+              </h3>
+              <p className="story-text">{paragraph.text}</p>
+              <dl className="story-bases">
+                {paragraph.comparisons.map((comparison) => (
+                  <div className="story-basis" key={comparison.label}>
+                    <dt>vs {comparison.label}</dt>
+                    <dd className={directionClass(comparison.favourable)}>
+                      {movement(comparison.movement, comparison.unit)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+          ))}
+          <p className="chart-note">
+            <strong>Code writes these paragraphs, not a model.</strong> Every sentence is composed
+            from the comparisons beside it and the decomposition behind them, so the prose is a
+            rendering of the arithmetic rather than an account of it. The cost is voice: this reads
+            like a controller rather than a writer, which is the right trade for the sentences that
+            carry the numbers. Polishing the prose is the model&rsquo;s job in the queue below,
+            where the figures are already fixed.
+          </p>
+        </div>
+      </section>
+
+      <section
+        className="section focusable"
+        id="section-movement"
+        aria-label="Balance sheet movement"
+      >
+        <div className="section-head">
+          <h2 className="section-title">Balance sheet, and what moved it</h2>
+          <span className="section-note">
+            Against the prior month rather than against forecast: a balance sheet is read as a
+            movement from where it was, and &ldquo;receivables are £600k above forecast&rdquo;
+            answers a question nobody asked about the balance sheet. Capital spend sits with fixed
+            assets because it is what moved them, and it leaves through cash on the same page.
+          </span>
+        </div>
+        <div className="pane pane-scroll">
+          <table className="grid">
+            <thead>
+              <tr>
+                <th scope="col">Line</th>
+                <th scope="col" className="num">
+                  {monthLabel(addMonths(view.scope.endMonth, -1))}
+                </th>
+                <th scope="col" className="num">
+                  {monthLabel(view.scope.endMonth)}
+                </th>
+                <th scope="col" className="num">
+                  Movement
+                </th>
+                <th scope="col">What moved it</th>
+              </tr>
+            </thead>
+            <tbody>
+              {movements.map((line) => (
+                <tr key={line.measureId}>
+                  <th scope="row">
+                    {line.heading}
+                    <span className="row-note">{line.group}</span>
+                  </th>
+                  <td className="num">{formatValue(line.opening, line.unit)}</td>
+                  <td className="num strong-cell">{formatValue(line.closing, line.unit)}</td>
+                  <td className={`num ${directionClass(line.favourable)}`}>
+                    {movement(line.movement, line.unit)}
+                  </td>
+                  <td>
+                    {line.because ?? (
+                      <span className="muted-cell">Moved less than 2%; no breakdown shown.</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="chart-note">
+            A line is only explained where it moved more than 2% of its opening balance. A
+            &ldquo;because of…&rdquo; under a £3k movement on a £40m balance sheet is the line that
+            teaches a reader to stop reading them.
+          </p>
+        </div>
+      </section>
 
       <section className="section focusable" id="section-commentary" aria-label="Commentary queue">
         <div className="section-head">
@@ -489,7 +612,13 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
         ) : (
           <div className="commentary-list">
             {visibleQueue.map((item, index) => (
-              <CommentaryCard key={item.id} item={item} queue={queue} view={view} index={index + 1} />
+              <CommentaryCard
+                key={item.id}
+                item={item}
+                queue={queue}
+                view={view}
+                index={index + 1}
+              />
             ))}
           </div>
         )}

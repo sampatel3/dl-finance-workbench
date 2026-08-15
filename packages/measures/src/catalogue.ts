@@ -369,6 +369,71 @@ export const MEASURES: readonly MeasureDefinition[] = [
     compute: (get) => get('receivables'),
   },
   {
+    /* The balance-sheet lines a movement page reads.
+       They were accounts and not measures, so a page asking for them threw — the third time that class
+       has appeared here (see `interest`/`tax`, then `subcontract_hours`). An account is a place a number
+       is stored; a measure is a number somebody owns and can be asked about, and a movement page is
+       exactly the surface where a reader asks who owns it. */
+    id: 'fixed_assets',
+    label: 'Fixed assets',
+    unit: 'currency',
+    polarity: 'neutral',
+    formula: 'property, plant and equipment at period end, net of depreciation',
+    owner: 'Group Financial Controller',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => get('fixed_assets'),
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory',
+    unit: 'currency',
+    // Neither good nor bad on its own: too little is a stockout and too much is cash on a shelf.
+    polarity: 'neutral',
+    formula: 'stock and work in progress at period end',
+    owner: 'Operations Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => get('inventory'),
+  },
+  {
+    id: 'payables',
+    label: 'Trade payables',
+    unit: 'currency',
+    // Higher payables is more cash retained, which is why this is not "lower is better" like a cost.
+    polarity: 'higher_is_better',
+    formula: 'trade payables and accruals at period end',
+    owner: 'Group Financial Controller',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => get('payables'),
+  },
+  {
+    id: 'borrowings',
+    label: 'Borrowings',
+    unit: 'currency',
+    polarity: 'lower_is_better',
+    formula: 'drawn debt at period end',
+    owner: 'Group Treasurer',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => get('borrowings'),
+  },
+  {
+    id: 'capex',
+    label: 'Capital spend',
+    unit: 'currency',
+    /* Neutral, and deliberately. Capital spend is not a cost to be minimised — a business that spent
+       nothing this month has either good discipline or a maintenance problem, and the measure layer is
+       not the place that decides which. */
+    polarity: 'neutral',
+    formula: 'cash spent on fixed assets in the period',
+    owner: 'Chief Financial Officer',
+    status: 'approved',
+    trend: 'sum',
+    compute: (get) => get('capex'),
+  },
+  {
     id: 'working_capital',
     label: 'Working capital',
     unit: 'currency',

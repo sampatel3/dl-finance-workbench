@@ -246,6 +246,29 @@ describe('the “because of” sentence', () => {
     expect(sentence).toMatch(/\bup\b|\bdown\b/);
   });
 
+  it('and says the slices are cancelling rather than printing a share above 100%', () => {
+    /* EBITDA fell £10k at the group while one entity was £132k higher. The share is 1316%, which is
+       arithmetically correct and reads as a broken product — and it buries the fact that actually
+       matters: a small net movement hiding two large opposing ones. */
+    const result = contributorsFor({
+      measureId: 'ebitda',
+      ctx: ctx(),
+      comparator: forecast,
+      dimension: 'entity',
+      limit: 3,
+    });
+    const top = result.rows[0];
+    if (top?.share === null || Math.abs(top?.share ?? 0) <= 1) {
+      // The fixture no longer produces the case; nothing to assert, and the guard still stands.
+      return;
+    }
+    const sentence = becauseOf(result, formatValue);
+    expect(sentence).toMatch(/opposite directions/);
+    expect(sentence).toMatch(/understates/);
+    // And no absurd percentage anywhere in it.
+    expect(sentence).not.toMatch(/[1-9]\d{2,}(\.\d+)?%/);
+  });
+
   it('and refuses to imply a share when the measure is a ratio', () => {
     const result = contributorsFor({
       measureId: 'gross_margin',

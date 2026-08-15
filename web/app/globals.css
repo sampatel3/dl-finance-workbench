@@ -1291,3 +1291,33 @@ a:hover { opacity: 0.72; }
 .trend-tag { font-family: var(--ff-mono); font-size: 10.5px; }
 
 .trend-table { margin-top: 14px; font-size: 12.5px; }
+
+/* --------------------------------------------------------------------- the monthly story */
+
+/* Seven paragraphs read top to bottom, so they are a column rather than a grid. A board narrative that
+   wraps into two columns is one a reader loses their place in halfway down. */
+.story-para { padding: 14px 0; border-top: 1px solid var(--border); }
+.story-para:first-child { border-top: 0; padding-top: 0; }
+
+.story-heading {
+  margin: 0 0 6px;
+  display: flex; align-items: baseline; gap: 12px;
+  font-family: var(--ff-display); font-size: 14px; font-weight: 600; color: var(--text);
+}
+.story-value { font-family: var(--ff-mono); font-size: 15px; color: var(--text); }
+
+/* The sentence, at reading width. A board paragraph set to the full width of a desk monitor is one
+   nobody finishes. */
+.story-text {
+  margin: 0 0 8px;
+  max-width: 78ch;
+  font-size: 13.5px; line-height: 1.65; color: var(--label);
+}
+
+/* The three bases, inline under the paragraph they support: the evidence for the sentence above,
+   not a second reading of it. */
+.story-bases { display: flex; flex-wrap: wrap; gap: 0 22px; margin: 0; }
+.story-basis dt {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+}
+.story-basis dd { margin: 2px 0 0; font-family: var(--ff-mono); font-size: 12px; }

@@ -318,6 +318,21 @@ export function becauseOf(
       : ` Next is ${second.label} at ${format(Math.abs(second.movement), contributors.movementUnit)} ` +
         `${second.movement < 0 ? 'down' : 'up'}.`;
 
+  /* A share above 100% is arithmetically correct and unreadable.
+     It happens whenever the slices move in opposite directions and mostly cancel: EBITDA fell £10k at the
+     group while one entity was £132k higher, which prints as "1316.3% of the movement" and makes the
+     product look broken. The share is not the interesting fact in that case — the *offset* is, because a
+     small net movement hiding two large opposing ones is precisely what an executive needs to be told
+     rather than reassured about. So this is a different sentence, not a clamped number. */
+  if (Math.abs(top.share) > 1) {
+    return (
+      `${top.label} moved ${magnitude} ${direction} on its own, against a net movement of ` +
+      `${format(Math.abs(contributors.total), contributors.movementUnit)} — the slices are moving in ` +
+      `opposite directions and largely cancelling, so the total understates what is happening ` +
+      `underneath it. Owned by ${top.owner}.${secondClause}`
+    );
+  }
+
   return (
     `Because of ${top.label}, ${direction} ${magnitude} — ` +
     `${format(Math.abs(top.share), 'percent')} of the movement, owned by ${top.owner}.${secondClause}`
