@@ -15,7 +15,8 @@ import type { Finding } from '@kestrel/analysis';
 import { formatValue } from '@kestrel/measures';
 
 import type { Headline } from '../lib/headline';
-import { closeStatusCopy } from '../lib/close';
+import type { AccountingStatus } from '../lib/close';
+import { shortDate } from '../lib/close';
 import { directionClass, movement } from '../lib/format';
 import type { View } from '../lib/world';
 import { hrefForTarget } from '../lib/world';
@@ -63,13 +64,15 @@ export function HeadlineCard({
  * was allowed to say are the same list. The action is a link the engine named, not a button this
  * component invented — a surface cannot offer a capability the engine does not express.
  */
-export function FindingCard({
-  finding,
-  view,
-}: {
-  readonly finding: Finding;
-  readonly view: View;
-}) {
+export function FindingCard({ finding, view }: { readonly finding: Finding; readonly view: View }) {
+  /* The five the review asked for — *finding, driver, £ impact, owner, next action* — as five labelled
+     rows rather than a paragraph a reader has to mine. The statement stays, because a sentence carries
+     the qualification a table cannot, but it is no longer the only place the driver appears.
+
+     `driver` and `impact` are optional on a Finding. A rule with no single driver — a reconciliation
+     break has two sides and no driver — prints nothing there rather than a plausible guess, which is why
+     these are rendered conditionally instead of being filled with the first figure in the set. */
+  const impact = finding.impact;
   return (
     <article className={`finding finding-${finding.priority}`}>
       <header className="finding-head">
@@ -78,6 +81,27 @@ export function FindingCard({
       </header>
 
       <p className="finding-statement">{finding.statement}</p>
+
+      <dl className="decision-row">
+        {finding.driver === undefined ? null : (
+          <div className="decision-cell">
+            <dt>Driver</dt>
+            <dd>{finding.driver}</dd>
+          </div>
+        )}
+        {impact === undefined ? null : (
+          <div className="decision-cell">
+            <dt>{impact.label}</dt>
+            <dd className={`decision-impact ${directionClass(finding.direction === 'favourable')}`}>
+              {formatValue(impact.value, impact.unit)}
+            </dd>
+          </div>
+        )}
+        <div className="decision-cell">
+          <dt>Owner</dt>
+          <dd>{finding.action.owner}</dd>
+        </div>
+      </dl>
 
       <dl className="finding-figures">
         {finding.figures.slice(0, 4).map((figure) => (
@@ -147,31 +171,65 @@ export function BoardPanel({
 }
 
 /**
- * The completeness banner.
+ * Accounting status.
  *
  * Rendered above the figures rather than below them, because it is a statement about every figure on the
  * page. A note at the foot saying the numbers may move is a note nobody reads before reading the numbers.
+ *
+ * It was "4/5 ledgers closed" and a sentence. The review's point was that this is a **control**, not a
+ * system message, and a control names the thing, the owner and the date. So the outstanding ledgers are a
+ * table: a reader scanning for whose it is should not have to read a paragraph to find a name, and a date
+ * buried in prose is a date nobody schedules against.
  */
-export function CompletenessBanner({
-  closed,
-  total,
-  openNames,
-  note,
+export function AccountingStatusBanner({
+  status,
+  detailHref,
 }: {
-  readonly closed: number;
-  readonly total: number;
-  readonly openNames: readonly string[];
-  readonly note?: string;
+  readonly status: AccountingStatus;
+  /** Where the full close position lives, so the banner is a route rather than a dead end. */
+  readonly detailHref?: string;
 }) {
-  const status = closeStatusCopy({ closed, total, openNames });
-  if (status.final) {
-    return (
-      <p className="banner banner-ok">{status.summary}</p>
-    );
-  }
   return (
-    <p className="banner banner-warn">
-      <strong>{status.summary}</strong> {status.detail ?? ''} {note ?? ''}
-    </p>
+    <section
+      className={`status-banner status-${status.grade}`}
+      aria-label="Accounting status"
+      role={status.grade === 'at_risk' ? 'alert' : 'status'}
+    >
+      <p className="status-line">
+        <span className="status-mark">Accounting status</span>
+        <strong>{status.summary}</strong> {status.consequence}
+      </p>
+
+      {status.outstanding.length === 0 ? null : (
+        <table className="status-grid">
+          <thead>
+            <tr>
+              <th scope="col">Outstanding</th>
+              <th scope="col">Waiting on</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {status.outstanding.map((ledger) => (
+              <tr key={ledger.entityId}>
+                <th scope="row">{ledger.entityName}</th>
+                <td>{ledger.owner}</td>
+                <td className={ledger.expected === undefined ? 'neg' : ''}>
+                  {ledger.expected === undefined ? 'no date committed' : shortDate(ledger.expected)}
+                </td>
+                <td>{ledger.reason ?? 'Submitted, not closed.'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {detailHref === undefined || status.outstanding.length === 0 ? null : (
+        <p className="status-route">
+          <a href={detailHref}>Open close readiness</a>
+        </p>
+      )}
+    </section>
   );
 }

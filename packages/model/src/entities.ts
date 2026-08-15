@@ -39,6 +39,14 @@ export interface Entity {
   readonly method: ConsolidationMethod;
   /** False for the group node, which holds no facts of its own. */
   readonly trading: boolean;
+  /**
+   * Who answers for this entity's numbers.
+   *
+   * Every dimension a movement can be attributed to carries an owner, for the reason set out on
+   * `SEGMENTS`: a driver without an owner is an observation rather than a work item. The entity
+   * owner is the local controller, which is also who the close is waiting on.
+   */
+  readonly owner: string;
 }
 
 /** The group's presentation currency: what every consolidated figure is reported in. */
@@ -57,6 +65,7 @@ export const ENTITIES: readonly Entity[] = [
     ownership: 1,
     method: 'full',
     trading: false,
+    owner: 'Group Financial Controller',
   },
   {
     id: 'manufacturing',
@@ -68,6 +77,7 @@ export const ENTITIES: readonly Entity[] = [
     ownership: 1,
     method: 'full',
     trading: true,
+    owner: 'UK Financial Controller',
   },
   {
     id: 'services',
@@ -79,6 +89,7 @@ export const ENTITIES: readonly Entity[] = [
     ownership: 1,
     method: 'full',
     trading: true,
+    owner: 'UK Financial Controller',
   },
   {
     // The entity the demo's working-capital and margin stories happen in, and the one a
@@ -92,6 +103,7 @@ export const ENTITIES: readonly Entity[] = [
     ownership: 1,
     method: 'full',
     trading: true,
+    owner: 'Business-unit Controller, Kestrel Gulf',
   },
   {
     id: 'europe',
@@ -105,6 +117,7 @@ export const ENTITIES: readonly Entity[] = [
     ownership: 0.85,
     method: 'full',
     trading: true,
+    owner: 'Europe Financial Controller',
   },
   {
     id: 'inc',
@@ -116,6 +129,7 @@ export const ENTITIES: readonly Entity[] = [
     ownership: 1,
     method: 'full',
     trading: true,
+    owner: 'US Financial Controller',
   },
 ];
 

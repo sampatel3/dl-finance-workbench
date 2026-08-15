@@ -1166,3 +1166,116 @@ a:hover { opacity: 0.72; }
   .skin .tw-exit { padding: 7px 10px; font-size: 11.5px; }
   .skin .tw-full-frame { padding-bottom: calc(52px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------------------------------------------------------------------------
+   Accounting status — a control, not a system message
+   ---------------------------------------------------------------------------
+   It was one amber line. The review's point was that a reader needs the entity, the owner, the date and
+   the reason before they can do anything about it, so the outstanding ledgers are a table. The grade
+   carries the colour: `final` is quiet, `on_schedule` is a note, `at_risk` is the only one that gets the
+   danger rule — because a ledger closing on Friday as planned and one that has already missed its date
+   are different conversations. */
+
+.status-banner {
+  margin: 0 0 24px;
+  padding: 12px 0 12px 16px;
+  border-left: 2px solid var(--border-strong);
+}
+.status-final { border-left-color: var(--border); }
+.status-on_schedule { border-left-color: var(--warn); }
+.status-at_risk { border-left-color: var(--neg); }
+
+.status-line {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.status-line strong { color: var(--text); font-weight: 600; }
+.status-mark {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.status-at_risk .status-mark { color: var(--neg); }
+
+.status-grid { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 12.5px; }
+.status-grid th, .status-grid td {
+  text-align: left; padding: 5px 12px 5px 0; border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+.status-grid thead th {
+  border-top: 0; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--faint); font-weight: 500;
+}
+.status-grid tbody th { color: var(--text); font-weight: 600; }
+.status-grid td { color: var(--muted); }
+/* The reason column carries a sentence; the other three are scannable, so only this one gets width. */
+.status-grid td:last-child { width: 46%; }
+.status-route { margin: 8px 0 0; font-size: 12.5px; }
+
+/* --------------------------------------------------------------------- drivers */
+
+/* One panel per material headline movement. Two across at desk width: side by side a reader can see
+   that revenue and margin moved for different reasons, which is the comparison the review is asking
+   for and which a stack of four full-width panels hides. */
+/* Bordered panels with a real gap, not a hairline grid.
+   The grid was drawn as a 1px-gap lattice over a border-coloured background, which is how the rest of
+   this product separates cells — and with three panels in two columns it painted the empty fourth cell
+   as a solid block. A count that happens to be even is not a layout. */
+.drivers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+@media (max-width: 900px) { .drivers { grid-template-columns: 1fr; } }
+
+.driver-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+}
+.driver-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.driver-title {
+  margin: 0; font-family: var(--ff-display); font-size: 15px; font-weight: 600; color: var(--text);
+}
+.driver-move { margin-left: 8px; font-family: var(--ff-mono); font-size: 13px; }
+.driver-cut {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  white-space: nowrap;
+}
+
+/* The sentence, given the weight of a statement rather than a caption. It is the half of this panel an
+   executive reads, so it is not allowed to look like a footnote to the table. */
+.driver-because {
+  margin: 10px 0 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--label);
+}
+
+.driver-grid { font-size: 12.5px; }
+/* The reconciling row: muted, because it is not a slice anybody owns — but present, because a reader
+   adding the movement column up has to find it. */
+.driver-residual th[scope='row'], .driver-residual td { color: var(--faint); font-weight: 400; }
+
+/* --------------------------------------------------------------------- decision row */
+
+/* Driver, impact and owner as three labelled cells on a board card. The review asked for these by name;
+   they were previously somewhere inside the statement paragraph, which is where a reader does not look
+   when they are scanning nine findings for the one with their name on it. */
+.decision-row {
+  display: flex; flex-wrap: wrap; gap: 0 24px;
+  margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border);
+}
+.decision-cell { min-width: 0; }
+.decision-cell dt {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+}
+.decision-cell dd { margin: 2px 0 0; font-size: 12.5px; color: var(--label); }
+.decision-impact { font-family: var(--ff-mono); font-weight: 600; }

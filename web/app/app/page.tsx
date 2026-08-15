@@ -1,17 +1,18 @@
 import { resolveView } from '@demo-kit/shell';
-import { closeCompleteness, entity } from '@kestrel/model';
+import { closePositionsFor, entity } from '@kestrel/model';
 import { runDetectors } from '@kestrel/analysis';
 import { POLICY, formatValue } from '@kestrel/measures';
 
 import { Masthead } from '../../components/Chrome';
 import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { BoardPanel, CompletenessBanner, HeadlineCard } from '../../components/Figures';
-import { LineChart } from '../../components/LineChart';
+import { AccountingStatusBanner, BoardPanel, HeadlineCard } from '../../components/Figures';
+import { DriverPanel } from '../../components/DriverPanel';
 import { Selectors } from '../../components/Selectors';
 import { headlinesFor } from '../../lib/headline';
 import { NARRATION } from '../../lib/narration.generated';
 import { measureEvidenceHref } from '../../lib/evidence';
-import { deterministicOverviewNarration, overviewRevenueSeries } from '../../lib/overview';
+import { accountingStatus } from '../../lib/close';
+import { deterministicOverviewNarration, headlinesWithDrivers } from '../../lib/overview';
 import type { Params } from '../../lib/world';
 import {
   ALL_MONTHS,
@@ -68,7 +69,10 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
   const view = viewOf(params);
   const ctx = contextOf(view);
-  const headlines = headlinesFor(ctx, view.comparator);
+  /* Each material headline carries what drove it. See `headlinesWithDrivers`: an immaterial movement
+     gets no explanation, because a "because of…" line under a 0.3% move teaches a reader to skip the
+     line — and then to skip it on the month it matters. */
+  const headlines = headlinesWithDrivers(view);
   const brief = briefFor(view);
   const findingRaw = Array.isArray(params.finding) ? params.finding[0] : params.finding;
   const selectedFinding =
@@ -79,16 +83,11 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         );
 
   const visibleEntities = new Set(view.permission.entityIds);
-  const completeness = closeCompleteness(
-    world().closePositions.filter((position) => visibleEntities.has(position.entityId)),
-    view.scope.endMonth,
+  const status = accountingStatus(
+    closePositionsFor(world().closePositions, view.scope.endMonth).filter((position) =>
+      visibleEntities.has(position.entityId),
+    ),
   );
-  const openNames = completeness.open.map((p) => entity(p.entityId).name);
-
-  /* Twelve months of revenue ending at the selected through-month, against the same month a year
-     earlier. Read through the measure layer once per month rather than out of the store, so the series
-     and the headline above it cannot disagree — two paths to the same figure is two figures. */
-  const series = overviewRevenueSeries(ctx, ALL_MONTHS, view.through);
 
   /* The cache contains the one default reporting identity built and freshness-checked ahead of time.
      Every other period, comparator, version or lens gets code-written prose from its selected evidence;
@@ -121,11 +120,9 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
       {/* Said before the figures rather than after them: it is a statement about every number on this
           page, and a note at the foot is a note nobody reads before reading the numbers. */}
-      <CompletenessBanner
-        closed={completeness.closed}
-        total={completeness.total}
-        openNames={openNames}
-        {...(completeness.open[0]?.note === undefined ? {} : { note: completeness.open[0].note })}
+      <AccountingStatusBanner
+        status={status}
+        detailHref={`${hrefFor('/app/controls', view)}${hrefFor('/app/controls', view).includes('?') ? '&' : '?'}focus=section-close`}
       />
 
       {view.fellBack ? (
@@ -144,7 +141,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
           </span>
         </div>
         <div className="cards">
-          {headlines.map((headline) => (
+          {headlines.map(({ headline }) => (
             <HeadlineCard
               key={headline.measureId}
               headline={headline}
@@ -153,6 +150,29 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             />
           ))}
         </div>
+
+        {/* The story under the figures. One panel per material movement, naming the slice, the money and
+            the owner — the review's "because of…" line, written by code from the contribution rows so
+            nothing here is a model's account of the arithmetic. */}
+        <div className="drivers">
+          {headlines
+            .filter((entry) => entry.contributors !== undefined)
+            .map((entry) => (
+              <DriverPanel
+                key={entry.headline.measureId}
+                headline={entry.headline}
+                contributors={entry.contributors!}
+                because={entry.because ?? ''}
+                view={view}
+              />
+            ))}
+        </div>
+        {headlines.every((entry) => entry.contributors === undefined) ? (
+          <p className="chart-note">
+            No headline movement cleared the materiality policy this period, so none is broken down.
+            An explanation of an immaterial movement is noise a reader learns to skip.
+          </p>
+        ) : null}
         {narration === undefined ? null : (
           <p className="narration">
             <strong>{narration.headline}.</strong> {narration.body}
@@ -174,12 +194,14 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             Materiality policy in force · v{POLICY.version} · {POLICY.status}
           </summary>
           <div className="policy-grid">
-            {([
-              ['P&L', POLICY.thresholds.pl],
-              ['Balance sheet', POLICY.thresholds.bs],
-              ['Cash flow', POLICY.thresholds.cf],
-              ['Operational', POLICY.thresholds.operational],
-            ] as const).map(([label, threshold]) => (
+            {(
+              [
+                ['P&L', POLICY.thresholds.pl],
+                ['Balance sheet', POLICY.thresholds.bs],
+                ['Cash flow', POLICY.thresholds.cf],
+                ['Operational', POLICY.thresholds.operational],
+              ] as const
+            ).map(([label, threshold]) => (
               <div key={label}>
                 <strong>{label}</strong>
                 <span>
@@ -251,10 +273,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             )}
             <p className="chart-note">
               Decision route:{' '}
-              <a
-                className="finding-action"
-                href={hrefForTarget(selectedFinding.action.href, view)}
-              >
+              <a className="finding-action" href={hrefForTarget(selectedFinding.action.href, view)}>
                 {selectedFinding.action.label}
               </a>{' '}
               · owner {selectedFinding.action.owner}
@@ -262,24 +281,6 @@ export default async function Overview({ searchParams }: { searchParams: Promise
           </div>
         </section>
       )}
-
-      <section className="section focusable" id="section-trend" aria-label="Revenue over time">
-        <div className="section-head">
-          <h2 className="section-title">Revenue, twelve months</h2>
-          <span className="section-note">
-            Against the same month a year earlier. A gap in a line is a month with no data, not a
-            zero.
-          </span>
-        </div>
-        <div className="pane">
-          <LineChart
-            points={series}
-            unit="currency"
-            label="Revenue"
-            comparativeLabel="Same month last year"
-          />
-        </div>
-      </section>
 
       <section className="section focusable" id="section-ask" aria-label="Explore and Ask">
         <div className="section-head">

@@ -163,6 +163,28 @@ export interface Finding {
   readonly materiality?: string;
   /** Where a figure in the set is not yet governed. Disclosed on the finding, not in a footnote. */
   readonly caveat?: string;
+  /**
+   * What caused it, in a few words. **Optional, and deliberately absent where the rule has no answer.**
+   *
+   * The review asked every board item to carry *finding, driver, £ impact, owner and next action*. Four
+   * of those a detector has always known. The driver is the one that was buried in the statement, where a
+   * reader had to mine a paragraph for it.
+   *
+   * It stays optional because filling it in for every rule would mean inventing one. An intercompany
+   * break has two sides and no driver; a restatement's driver is the restatement. A field that is always
+   * populated is a field a reader stops reading, and a plausible guess in this slot is worse than a gap —
+   * it is the product asserting a cause, which is the one thing it must not do.
+   */
+  readonly driver?: string;
+  /**
+   * The single number this finding is worth, chosen by the rule that knows.
+   *
+   * Not derivable from `figures`: the largest figure in the set is usually the base rather than the
+   * exposure — a margin finding's biggest number is the segment's revenue, and the answer to "how much is
+   * this worth" is the gross profit at stake. Picking it in the detector is the only place the difference
+   * is known.
+   */
+  readonly impact?: FindingFigure;
 }
 
 /**
@@ -280,6 +302,11 @@ const revenueAheadOfForecast: DetectorDefinition = {
         direction: 'favourable',
         horizon: 'current',
         priority: priorityOf(comparison, 'pl'),
+        driver:
+          principal === undefined
+            ? 'No single component dominates the difference'
+            : `${principal.label}, the largest single component`,
+        impact: { label: 'Ahead by', value: variance, unit: 'currency' },
         figures: [
           { label: 'Revenue', value: comparison.current.value, unit: 'currency' },
           { label: basis, value: comparison.comparativeValue, unit: 'currency' },
@@ -359,6 +386,8 @@ const segmentMarginBehindForecast: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'current',
         priority: priorityOf(comparison, 'pl'),
+        driver: `Cost to serve on ${spec.label.toLowerCase()}, not price`,
+        impact: { label: 'Gross profit at stake', value: atStake, unit: 'currency' },
         figures: [
           { label: `${spec.label} gross margin`, value: comparison.current.value, unit: 'percent' },
           { label: `${basis} margin`, value: comparison.comparativeValue, unit: 'percent' },
@@ -451,9 +480,7 @@ const driverAboveAssumption: DetectorDefinition = {
     const anchorCtx: MeasureContext = {
       ...dctx.ctx,
       scope: anchorScope,
-      ...(dctx.ctx.lens === 'constant'
-        ? { comparativeScope: priorYearScope(anchorScope) }
-        : {}),
+      ...(dctx.ctx.lens === 'constant' ? { comparativeScope: priorYearScope(anchorScope) } : {}),
     };
     const hours = computeMeasure('subcontract_hours', anchorCtx).value;
     const monthlyCost = hours === null ? null : hours * (actual - assumed);
@@ -477,6 +504,8 @@ const driverAboveAssumption: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'forward',
         priority: priorityFromMultiple(annualCost / POLICY.thresholds.pl.absoluteMinor),
+        driver: `The rate paid is running above the assumption in ${forecast.label}`,
+        impact: { label: 'Cost a year if it runs', value: annualCost, unit: 'currency' },
         figures: [
           { label: 'Rate paid', value: actual, unit: 'rate' },
           { label: `${forecast.label} assumption`, value: assumed, unit: 'rate' },
@@ -552,6 +581,8 @@ const currencyDistortsGrowth: DetectorDefinition = {
         direction: 'favourable',
         horizon: 'current',
         priority: priorityFromMultiple(Math.abs(fxEffect) / POLICY.thresholds.pl.absoluteMinor),
+        driver: 'Currency translation, not trading',
+        impact: { label: 'Currency effect', value: fxEffect, unit: 'currency' },
         figures: [
           { label: 'Revenue, reported', value: reported, unit: 'currency' },
           { label: 'Revenue, constant currency', value: constant, unit: 'currency' },
@@ -640,6 +671,8 @@ const collectionsSlipping: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'current',
         priority: priorityFromMultiple(excess / DSO_SLIP_DAYS),
+        driver: `Collections at ${e.name}`,
+        impact: { label: 'Cash held in the excess', value: cashTied, unit: 'currency' },
         figures: [
           { label: `${e.name} DSO, opening`, value: previous, unit: 'days' },
           { label: `${e.name} DSO, closing`, value: current.value, unit: 'days' },
@@ -702,6 +735,8 @@ const cashFloorBreach: DetectorDefinition = {
         priority: priorityFromMultiple(
           breach.shortfall / (MINIMUM_CASH.amountMinor * POLICY.thresholds.cf.relative),
         ),
+        driver: 'The dividend and a supplier run landing in the same week',
+        impact: { label: 'Shortfall against the floor', value: breach.shortfall, unit: 'currency' },
         figures: [
           { label: 'Opening cash', value: forecast.opening, unit: 'currency' },
           { label: `Week ${breach.index} closing`, value: week?.closing ?? null, unit: 'currency' },
@@ -751,7 +786,11 @@ const unmappedAccounts: DetectorDefinition = {
   question: 'Is anything in the ledger not reaching the reported figures?',
   run: (dctx) => {
     const set = mappingSetFor(dctx.world.mappingSets, dctx.ctx.scope.endMonth);
-    if (set === undefined || dctx.ctx.segmentId !== undefined || dctx.ctx.costCentreId !== undefined) {
+    if (
+      set === undefined ||
+      dctx.ctx.segmentId !== undefined ||
+      dctx.ctx.costCentreId !== undefined
+    ) {
       return [];
     }
     const visibleEntities = new Set(dctx.ctx.entityIds);
@@ -775,6 +814,8 @@ const unmappedAccounts: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'current',
         priority: priorityFromMultiple(Math.abs(total) / POLICY.thresholds.pl.absoluteMinor),
+        driver: 'Ledger codes arriving with nothing in the mapping set to place them',
+        impact: { label: 'Value at stake', value: total, unit: 'currency' },
         figures: [
           { label: 'Accounts unmapped', value: unmapped.length, unit: 'count' },
           { label: 'Value at stake', value: total, unit: 'currency' },
@@ -834,6 +875,7 @@ const intercompanyMismatch: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'current',
         priority: 'high',
+        impact: { label: 'Out by', value: trading, unit: 'currency' },
         figures: [
           { label: 'Unreconciled, profit and loss', value: trading, unit: 'currency' },
           { label: 'Unreconciled, balance sheet', value: c.unreconciled.balance, unit: 'currency' },
@@ -889,6 +931,12 @@ const forecastBias: DetectorDefinition = {
         priority: priorityFromMultiple(
           Math.abs(bias.meanSignedError) / POLICY.thresholds.pl.relative,
         ),
+        driver: `The assumption behind ${label.toLowerCase()}, not one version's variance`,
+        impact: {
+          label: 'Mean error across the run',
+          value: bias.meanSignedError,
+          unit: 'percent',
+        },
         figures: [
           { label: 'Mean error', value: bias.meanSignedError, unit: 'percent' },
           { label: 'Consecutive versions', value: bias.consecutiveVersions, unit: 'count' },
@@ -942,9 +990,7 @@ const closeIncomplete: DetectorDefinition = {
     const closingCtx: MeasureContext = {
       ...dctx.ctx,
       scope: closingScope,
-      ...(dctx.ctx.lens === 'constant'
-        ? { comparativeScope: priorYearScope(closingScope) }
-        : {}),
+      ...(dctx.ctx.lens === 'constant' ? { comparativeScope: priorYearScope(closingScope) } : {}),
     };
     const openRevenue = completeness.open.reduce((sum, p) => {
       const value = computeMeasure('revenue', {
@@ -968,6 +1014,9 @@ const closeIncomplete: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'current',
         priority: 'medium',
+        driver:
+          completeness.open.map((p) => entity(p.entityId).name).join(', ') + ' has not closed',
+        impact: { label: 'Revenue not yet closed', value: openRevenue, unit: 'currency' },
         figures: [
           { label: 'Ledgers closed', value: completeness.closed, unit: 'count' },
           { label: 'Ledgers in selected scope', value: completeness.total, unit: 'count' },
@@ -1037,6 +1086,11 @@ const restatementInLoad: DetectorDefinition = {
         direction: 'adverse',
         horizon: 'current',
         priority: 'medium',
+        impact: {
+          label: 'Gross margin, as filed against now',
+          value: asNow === null || asFiled === null ? null : asNow - asFiled,
+          unit: 'percent',
+        },
         figures: [
           { label: 'Gross margin as filed', value: asFiled, unit: 'percent' },
           { label: 'Gross margin now', value: asNow, unit: 'percent' },
@@ -1078,9 +1132,7 @@ const pipelineAheadOfAssumption: DetectorDefinition = {
     const anchorCtx: MeasureContext = {
       ...dctx.ctx,
       scope: anchorScope,
-      ...(dctx.ctx.lens === 'constant'
-        ? { comparativeScope: priorYearScope(anchorScope) }
-        : {}),
+      ...(dctx.ctx.lens === 'constant' ? { comparativeScope: priorYearScope(anchorScope) } : {}),
     };
     const actual = readDriver('pipeline_conversion', {
       ...anchorCtx,
@@ -1117,6 +1169,8 @@ const pipelineAheadOfAssumption: DetectorDefinition = {
         direction: 'favourable',
         horizon: 'forward',
         priority: priorityFromMultiple(gap / POLICY.thresholds.operational.relative),
+        driver: `The CRM is converting ahead of the rate ${forecast.label} assumes`,
+        impact: { label: 'Full-year revenue at stake', value: atStake, unit: 'currency' },
         figures: [
           { label: 'Pipeline conversion, actual', value: actual.value, unit: 'percent' },
           { label: `${forecast.label} assumption`, value: assumed.value, unit: 'percent' },

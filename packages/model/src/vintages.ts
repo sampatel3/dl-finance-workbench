@@ -214,6 +214,15 @@ export interface ClosePosition {
   readonly closedAt?: string;
   /** Why it is not closed, in words a reviewer can act on. */
   readonly note?: string;
+  /**
+   * When the group expects this ledger to close. Stated, never computed from a clock.
+   *
+   * Present only while a position is open, because a date on a closed ledger is a promise about the
+   * past. The review asked the close area to name *"outstanding entity, reason and expected close
+   * date"* — the first two were already here, and without the third the banner tells a reader
+   * something is late without telling them whether that is a problem today or on Friday.
+   */
+  readonly expectedCloseAt?: string;
 }
 
 /** The close positions for a month, in entity order. */

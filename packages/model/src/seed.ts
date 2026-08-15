@@ -1587,6 +1587,9 @@ function buildClosePositions(healthy: boolean): ClosePosition[] {
               note:
                 'Trial balance submitted; revenue cut-off on two project milestones still under ' +
                 'review, so the figures may move before close.',
+              /* Two working days after the group's own close date, which is what makes this a
+                 schedule slip a reader can size rather than an open-ended "pending". */
+              expectedCloseAt: `${month}-08T17:00:00Z`,
             }
           : {}),
       });

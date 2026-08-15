@@ -447,16 +447,46 @@ export function accountsOnStatement(statement: Statement): AccountCode[] {
 /**
  * Revenue segments.
  *
+ * `owner` is here rather than on a page because the review's ask — *for each item show finding,
+ * driver, £ impact, owner and next action* — makes the owner part of the finding rather than
+ * decoration on the card. A driver with no owner is an observation; a driver with an owner is a
+ * work item, and the difference is the whole point of putting a movement in front of an executive.
+ * Held on the dimension so every surface that names a slice can name who answers for it.
+ *
  * `unitised` is the field the whole variance story rests on: a segment that sells countable
  * things carries a quantity on its facts, so its variance decomposes into price, volume and mix.
  * A segment that does not — a management recharge, an overhead allocation — carries no quantity,
  * and the bridge correctly reports a rate effect for it rather than inventing a price.
  */
 export const SEGMENTS = [
-  { code: 'equipment', label: 'Equipment', division: 'products', unitised: true },
-  { code: 'spares', label: 'Spares & consumables', division: 'products', unitised: true },
-  { code: 'contracts', label: 'Service contracts', division: 'services', unitised: true },
-  { code: 'projects', label: 'Projects', division: 'services', unitised: false },
+  {
+    code: 'equipment',
+    label: 'Equipment',
+    division: 'products',
+    unitised: true,
+    owner: 'Commercial Director',
+  },
+  {
+    code: 'spares',
+    label: 'Spares & consumables',
+    division: 'products',
+    unitised: true,
+    owner: 'Commercial Director',
+  },
+  {
+    code: 'contracts',
+    label: 'Service contracts',
+    division: 'services',
+    unitised: true,
+    owner: 'Services Director',
+  },
+  {
+    code: 'projects',
+    label: 'Projects',
+    division: 'services',
+    unitised: false,
+    owner: 'Projects Director',
+  },
 ] as const;
 
 export type SegmentCode = (typeof SEGMENTS)[number]['code'];
@@ -481,12 +511,37 @@ export function segmentsOfDivision(division: DivisionCode): SegmentCode[] {
 
 /** Cost centres, in the order a management P&L lists them. */
 export const COST_CENTRES = [
-  { code: 'operations', label: 'Manufacturing operations', function: 'delivery' },
-  { code: 'field_service', label: 'Field service', function: 'delivery' },
-  { code: 'engineering', label: 'Engineering', function: 'delivery' },
-  { code: 'sales', label: 'Sales & marketing', function: 'commercial' },
-  { code: 'finance_admin', label: 'Finance & administration', function: 'support' },
-  { code: 'it', label: 'IT', function: 'support' },
+  {
+    code: 'operations',
+    label: 'Manufacturing operations',
+    function: 'delivery',
+    owner: 'Operations Director',
+  },
+  {
+    code: 'field_service',
+    label: 'Field service',
+    function: 'delivery',
+    owner: 'Services Director',
+  },
+  {
+    code: 'engineering',
+    label: 'Engineering',
+    function: 'delivery',
+    owner: 'Engineering Director',
+  },
+  {
+    code: 'sales',
+    label: 'Sales & marketing',
+    function: 'commercial',
+    owner: 'Commercial Director',
+  },
+  {
+    code: 'finance_admin',
+    label: 'Finance & administration',
+    function: 'support',
+    owner: 'Group Financial Controller',
+  },
+  { code: 'it', label: 'IT', function: 'support', owner: 'IT Director' },
 ] as const;
 
 export type CostCentreCode = (typeof COST_CENTRES)[number]['code'];
