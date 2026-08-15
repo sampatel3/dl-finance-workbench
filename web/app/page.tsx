@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import {
-  SKIN_COOKIE,
   SCHEME_COOKIE,
   STYLE_COOKIE,
   SchemeToggle,
-  SkinToggle,
   StyleToggle,
   resolveScheme,
   resolveStyle,
@@ -16,7 +14,6 @@ import {
 } from '@demo-kit/shell';
 import { TOUR } from '../lib/tour';
 import { DEMO_NAME } from '../lib/demo';
-import { resolveWorkbenchSkin } from '../lib/skin';
 
 /**
  * The landing page is the demo shell, not the product.
@@ -44,7 +41,6 @@ export default async function Shell({
   const params = await searchParams;
   const view = resolveShellView(TOUR, params);
   const jar = await cookies();
-  const skin = resolveWorkbenchSkin(jar.get(SKIN_COOKIE)?.value);
   const scheme = resolveScheme(jar.get(SCHEME_COOKIE)?.value ?? 'deeplight');
   const style = resolveStyle(jar.get(STYLE_COOKIE)?.value);
 
@@ -57,13 +53,11 @@ export default async function Shell({
       }
       title={DEMO_NAME}
       view={view}
-      skin={skin}
       link={Link}
       /* In the control bar rather than the notes: `notes` is guided-only, so a reader who
          switched to free view had no treatment controls at all. */
       controls={
         <>
-          <SkinToggle skin={skin} />
           <SchemeToggle scheme={scheme} />
           <StyleToggle style={style} />
         </>

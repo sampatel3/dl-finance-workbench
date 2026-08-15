@@ -3,7 +3,6 @@ import { cookies } from 'next/headers';
 import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import {
   SCHEME_COOKIE,
-  SKIN_COOKIE,
   STYLE_COOKIE,
   resolveScheme,
   resolveStyle,
@@ -12,7 +11,6 @@ import '@demo-kit/shell/themes.css';
 import './globals.css';
 import '@demo-kit/shell/shell.css';
 import { DEMO_DESCRIPTION, DEMO_NAME } from '../lib/demo';
-import { resolveWorkbenchSkin } from '../lib/skin';
 
 /**
  * The root layout: the fonts, and the one place the treatment is decided.
@@ -29,24 +27,6 @@ import { resolveWorkbenchSkin } from '../lib/skin';
  * The weights are pinned to the ones actually used. `next/font` subsets what it is asked for, so
  * declaring the full range would ship four unused faces.
  *
- * ## Dark is the product; light is paper
- *
- * The kit's convention is that light is the bare page and dark adds `.skin-dark`, because a stylesheet
- * naming both treatments in every rule states every colour twice. That convention is right and this
- * demo inverts which one is bare: the brand is dark-first, and its light palette is scoped to
- * "documents and print only".
- *
- * So the mapping is done here rather than by `skinClass`, and deliberately not by changing the kit —
- * light-as-default is correct for every other demo. Read the raw cookie rather than `resolveSkin`,
- * because that helper folds "no cookie" and "cookie says light" into the same answer, and those are
- * different here: an unset preference has to mean the product's own treatment, not the paper one.
- *
- * The class goes on `<body>` from the server rather than through the kit's `SkinBody`. That component
- * mirrors the treatment onto the body in a layout effect, which is the right mechanism when the class
- * is `skin-dark` — but the only class it can ever add is `skin-dark`, and this demo's second treatment
- * is `skin-light`. Passing it `light` would add nothing at all, and every surface portalled out of the
- * tree would stay dark while the page around it went to paper. Rendering the class on the server is
- * both simpler and better here: it reaches portals, needs no effect, and cannot flash.
  */
 
 const display = Inter_Tight({
@@ -80,22 +60,18 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const jar = await cookies();
-  const raw = jar.get(SKIN_COOKIE)?.value;
   /* `?? 'deeplight'` is this workbench's own palette named, so an absent cookie reproduces
      exactly what it looked like before the scheme layer existed. Both attributes go on
      <html>: a custom property that reads another resolves it where it is DECLARED, so a
      scheme set below `:root` would leave every token in this file on the default brand. */
   const scheme = resolveScheme(jar.get(SCHEME_COOKIE)?.value ?? 'deeplight');
   const style = resolveStyle(jar.get(STYLE_COOKIE)?.value);
-  /* Only an explicit `light` gets the paper treatment. Anything else — unset, `dark`, or a value
-     somebody hand-edited — is the product. */
-  const paper = resolveWorkbenchSkin(raw) === 'light';
   const fonts = `${display.variable} ${body.variable} ${mono.variable}`;
 
   return (
     <html lang="en-GB" className={fonts} data-scheme={scheme} data-style={style}>
-      <body className={paper ? 'skin-light' : ''}>
-        <div className={`skin${paper ? ' skin-light' : ''}`}>{children}</div>
+      <body>
+        <div className="skin">{children}</div>
       </body>
     </html>
   );

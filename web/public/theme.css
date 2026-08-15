@@ -2,10 +2,15 @@
  * The schemes — the brand layer, and the only place a brand colour is written down.
  *
  * TWO AXES, AND THEY ARE NOT THE SAME AXIS
- *   · skin   — light or dark. Which of two surfaces the reader is looking at. `.skin-dark`.
- *   · scheme — which brand. Deeplight, Default, Signal, Ember. `[data-scheme="…"]`.
- * They compose: any scheme in either skin. Keeping them apart is what stops "the dark one"
- * and "the orange one" from becoming four hand-maintained palettes that drift.
+ *   · scheme — which brand.         `[data-scheme="…"]`  default | deeplight | slate | signal | ember
+ *   · style  — which design system. `[data-style="…"]`   aurora | drift
+ * They compose: any brand in either grammar. Keeping them apart is what stops "the dark one"
+ * and "the orange one" from becoming hand-maintained palettes that drift.
+ *
+ * There was a third — a light/dark `skin` — and it is gone. A brand already knows whether it
+ * is dark: Deeplight is black and says so. Carrying a separate lightness switch meant every
+ * surface had to be stated twice and a scheme could be worn in a lightness that contradicted
+ * it, which is two ways to be wrong in exchange for nothing.
  *
  * WHAT A SCHEME IS ALLOWED TO SET
  * Four values and no more: two brand colours, a ground, and the grey that sits on it.

@@ -107,6 +107,11 @@
      off every device slide, and the template deck overflowed on exactly the two slides that
      carry a device — which `deck slides` said out loud rather than letting them crop. */
   --device-w: 48cqi;
+  /* The bezel, in the SAME UNIT as the width — see the device block for why a percentage here
+     is a bug rather than a shorthand. 1.176cqi is 2.45% of 48cqi, so the device keeps the
+     bezel it already had beside a column, and full-bleed slides stop being the odd ones out. */
+  --device-bezel: 1.176cqi;
+  --device-radius: 1.63cqi;
 
   --pos: #2fbf8f;
   --neg: #ef8b93;
@@ -192,74 +197,6 @@
     radial-gradient(64% 58% at 78% 14%, color-mix(in srgb, var(--brand-a) var(--field-mix), var(--brand-ink)) 0%, transparent 66%),
     radial-gradient(60% 62% at 18% 88%, color-mix(in srgb, var(--brand-b) var(--field-mix), var(--brand-ink)) 0%, transparent 64%),
     color-mix(in srgb, var(--brand-a) var(--field-mix), var(--brand-ink));
-}
-
-/*
- * DEEPLIGHT IS BESPOKE, BY INSTRUCTION — the one scheme allowed to reach into the ground.
- * Its page is BLACK. No field, no glow, no gradient: the brand arrives only as text and
- * graphics in the yellow and the blue. Every other scheme takes the reference field exactly
- * as the template draws it, and no other scheme gets an exception like this one.
- */
-[data-style='aurora'][data-scheme='deeplight'] .vivid {
-  background: var(--brand-ink);
-  --accent-ink: var(--brand-a);
-}
-/* Black throughout, like the brand's own deck: the quiet ground is the grey step above the
-   black rather than a pale page, panes step up within the dark and take light ink, and the
-   numerals drop their fill — bare yellow monospace, which is how the brand writes them. */
-[data-style='aurora'][data-scheme='deeplight'] {
-  --pill-bg: transparent;
-  --pill-fg: var(--brand-a);
-}
-[data-style='aurora'][data-scheme='deeplight'] .deep {
-  --ink: #ffffff;
-  --mute: rgba(255, 255, 255, .72);
-  --faint: rgba(255, 255, 255, .32);
-  --pane: color-mix(in srgb, #ffffff 5%, var(--brand-grey));
-  --pane-edge: rgba(255, 255, 255, .1);
-  --pane-ink: #ffffff;
-  --pane-mute: rgba(255, 255, 255, .72);
-  --pane-faint: rgba(255, 255, 255, .3);
-  --accent-ink: var(--brand-a);
-  --pane-accent: var(--brand-a);
-  color: var(--ink);
-  background: var(--brand-grey);
-}
-/* Graphics on the black page: the donut's first segment is paper (ink would vanish), and the
-   media well mixes toward the dark instead of toward paper. */
-[data-style='aurora'][data-scheme='deeplight'] .donut .dchart {
-  background: conic-gradient(
-    #ffffff 0 calc(var(--s1) * 1%),
-    var(--brand-a) 0 calc((var(--s1) + var(--s2)) * 1%),
-    var(--brand-b) 0 100%);
-}
-[data-style='aurora'][data-scheme='deeplight'] .media {
-  background:
-    radial-gradient(60% 60% at 28% 30%, color-mix(in srgb, var(--brand-b) 20%, var(--brand-ink)) 0%, transparent 70%),
-    radial-gradient(70% 70% at 76% 76%, color-mix(in srgb, var(--brand-a) 22%, var(--brand-ink)) 0%, transparent 72%),
-    color-mix(in srgb, var(--brand-a) 6%, var(--brand-ink));
-  color: rgba(255, 255, 255, .6);
-}
-
-/* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
-   slides in the reference actually use, and its panes are pure white against it. */
-[data-style='aurora'] .deep {
-  --ink: var(--brand-ink);
-  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
-  --pane: #ffffff;
-  --pane-edge: transparent;
-  --pane-ink: var(--brand-ink);
-  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  color: var(--ink);
-  background:
-    radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
-    radial-gradient(56% 64% at 96% 20%, color-mix(in srgb, var(--brand-a) 14%, transparent) 0%, transparent 62%),
-    radial-gradient(64% 70% at 82% 96%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 66%),
-    color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
 }
 
 /* ----------------------------------------------------------------------- drift ---- */
@@ -427,7 +364,28 @@ h1 {
  */
 .slide > :is(.grid, .opts, .tiles, .roster, .ruled, .rail, .mech, .box, .contents,
              .trio, .plans, .pillars, .stats, .figures, .ladder, .panel, .bars, .donut,
-             .rings, .team, .timeline, .close) { margin-top: auto; }
+             .rings, .team, .timeline, .close,
+             /* The product pages belong here too, and their absence was the loudest fault in
+                the composition: on every slide carrying a device the band was INVERTED —
+                about a centimetre of air above the picture and up to 8.7cqi of dead space
+                below it, which is the exact opposite of the design. `.works`, `.sum` and
+                `.nest` were missing for the same reason. */
+             .screen, .duo, .duoflip, .works, .sum, .nest) { margin-top: auto; }
+
+/*
+ * AND THE FOOT MUST NOT COMPETE FOR THE SAME SPACE.
+ *
+ * `.foot` also carries `margin-top: auto` so that a slide with no body block still pins it to
+ * the floor. On a slide that has both, two auto margins SPLIT the free space equally — so the
+ * band that should sit under the headline was cut in half and the other half opened up above
+ * the foot. Measured at 8.62cqi above and 8.62cqi below on a claim slide.
+ *
+ * When a body block precedes it, the body takes the space and the foot simply follows it.
+ */
+.slide > :is(.grid, .opts, .tiles, .roster, .ruled, .rail, .mech, .box, .contents,
+             .trio, .plans, .pillars, .stats, .figures, .ladder, .panel, .bars, .donut,
+             .rings, .team, .timeline, .close, .screen, .duo, .duoflip, .works, .sum,
+             .nest, .quad, .visual, .split) + .foot { margin-top: 1.6cqi; }
 
 .stand { margin: 1.2cqi 0 0; max-width: 72ch; font-size: 1.18cqi; line-height: 1.58; color: var(--mute); }
 
@@ -562,25 +520,56 @@ h1 {
      wrong shape is cropped by the frame's `object-fit: cover` and reported by `deck lint`,
      rather than quietly widening the device to fit itself. */
   width: var(--device-w); aspect-ratio: 1194 / 834; margin: 1.4cqi auto 0;
-  padding: 2.45%; border-radius: 3.4%;
-  /* Black, because that is what the object is. The lit inner edge is the only concession —
-     without it a black rectangle on a dark ground has no edge at all. */
+  /*
+   * THE BEZEL IS A LENGTH, NOT A PERCENTAGE — AND THIS IS THE ONE THAT MATTERED.
+   *
+   * It was `padding: 2.45%`, which reads like "2.45% of the device" and is not: percentage
+   * padding resolves against the CONTAINING BLOCK's width. Full-bleed, the containing block
+   * is the slide's content row; beside a column it is the 48cqi grid area. Measured on the
+   * real stylesheet at a 1564px deck: the bezel came out 35.01px on a `.screen` slide and
+   * 18.34px in `.duo` — the SAME device wearing a border nearly twice as thick depending on
+   * which layout it happened to be in.
+   *
+   * That is what "different variations of borders" was. It is invisible in review because the
+   * declaration looks self-relative, and it survived the pass that removed the per-style and
+   * per-scheme overrides, because it is a unit bug rather than a token one. Stated in `cqi` it
+   * is measured against the deck, like every other length in this file, and cannot move.
+   */
+  padding: var(--device-bezel);
+  /*
+   * The radii too. A percentage radius resolves horizontally against width and vertically
+   * against height, so `3.4%` drew a 25.5 x 17.8 ELLIPSE rather than a corner — and on the
+   * screen it varied with the layout for the same reason the bezel did.
+   */
+  border-radius: var(--device-radius);
+
+  /*
+   * THE DEVICE IS A CONSTANT OBJECT. NOTHING BELOW DERIVES FROM A TOKEN.
+   *
+   * An iPad is the same iPad on every slide of every deck in every brand — so not one value
+   * here reads a scheme or a style variable. It had three ways to differ and all three were
+   * invisible in the source until they were listed together:
+   *
+   *   1. a per-style override gave `drift` a 24% shadow against everyone else's 55%
+   *   2. the shadow's COLOUR was `--brand-ink`, so it changed hue with the scheme
+   *   3. the screen's background was `--brand-paper`, another scheme token
+   *
+   * Each was defensible on its own — a heavy shadow does look like a hole on a pale page —
+   * and together they meant no two decks drew the same object. The fix is not better values;
+   * it is removing the ability to have values. Literals only, forever.
+   *
+   * The one shadow is tuned to sit on a near-white page without gouging it AND to stay
+   * visible on black: a wide, low-opacity neutral, not a brand-tinted one.
+   */
   background: #0b0b0d;
   box-shadow:
     inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
-    0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 55%, transparent);
-}
-/* On a pale ground the device's own drop shadow has to be much lighter or it reads as a hole
-   cut in the page. */
-[data-style='drift'] .device {
-  box-shadow:
-    inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
-    0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 24%, transparent);
+    0 1.2cqi 3cqi rgba(0, 0, 0, .28);
 }
 /* The screen fills the bezel and takes the device's shape rather than the image's: a capture
    whose section is shorter than the glass letterboxes against the black, which is what a real
    screen does, instead of stretching the device to fit the picture. */
-.device .frame { height: 100%; border-radius: 1.1%; overflow: hidden; }
+.device .frame { height: 100%; border-radius: .5cqi; overflow: hidden; background: #0b0b0d; }
 .device .frame img { height: 100%; width: 100%; object-fit: cover; object-position: top center; }
 /* In a two-column layout the device keeps exactly the size it has anywhere else. */
 .duo .device, .duoflip .device { margin-top: 0; }
@@ -861,21 +850,42 @@ ul.plus li::before {
  */
 .contents { display: grid; gap: 0; width: 100%; }
 .contents .item {
-  display: flex; align-items: baseline; gap: 1.4cqi;
+  /* Centred, not baseline-aligned: the numeral is a small object beside a large name, and on a
+     baseline it hung 9px below the row's middle. */
+  display: flex; align-items: center; gap: 1.4cqi;
   font-size: 2.4cqi; letter-spacing: -0.02em; line-height: 1.1;
 }
-.contents .item .nm { flex: 1; }
+/*
+ * THE ORDER IS THE STYLE'S, NEVER THE MARKUP'S.
+ *
+ * Aurora puts the numeral last, drift puts it first — and only aurora said so, with
+ * `order: 2`. Drift said nothing, so its numeral went wherever the HTML happened to put it,
+ * and the templates disagreed with each other: build and court write the name first, sell and
+ * invest write the numeral first. A deck authored either way rendered its contents backwards
+ * the moment it was switched to the other style. Both positions are stated here, so no
+ * author's element order can decide a design question.
+ */
+.contents .item .nm { flex: 1; order: 1; }
+.contents .item .no { order: 2; }
+[data-style='drift'] .contents .item .no { order: 0; }
 
 [data-style='aurora'] .contents .item {
   padding: 1.15cqi 0; border-top: .07cqi solid var(--faint);
   font-weight: 450;
 }
 [data-style='aurora'] .contents .item:first-child { border-top: 0; }
-/* The numeral goes last and is a filled black pill, which is aurora's one recurring object. */
+/*
+ * The numeral IS the deck's pill, and now says so. It used to hardcode `--brand-ink` on white
+ * with no weight of its own, which cost three things: it inherited the row's 450 where the
+ * pill face ships 400 and 700 only, so it rendered in a synthesized weight; it ignored the
+ * Deeplight override that drops pill fills, so the one scheme documented as having no filled
+ * numerals still had a black box on its contents page; and at `.5cqi` it was a rounded
+ * rectangle rather than a pill.
+ */
 [data-style='aurora'] .contents .item .no {
-  order: 2; background: var(--brand-ink); color: #fff;
-  font-family: var(--mono); font-size: .82cqi; letter-spacing: .1em;
-  padding: .34cqi .72cqi; border-radius: .5cqi;
+  background: var(--pill-bg); color: var(--pill-fg); font-weight: var(--pill-weight);
+  font-family: var(--label-face); font-size: .82cqi; letter-spacing: .1em;
+  padding: .34cqi .72cqi; border-radius: 999px;
 }
 
 /* Drift: two columns, no rules, the numeral small and grey in front of the name. */
@@ -964,6 +974,116 @@ ul.plus li::before {
 
 /* Small print in drift is a quiet line, not a ruled band — its reference draws no rules. */
 [data-style='drift'] .foot { border-top: 0; padding-top: 0; font-size: .95cqi; max-width: 56ch; }
+
+/*
+ * DEEPLIGHT IS BESPOKE, BY INSTRUCTION — the one scheme allowed to reach into the ground.
+ *
+ * Its page is BLACK. No field, no glow, no gradient: the brand arrives only as text and
+ * graphics in the yellow and the blue. Every other scheme takes the reference field exactly
+ * as the template draws it, and no other scheme gets an exception like this one.
+ *
+ * NOT QUALIFIED BY STYLE, and that is the point. These rules were written
+ * `[data-style='aurora'][data-scheme='deeplight']`, so a Deeplight deck in `drift` fell back
+ * to pale pastel blobs — the brand rendering as two different things depending on a setting
+ * that has nothing to do with the brand. A scheme is the brand; a style is the layout
+ * grammar. Deeplight is black in both, and the drift blob ground is overridden here for the
+ * same reason its field is.
+ */
+/*
+ * A GROUND OVERRIDE THAT SETS A BACKGROUND MUST SET ITS INK IN THE SAME BREATH.
+ *
+ * This rule used to set `background` and `--accent-ink` and nothing else, which worked by
+ * accident: it was scoped to `aurora`, whose `.vivid` already sets a light `--ink`. Unscoped
+ * to reach `drift` — whose grounds are pale, so its `--ink` is the scheme's near-BLACK — the
+ * page went black and the type stayed black with it. The headline was 727px wide, present in
+ * the DOM, and invisible.
+ *
+ * So every ground here restates the full set. A background and an ink are one decision.
+ */
+[data-scheme='deeplight'] .vivid {
+  --ink: #ffffff;
+  --mute: rgba(255, 255, 255, .72);
+  --faint: rgba(255, 255, 255, .32);
+  --pane: color-mix(in srgb, #ffffff 5%, var(--brand-grey));
+  --pane-edge: rgba(255, 255, 255, .1);
+  --pane-ink: #ffffff;
+  --pane-mute: rgba(255, 255, 255, .72);
+  --pane-faint: rgba(255, 255, 255, .3);
+  --accent-ink: var(--brand-a);
+  --pane-accent: var(--brand-a);
+  color: var(--ink);
+  background: var(--brand-ink);
+}
+/* Black throughout, like the brand's own deck: the quiet ground is the grey step above the
+   black rather than a pale page, panes step up within the dark and take light ink, and the
+   numerals drop their fill — bare yellow monospace, which is how the brand writes them. */
+[data-scheme='deeplight'] {
+  --pill-bg: transparent;
+  --pill-fg: var(--brand-a);
+}
+[data-scheme='deeplight'] .deep {
+  --ink: #ffffff;
+  --mute: rgba(255, 255, 255, .72);
+  --faint: rgba(255, 255, 255, .32);
+  --pane: color-mix(in srgb, #ffffff 5%, var(--brand-grey));
+  --pane-edge: rgba(255, 255, 255, .1);
+  --pane-ink: #ffffff;
+  --pane-mute: rgba(255, 255, 255, .72);
+  --pane-faint: rgba(255, 255, 255, .3);
+  --accent-ink: var(--brand-a);
+  --pane-accent: var(--brand-a);
+  color: var(--ink);
+  background: var(--brand-grey);
+}
+/* Graphics on the black page: the donut's first segment is paper (ink would vanish), and the
+   media well mixes toward the dark instead of toward paper. */
+[data-scheme='deeplight'] .donut .dchart {
+  background: conic-gradient(
+    #ffffff 0 calc(var(--s1) * 1%),
+    var(--brand-a) 0 calc((var(--s1) + var(--s2)) * 1%),
+    var(--brand-b) 0 100%);
+}
+[data-scheme='deeplight'] .media {
+  background:
+    radial-gradient(60% 60% at 28% 30%, color-mix(in srgb, var(--brand-b) 20%, var(--brand-ink)) 0%, transparent 70%),
+    radial-gradient(70% 70% at 76% 76%, color-mix(in srgb, var(--brand-a) 22%, var(--brand-ink)) 0%, transparent 72%),
+    color-mix(in srgb, var(--brand-a) 6%, var(--brand-ink));
+  color: rgba(255, 255, 255, .6);
+}
+
+/* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
+   slides in the reference actually use, and its panes are pure white against it. */
+[data-style='aurora'] .deep {
+  --ink: var(--brand-ink);
+  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
+  --pane: #ffffff;
+  --pane-edge: transparent;
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  color: var(--ink);
+  background:
+    radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
+    radial-gradient(56% 64% at 96% 20%, color-mix(in srgb, var(--brand-a) 14%, transparent) 0%, transparent 62%),
+    radial-gradient(64% 70% at 82% 96%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 66%),
+    color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
+}
+
+/* The two ground rules above already beat drift's blob grounds — same specificity, declared
+   later — so nothing is restated for them here. The divider is the exception: drift styles it
+   with `.slide.divider`, which outranks a bare `.vivid`, so it is the one rule that has to
+   name itself. It states its ink alongside its ground, like every other ground rule. */
+[data-style='drift'][data-scheme='deeplight'] .slide.divider {
+  background: var(--brand-ink);
+  --ink: #ffffff;
+  --mute: rgba(255, 255, 255, .72);
+  --faint: rgba(255, 255, 255, .32);
+  --accent-ink: var(--brand-a);
+  color: var(--ink);
+}
 
 /* ==================================================================== THE LIBRARY ===== */
 /*
