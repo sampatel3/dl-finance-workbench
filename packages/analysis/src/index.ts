@@ -18,3 +18,4 @@ export * from './priority.ts';
 export * from './pivot.ts';
 export * from './contributors.ts';
 export * from './landing.ts';
+export * from './funding.ts';

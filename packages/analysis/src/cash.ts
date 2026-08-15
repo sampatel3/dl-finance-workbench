@@ -61,6 +61,29 @@ export const MINIMUM_CASH = {
 // The direct forecast
 // ---------------------------------------------------------------------------
 
+/**
+ * One named payment or receipt stream inside a week.
+ *
+ * The review's question is *"why does cash go red in that week?"*, and a net figure cannot answer it. A
+ * week that is £760k short because the dividend landed is a different conversation from one that is
+ * £760k short because nobody collected — the first is a date somebody chose, the second is a problem.
+ *
+ * `lumpy` is what separates them. A stream that runs every week (supplier settlement, payroll spread,
+ * overheads) is the run rate; one that lands in a single week (tax, interest, the dividend) is the
+ * event. A breach explained by the run rate is structural; one explained by an event is timing, and the
+ * distinction is the review's second ask on this surface.
+ */
+export interface CashComponent {
+  readonly key: string;
+  readonly label: string;
+  /** Positive for a receipt, negative for a payment, so the components sum to `net`. */
+  readonly amount: number;
+  /** True where this stream lands in particular weeks rather than every week. */
+  readonly lumpy: boolean;
+  /** Who it is owed to or owed by — a driver with no owner is not an action. */
+  readonly owner: string;
+}
+
 export interface CashWeek {
   readonly week: ForecastWeek;
   readonly index: number;
@@ -73,6 +96,8 @@ export interface CashWeek {
   readonly closing: number;
   /** True where this week's closing balance is below the board's floor. */
   readonly belowFloor: boolean;
+  /** What the week is made of. Sums to `net` exactly; asserted rather than assumed. */
+  readonly components: readonly CashComponent[];
 }
 
 export interface DirectForecast {
@@ -192,16 +217,95 @@ export function directForecast(
         borrowingTotal / CASH_HORIZON_WEEKS,
     );
 
-    let payments = (supplierTotal * (SUPPLIER_PROFILE[i] ?? 1)) / supplierWeight + otherPerWeek;
-    if ((PAYROLL_WEEKS as readonly number[]).includes(index)) payments += payrollPerRun;
-    if (index === TAX_WEEK) payments += taxTotal;
-    if (index === INTEREST_WEEK) payments += interestTotal;
-    if (index === DIVIDEND_WEEK) payments += dividendTotal;
-    payments += capexTotal / CASH_HORIZON_WEEKS;
+    const supplierThisWeek = (supplierTotal * (SUPPLIER_PROFILE[i] ?? 1)) / supplierWeight;
+    const payrollThisWeek = (PAYROLL_WEEKS as readonly number[]).includes(index)
+      ? payrollPerRun
+      : 0;
+    const taxThisWeek = index === TAX_WEEK ? taxTotal : 0;
+    const interestThisWeek = index === INTEREST_WEEK ? interestTotal : 0;
+    const dividendThisWeek = index === DIVIDEND_WEEK ? dividendTotal : 0;
+    const capexThisWeek = capexTotal / CASH_HORIZON_WEEKS;
+
+    const payments =
+      supplierThisWeek +
+      otherPerWeek +
+      payrollThisWeek +
+      taxThisWeek +
+      interestThisWeek +
+      dividendThisWeek +
+      capexThisWeek;
 
     const rounded = Math.round(payments);
     const net = receipts - rounded;
     closing += net;
+
+    /* Built from the same locals the arithmetic used, so the breakdown cannot drift from the total it
+       explains. The rounding difference is carried on the largest payment stream rather than left as a
+       residual: a "rounding" row of a few pence beside £760k of dividend is noise a reader has to
+       read past, and there is nothing here a residual would be hiding. */
+    const raw: CashComponent[] = [
+      {
+        key: 'collections',
+        label: 'Collections',
+        amount: receipts,
+        lumpy: false,
+        owner: 'Group Treasurer',
+      },
+      {
+        key: 'suppliers',
+        label: 'Supplier settlement',
+        amount: -supplierThisWeek,
+        lumpy: false,
+        owner: 'Group Financial Controller',
+      },
+      {
+        key: 'overheads',
+        label: 'Overheads',
+        amount: -otherPerWeek,
+        lumpy: false,
+        owner: 'Group Financial Controller',
+      },
+      {
+        key: 'capex',
+        label: 'Capital spend',
+        amount: -capexThisWeek,
+        lumpy: false,
+        owner: 'Chief Financial Officer',
+      },
+      {
+        key: 'payroll',
+        label: 'Payroll',
+        amount: -payrollThisWeek,
+        lumpy: true,
+        owner: 'Group Financial Controller',
+      },
+      { key: 'tax', label: 'Tax', amount: -taxThisWeek, lumpy: true, owner: 'Group Tax' },
+      {
+        key: 'interest',
+        label: 'Interest and debt service',
+        amount: -interestThisWeek,
+        lumpy: true,
+        owner: 'Group Treasurer',
+      },
+      {
+        key: 'dividend',
+        label: 'Dividend',
+        amount: -dividendThisWeek,
+        lumpy: true,
+        owner: 'Chief Financial Officer',
+      },
+    ].filter((component) => Math.round(component.amount) !== 0);
+
+    const drift = net - raw.reduce((total, component) => total + Math.round(component.amount), 0);
+    const heaviest = raw.reduce(
+      (worst, component) => (component.amount < worst.amount ? component : worst),
+      raw[0] as CashComponent,
+    );
+    const components = raw.map((component) => ({
+      ...component,
+      amount: Math.round(component.amount) + (component === heaviest ? drift : 0),
+    }));
+
     weeks.push({
       week,
       index,
@@ -210,6 +314,7 @@ export function directForecast(
       net,
       closing,
       belowFloor: closing < MINIMUM_CASH.amountMinor,
+      components,
     });
   });
 
@@ -518,4 +623,96 @@ export function cashSensitivity(ctx: MeasureContext, revenueDelta: number): Cash
       'be collected. Answering with the revenue change alone overstates the cash effect by the whole ' +
       'gross margin.',
   };
+}
+
+// ---------------------------------------------------------------------------
+// Why a week is red
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether a breach is a date or a problem.
+ *
+ * The review asks the surface to *"show whether the problem is timing or structural liquidity"*, and the
+ * two demand different actions: timing is funded, structural is fixed. Getting it wrong in either
+ * direction is expensive — funding a structural hole buys a month, and re-planning around a dividend date
+ * is a quarter of work nobody needed.
+ */
+export type BreachNature =
+  /** A lumpy payment landed, and the balance recovers inside the horizon. Fund the week. */
+  | 'timing'
+  /** The run rate does not cover the run rate. Funding it moves the date, not the problem. */
+  | 'structural';
+
+export interface WeekExplanation {
+  readonly index: number;
+  readonly shortfall: number;
+  readonly nature: BreachNature;
+  /** The component that put the week under, largest first. */
+  readonly drivers: readonly CashComponent[];
+  /** Whether the balance climbs back above the floor before the horizon ends, and when. */
+  readonly recoversAtWeek?: number;
+  /** One sentence, written by code from the components. */
+  readonly statement: string;
+}
+
+/**
+ * Explain every week that closes below the floor.
+ *
+ * The nature test is deliberately about **recovery**, not about which stream is largest. A week can be
+ * pushed under by an ordinary supplier run and recover the following week — that is still timing, and a
+ * test keyed on "was the driver lumpy" would call it structural because supplier settlement runs every
+ * week. What makes a breach structural is that the balance does not come back, whatever caused it.
+ *
+ * The drivers are then the lumpy components, largest first, because those are the ones with a date
+ * somebody chose. Where there are none, the run rate is the driver and the sentence says so.
+ */
+export function explainBreaches(
+  forecast: DirectForecast,
+  floorMinor: number = MINIMUM_CASH.amountMinor,
+): WeekExplanation[] {
+  return forecast.weeks
+    .filter((week) => week.belowFloor)
+    .map((week) => {
+      const later = forecast.weeks.filter((candidate) => candidate.index > week.index);
+      const recovery = later.find((candidate) => !candidate.belowFloor);
+      /* Recovered only if it stays recovered. A balance that bobs above the floor for one week and
+         falls back has not recovered, and calling it timing would send somebody to arrange a bridge
+         loan for the wrong week. */
+      const holds =
+        recovery !== undefined &&
+        later.filter((candidate) => candidate.index >= recovery.index).every((c) => !c.belowFloor);
+
+      const lumpy = week.components
+        .filter((component) => component.lumpy && component.amount < 0)
+        .sort((a, b) => a.amount - b.amount);
+
+      const nature: BreachNature = holds ? 'timing' : 'structural';
+      const shortfall = floorMinor - week.closing;
+
+      const named = lumpy
+        .slice(0, 2)
+        .map((component) => component.label.toLowerCase())
+        .join(' and ');
+
+      /* Two sentences, because one template cannot serve both cases. A week put under by a dated payment
+         names it; a week put under by the run rate has nothing to name, and forcing it through the same
+         template produced "because the ordinary run rate outweighs collections lands in it" — grammar
+         that only appears on the weeks with no lumpy driver, which is the half a demo rarely opens. */
+      const cause =
+        lumpy.length === 0
+          ? 'the ordinary run rate outweighs collections'
+          : `${named} ${lumpy.length > 1 ? 'land' : 'lands'} in it`;
+
+      return {
+        index: week.index,
+        shortfall,
+        nature,
+        drivers: lumpy.length > 0 ? lumpy : week.components.filter((c) => c.amount < 0),
+        ...(holds && recovery !== undefined ? { recoversAtWeek: recovery.index } : {}),
+        statement:
+          nature === 'timing'
+            ? `Week ${week.index} closes under the floor because ${cause}, and the balance is back above the floor by week ${recovery?.index}. This is a week to fund, not a hole to fix.`
+            : `Week ${week.index} closes under the floor and does not recover inside the horizon. ${lumpy.length === 0 ? 'No dated payment explains it' : `${named.charAt(0).toUpperCase()}${named.slice(1)} contributes`}, but the balance does not come back — so this is structural, and funding the week moves the date rather than the problem.`,
+      };
+    });
 }

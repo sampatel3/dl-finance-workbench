@@ -1,7 +1,16 @@
 import { resolveView } from '@demo-kit/shell';
 import { entity, tradingEntities } from '@kestrel/model';
 import { computeMeasure, formatValue } from '@kestrel/measures';
-import { MINIMUM_CASH, cashSensitivity, directForecast, indirectBridge } from '@kestrel/analysis';
+import {
+  MINIMUM_CASH,
+  PAYMENT_TERMS_DAYS,
+  ageingFor,
+  cashSensitivity,
+  directForecast,
+  explainBreaches,
+  fundingPlan,
+  indirectBridge,
+} from '@kestrel/analysis';
 
 import { CashColumns } from '../../../components/CashColumns';
 import { Masthead } from '../../../components/Chrome';
@@ -9,7 +18,7 @@ import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { movement } from '../../../lib/format';
 import type { Params } from '../../../lib/world';
-import { contextForEntity, contextOf, viewOf } from '../../../lib/world';
+import { contextForEntity, contextOf, selectableEntities, viewOf } from '../../../lib/world';
 
 /**
  * Cash — the surface a treasurer reads.
@@ -47,6 +56,20 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
       : forecast.weeks.slice(forecast.breach.index).find((week) => !week.belowFloor);
   const bridge = indirectBridge(ctx);
   const sensitivity = cashSensitivity(ctx, SENSITIVITY);
+
+  /* Why each red week is red, and whether it is a date or a problem. See `explainBreaches`: the test is
+     recovery rather than which stream is largest, because an ordinary supplier run can put a week under
+     and still be timing. */
+  const breaches = explainBreaches(forecast);
+
+  /* Where the money could come from, and whether it arrives before the week needs it. Only the entities
+     this session can read, so a business-unit controller does not get a list of its siblings' balances. */
+  const funding =
+    forecast.breach === undefined
+      ? null
+      : fundingPlan(ctx, forecast.breach.shortfall, forecast.breach.index);
+
+  const ageing = selectableEntities(view.principal).map((e) => ageingFor(ctx, e.id));
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
@@ -93,6 +116,192 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
           </p>
         )}
       </section>
+
+      {breaches.length === 0 ? null : (
+        <section
+          className="section focusable"
+          id="section-why-red"
+          aria-label="Why the red weeks are red"
+        >
+          <div className="section-head">
+            <h2 className="section-title">Why cash goes red, and whether it matters</h2>
+            <span className="section-note">
+              Each week below the floor, with what put it there and whether the balance comes back.
+              Timing is funded; structural is fixed — and the two demand different work, so the
+              product decides which it is rather than colouring both amber.
+            </span>
+          </div>
+          {/* A summary first, then the streams behind each week on demand.
+              Five red weeks each with a full table is a wall, and a reader looking for "which week and
+              why" has to read four tables to find the one they came for. The summary answers that in one
+              pass; the breakdown is one click away and stays available for the week they open. */}
+          <div className="pane">
+            <table className="grid">
+              <thead>
+                <tr>
+                  <th scope="col">Week</th>
+                  <th scope="col" className="num">
+                    Closes at
+                  </th>
+                  <th scope="col" className="num">
+                    Under the floor
+                  </th>
+                  <th scope="col">Nature</th>
+                  <th scope="col">What put it there</th>
+                </tr>
+              </thead>
+              <tbody>
+                {breaches.map((breach) => (
+                  <tr
+                    key={breach.index}
+                    className={breach.nature === 'structural' ? 'row-warn' : ''}
+                  >
+                    <th scope="row">Week {breach.index}</th>
+                    <td className="num">
+                      {formatValue(forecast.weeks[breach.index - 1]?.closing ?? null, 'currency')}
+                    </td>
+                    <td className="num neg">{formatValue(breach.shortfall, 'currency')}</td>
+                    <td className={breach.nature === 'timing' ? '' : 'neg'}>
+                      {breach.nature === 'timing'
+                        ? `timing — back by week ${breach.recoversAtWeek}`
+                        : 'structural'}
+                    </td>
+                    <td>
+                      {breach.drivers[0]?.label ?? 'the run rate'}
+                      {breach.drivers[0] === undefined ? '' : ` · ${breach.drivers[0].owner}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="chart-note">
+              <strong>Timing</strong> means the balance recovers inside the horizon, so the week is
+              funded. <strong>Structural</strong> means it does not, and funding it moves the date
+              rather than the problem. The test is recovery, not which payment is largest — an
+              ordinary supplier run can put a week under and the balance come straight back.
+            </p>
+          </div>
+
+          {breaches.map((breach) => (
+            <details className="pane evidence" key={breach.index}>
+              <summary>
+                Week {breach.index} · {formatValue(breach.shortfall, 'currency')} under the floor ·{' '}
+                what it is made of
+              </summary>
+              <p className="narration">
+                <strong>{breach.statement}</strong>
+              </p>
+              <table className="grid">
+                <thead>
+                  <tr>
+                    <th scope="col">Stream</th>
+                    <th scope="col" className="num">
+                      Amount
+                    </th>
+                    <th scope="col">Runs</th>
+                    <th scope="col">Owner</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(forecast.weeks[breach.index - 1]?.components ?? []).map((component) => (
+                    <tr key={component.key} className={component.lumpy ? 'row-warn' : ''}>
+                      <th scope="row">{component.label}</th>
+                      <td className={`num ${component.amount < 0 ? 'neg' : 'pos'}`}>
+                        {movement(component.amount, 'currency')}
+                      </td>
+                      <td>{component.lumpy ? 'this week only' : 'every week'}</td>
+                      <td>{component.owner}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="chart-note">
+                The streams sum to the week&rsquo;s net movement exactly. A stream marked{' '}
+                <em>this week only</em> is an event with a date somebody chose; the rest is the run
+                rate, and a breach the run rate explains is not one a transfer solves.
+              </p>
+            </details>
+          ))}
+        </section>
+      )}
+
+      {funding === null ? null : (
+        <section
+          className="section focusable"
+          id="section-funding"
+          aria-label="Intercompany funding"
+        >
+          <div className="section-head">
+            <h2 className="section-title">Can we move cash in time, and who approves it?</h2>
+            <span className="section-note">
+              Availability is the balance less each entity&rsquo;s operating buffer — an entity
+              cannot send what it needs for its own payroll. What decides is lead time: an approval,
+              a banking cut-off and a currency conversion take as long as they take, so what the
+              panel reports is the <em>decision date</em> — the week each request has to be raised
+              by. A column that only said &ldquo;yes, it fits&rdquo; would say yes to everything
+              eight weeks out and be worth nothing.
+            </span>
+          </div>
+          <div className="pane">
+            <p className={`narration ${funding.covered ? '' : 'warn-note'}`}>
+              <strong>{funding.statement}</strong>
+            </p>
+            <table className="grid">
+              <thead>
+                <tr>
+                  <th scope="col">Entity</th>
+                  <th scope="col" className="num">
+                    Cash
+                  </th>
+                  <th scope="col" className="num">
+                    Buffer
+                  </th>
+                  <th scope="col" className="num">
+                    Could send
+                  </th>
+                  <th scope="col" className="num">
+                    Notice
+                  </th>
+                  <th scope="col" className="num">
+                    Request by
+                  </th>
+                  <th scope="col">Approval and constraints</th>
+                </tr>
+              </thead>
+              <tbody>
+                {funding.options.map((option) => (
+                  <tr key={option.entityId} className={option.arrivesInTime ? '' : 'row-warn'}>
+                    <th scope="row">{option.entityName}</th>
+                    <td className="num">{formatValue(option.cash, 'currency')}</td>
+                    <td className="num muted-cell">
+                      {formatValue(option.bufferMinor, 'currency')}
+                    </td>
+                    <td className="num strong-cell">{formatValue(option.available, 'currency')}</td>
+                    <td className="num">{option.leadTimeDays}d</td>
+                    <td className={`num ${option.startByWeek === null ? 'neg' : ''}`}>
+                      {option.blocked !== undefined
+                        ? 'blocked'
+                        : option.arrivesInTime
+                          ? `week ${option.startByWeek}`
+                          : 'too slow'}
+                    </td>
+                    <td>
+                      {option.approver}. {option.blocked ?? option.note}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="chart-note">
+              Week {funding.week} is {funding.daysAvailable} working days out.{' '}
+              {formatValue(funding.reachableMinor, 'currency')} can arrive in time against a
+              shortfall of {formatValue(funding.needMinor, 'currency')}. Constraints are modelled —
+              this demo moves no money and dials no bank — but the shape is the one that decides:
+              approver, notice period, cut-off, and a reason a transfer may be refused outright.
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="section focusable" id="section-weeks" aria-label="Week by week">
         <div className="section-head">
@@ -221,6 +430,66 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
         </div>
       </section>
 
+      <section className="section focusable" id="section-ageing" aria-label="Receivables ageing">
+        <div className="section-head">
+          <h2 className="section-title">What is owed, and how long it has been owed</h2>
+          <span className="section-note">
+            Collections are the largest single receipt line in the forecast above, so the state of
+            the book is what the forecast rests on. Terms are {PAYMENT_TERMS_DAYS} days; anything
+            past that is money somebody can be asked for today.
+          </span>
+        </div>
+        <div className="pane pane-scroll">
+          <table className="grid">
+            <thead>
+              <tr>
+                <th scope="col">Entity</th>
+                <th scope="col" className="num">
+                  Receivables
+                </th>
+                <th scope="col" className="num">
+                  DSO
+                </th>
+                {(ageing[0]?.buckets ?? []).map((bucket) => (
+                  <th scope="col" className="num" key={bucket.label}>
+                    {bucket.label}
+                  </th>
+                ))}
+                <th scope="col" className="num">
+                  Overdue
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {ageing.map((book) => (
+                <tr key={book.entityId} className={book.overdueShare > 0.5 ? 'row-warn' : ''}>
+                  <th scope="row">{book.entityName}</th>
+                  <td className="num">{formatValue(book.receivables, 'currency')}</td>
+                  <td className="num">{formatValue(book.dso, 'days')}</td>
+                  {book.buckets.map((bucket) => (
+                    <td className={`num ${bucket.overdue ? 'muted-cell' : ''}`} key={bucket.label}>
+                      {formatValue(bucket.amount, 'currency')}
+                    </td>
+                  ))}
+                  <td className={`num ${book.overdueShare > 0.5 ? 'neg' : ''}`}>
+                    {formatValue(book.overdueMinor, 'currency')} ·{' '}
+                    {formatValue(book.overdueShare, 'percent')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="chart-note">
+            The buckets are <strong>derived</strong> from each book&rsquo;s balance and its
+            collection period, and they sum to the receivables figure exactly — so the ageing ties
+            to the balance sheet rather than sitting beside it. The shape is modelled: a book
+            collecting at 77 days carries more of itself past terms than one at 60, and the profile
+            moves with the period. The totals are governed; the distribution is not, and that is
+            said here rather than implied.
+          </p>
+        </div>
+      </section>
+
       <section className="section focusable" id="section-wc" aria-label="Working capital by entity">
         <div className="section-head">
           <h2 className="section-title">Which entity is holding the cash</h2>
@@ -252,25 +521,25 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
               {tradingEntities()
                 .filter((e) => view.permission.entityIds.includes(e.id))
                 .map((e) => {
-                const inner = contextForEntity(view, e.id);
-                return (
-                  <tr key={e.id}>
-                    <th scope="row">{entity(e.id).name}</th>
-                    <td className="num">
-                      {formatValue(computeMeasure('dso', inner).value, 'days')}
-                    </td>
-                    <td className="num">
-                      {formatValue(computeMeasure('dpo', inner).value, 'days')}
-                    </td>
-                    <td className="num">
-                      {formatValue(computeMeasure('dio', inner).value, 'days')}
-                    </td>
-                    <td className="num">
-                      {formatValue(computeMeasure('working_capital', inner).value, 'currency')}
-                    </td>
-                  </tr>
-                );
-              })}
+                  const inner = contextForEntity(view, e.id);
+                  return (
+                    <tr key={e.id}>
+                      <th scope="row">{entity(e.id).name}</th>
+                      <td className="num">
+                        {formatValue(computeMeasure('dso', inner).value, 'days')}
+                      </td>
+                      <td className="num">
+                        {formatValue(computeMeasure('dpo', inner).value, 'days')}
+                      </td>
+                      <td className="num">
+                        {formatValue(computeMeasure('dio', inner).value, 'days')}
+                      </td>
+                      <td className="num">
+                        {formatValue(computeMeasure('working_capital', inner).value, 'currency')}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
