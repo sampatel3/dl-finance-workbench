@@ -6,7 +6,7 @@ import { Masthead } from '../../../components/Chrome';
 import { FocusOnLoad } from '../../../components/FocusOnLoad';
 import { Selectors } from '../../../components/Selectors';
 import { directionClass, movement } from '../../../lib/format';
-import { kpisFor, type PriorPeriodDirection } from '../../../lib/kpis';
+import { HORIZON_LABELS, kpisFor, type PriorPeriodDirection } from '../../../lib/kpis';
 import type { Params } from '../../../lib/world';
 import { contextOf, viewOf } from '../../../lib/world';
 
@@ -57,8 +57,18 @@ export default async function Kpis({ searchParams }: { searchParams: Promise<Par
           aria-label={`${group.label} KPIs`}
         >
           <div className="section-head">
-            <h2 className="section-title">{group.label}</h2>
-            <span className="section-note">{group.description}</span>
+            <h2 className="section-title">
+              {group.label}
+              {/* Leading, concurrent or lagging — said on the group rather than left to be inferred.
+                  A page that mixes the two without saying invites them to be read alike, and the
+                  whole argument for non-financial indicators is that they are not alike. */}
+              <span className={`horizon-mark horizon-${group.horizon}`}>
+                {HORIZON_LABELS[group.horizon]}
+              </span>
+            </h2>
+            <span className="section-note">
+              {group.description} {group.horizonNote}
+            </span>
           </div>
           <div className="pane pane-scroll">
             <table className="grid">

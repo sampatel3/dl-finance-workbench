@@ -12,16 +12,49 @@ describe('the governed KPI projection', () => {
   const rows = dashboard.groups.flatMap((group) => group.rows);
   const row = (id: string) => rows.find((candidate) => candidate.measureId === id)!;
 
-  it('has the three finance-native groups and only their declared measures', () => {
+  it('has the finance-native groups and the non-financial ones, in reading order', () => {
+    /* Six now. The three the review calls for — customer, people, quality — sit after the financial ones
+       rather than before them, because a reader arrives asking what happened and stays to ask why. */
     expect(dashboard.groups.map((group) => group.id)).toEqual([
       'financial',
       'working_capital',
       'operational',
+      'customer',
+      'people',
+      'quality',
     ]);
     for (const group of dashboard.groups) {
       expect(group.rows.map((candidate) => candidate.measureId)).toEqual(
         KPI_GROUPS.find((spec) => spec.id === group.id)?.measureIds,
       );
+    }
+  });
+
+  it('and says of every group whether it leads or lags the financial result', () => {
+    /* The review's whole argument for non-financial KPIs — *"they often explain future financial
+       performance earlier"* — depends on a reader knowing which is which. A page that mixes them without
+       saying invites the two to be read alike, and they are not alike.
+
+       Asserted as a claim the product makes out loud rather than derives: whether churn leads revenue is
+       a statement about this business, not arithmetic. */
+    for (const spec of KPI_GROUPS) {
+      expect(['leading', 'concurrent', 'lagging']).toContain(spec.horizon);
+      expect(spec.horizonNote, `${spec.id} claims a horizon with no reason`).not.toBe('');
+    }
+    // And the mix is real: a page of all-leading indicators is one with no result on it.
+    const horizons = new Set(KPI_GROUPS.map((group) => group.horizon));
+    expect(horizons.size).toBeGreaterThan(1);
+    expect(horizons).toContain('leading');
+    expect(horizons).toContain('lagging');
+  });
+
+  it('and every declared measure resolves, because a curated list goes stale silently', () => {
+    /* The failure a hand-written list produces: a measure id that no longer exists throws on the one
+       click that selects it, and nothing before that click notices. */
+    for (const spec of KPI_GROUPS) {
+      for (const measureId of spec.measureIds) {
+        expect(() => computeMeasure(measureId, ctx), `${measureId} does not resolve`).not.toThrow();
+      }
     }
   });
 

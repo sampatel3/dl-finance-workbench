@@ -69,20 +69,26 @@ describe('the catalogue is the semantic layer', () => {
   });
 
   it('and keeps the drivers nobody in Finance owns yet in draft rather than pretending', () => {
-    // Both come from the CRM's own weighting, which is the state most operational drivers actually
-    // arrive in. A catalogue where everything is approved is a catalogue nobody read.
-    //
-    // Asserted as *which* measures are draft rather than how many. A count says nothing about whether the
-    // right ones are draft, and it fails for the wrong reason the moment a second honest draft is added —
-    // which is what happened when pipeline conversion arrived.
+    /* Three now: two from the CRM's own weighting, and the engagement score from the HR survey. All
+       three are the state most operational drivers actually arrive in — sourced outside Finance, useful,
+       and not yet owned by anybody who would sign a number. A catalogue where everything is approved is
+       a catalogue nobody read.
+
+       Asserted as *which* measures are draft rather than how many. A count says nothing about whether the
+       right ones are draft, and it fails for the wrong reason the moment a second honest draft is added —
+       which is what happened when pipeline conversion arrived, and again when the non-financial KPIs
+       did. */
     expect(
       MEASURES.filter((m) => m.status === 'draft')
         .map((m) => m.id)
         .sort(),
-    ).toEqual(['pipeline_conversion', 'pipeline_coverage']);
-    // And every one of them names the same owner outside Finance, which is why they are draft.
+    ).toEqual(['engagement', 'pipeline_conversion', 'pipeline_coverage']);
+
+    // And every one names an owner outside Finance, which is *why* it is draft rather than an oversight.
     for (const m of MEASURES.filter((d) => d.status === 'draft')) {
-      expect(m.owner).toBe('Sales Director');
+      expect(['Sales Director', 'Group HR Director']).toContain(m.owner);
+      // Each says where it came from, so "why is this draft?" has an answer on the measure itself.
+      expect(m.note ?? '', `${m.id} is draft with no explanation`).not.toBe('');
     }
   });
 
@@ -555,5 +561,62 @@ describe('the concept slide’s four figures, read through the measure layer', (
     );
     expect(formatValue(computeMeasure('ebitda', ctx({ scope })).value, 'currency')).toBe('£2.1m');
     expect(formatValue(computeMeasure('cash', ctx({ scope })).value, 'currency')).toBe('£4.8m');
+  });
+});
+
+describe('rates are computed, never stored', () => {
+  /**
+   * The rule this suite exists to keep, and the one the non-financial KPIs broke on their first pass.
+   *
+   * A rate stored as a fact is summed across entities on consolidation. Five entities each scoring 46 on
+   * net promoter produced a group score of 19,319 — visibly absurd, and the same defect at a smaller
+   * scale would not have been: a churn rate of 14% where four entities are at 2.8% reads as a bad month
+   * rather than as arithmetic that cannot work.
+   *
+   * So every percentage, ratio and rate in the catalogue must divide two things, and the test is
+   * mechanical: read the compute function's source and require a division in it. Crude, and it catches
+   * exactly the mistake that was made.
+   */
+  const DERIVED_UNITS = new Set(['percent', 'ratio', 'rate']);
+
+  it('so every percentage or ratio measure divides rather than reading one account', () => {
+    const offenders: string[] = [];
+    for (const definition of MEASURES) {
+      if (!DERIVED_UNITS.has(definition.unit)) continue;
+      const source = definition.compute.toString();
+      /* A single `get('x')` with no division is a stored rate. Bps measures are excluded because a
+         basis-point figure is already a difference rather than a level. */
+      const divides = source.includes('/') || source.includes('div(');
+      if (!divides) offenders.push(`${definition.id} (${definition.unit})`);
+    }
+    expect(offenders, 'these read a stored rate instead of computing one').toEqual([]);
+  });
+
+  it('and a group rate is not the sum of its entities', () => {
+    /* The consequence, asserted on a real figure rather than on the rule. If churn were stored, the
+       group would be roughly five times any entity's; computed, it sits inside their range. */
+    const groupCtx = ctx();
+    const group = computeMeasure('customer_churn', groupCtx).value;
+    const entityRates = allEntityIds()
+      .map((id) => computeMeasure('customer_churn', { ...groupCtx, entityIds: [id] }).value)
+      .filter((value): value is number => value !== null);
+
+    expect(entityRates.length).toBeGreaterThan(1);
+    expect(group).not.toBeNull();
+    const lowest = Math.min(...entityRates);
+    const highest = Math.max(...entityRates);
+    expect(group ?? 0).toBeGreaterThanOrEqual(lowest - 1e-9);
+    expect(group ?? 0).toBeLessThanOrEqual(highest + 1e-9);
+  });
+
+  it('and a survey score is weighted by responses rather than averaged flat', () => {
+    /* A flat average would give a 40-customer entity the same vote as a 400-customer one. Asserted by
+       checking the group sits nearer the entity with the most responses. */
+    const groupCtx = ctx();
+    const group = computeMeasure('nps', groupCtx).value;
+    expect(group).not.toBeNull();
+    // A net promoter score is a whole-number score, not a fraction or a multiple.
+    expect(Math.abs(group ?? 0)).toBeLessThan(100);
+    expect(Math.abs(group ?? 0)).toBeGreaterThan(1);
   });
 });

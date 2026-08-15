@@ -433,6 +433,219 @@ export const MEASURES: readonly MeasureDefinition[] = [
     trend: 'sum',
     compute: (get) => get('capex'),
   },
+  /* ---- Non-financial indicators.
+     A count is stored; a *rate* is what a reader asks for. On-time delivery is 94%, not 47 deliveries,
+     and holding it as a rate in the store would be the mistake the pipeline conversion measure exists to
+     avoid — a rate cannot be summed across entities, so a group figure would be the sum of five
+     percentages. Numerator and denominator are the facts; the ratio is the measure. */
+  {
+    id: 'nps',
+    label: 'Net promoter score',
+    // A count, not a ratio: an NPS is conventionally a whole number between −100 and +100.
+    unit: 'count',
+    polarity: 'higher_is_better',
+    formula: 'net promoter score, averaged over the period',
+    owner: 'Commercial Director',
+    status: 'approved',
+    trend: 'last',
+    note: 'A survey score rather than a ledger figure; the source is the customer platform. Rolled up weighted by responses, so a 400-customer entity does not get the same vote as a 40-customer one.',
+    compute: (get) => {
+      const points = get('nps_points');
+      const responses = get('survey_responses');
+      return points === null || responses === null || responses === 0 ? null : points / responses;
+    },
+  },
+  {
+    id: 'customer_churn',
+    label: 'Customer churn',
+    unit: 'percent',
+    polarity: 'lower_is_better',
+    formula: 'customers lost ÷ customers at the start of the period',
+    owner: 'Commercial Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const lost = get('customers_lost');
+      const opening = get('customers_opening');
+      return lost === null || opening === null || opening === 0 ? null : lost / opening;
+    },
+  },
+  {
+    id: 'complaints',
+    label: 'Complaints raised',
+    unit: 'count',
+    polarity: 'lower_is_better',
+    formula: 'complaints logged in the period',
+    owner: 'Services Director',
+    status: 'approved',
+    trend: 'sum',
+    compute: (get) => get('complaints'),
+  },
+  {
+    id: 'complaint_resolution',
+    label: 'Complaint resolution',
+    unit: 'days',
+    polarity: 'lower_is_better',
+    formula: 'total days to resolve ÷ complaints raised',
+    owner: 'Services Director',
+    status: 'approved',
+    trend: 'last',
+    note: 'Total days over complaints, not a mean of entity means — the average of five averages is not the group average.',
+    compute: (get) => {
+      const days = get('complaint_days_total');
+      const complaints = get('complaints');
+      return days === null || complaints === null || complaints === 0 ? null : days / complaints;
+    },
+  },
+  {
+    id: 'sla_performance',
+    label: 'Service level met',
+    unit: 'percent',
+    polarity: 'higher_is_better',
+    formula: 'deliveries meeting the service level ÷ deliveries due',
+    owner: 'Services Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const met = get('sla_met');
+      const due = get('deliveries');
+      return met === null || due === null || due === 0 ? null : met / due;
+    },
+  },
+  {
+    id: 'staff_turnover',
+    label: 'Staff turnover',
+    unit: 'percent',
+    polarity: 'lower_is_better',
+    formula: 'leavers ÷ headcount, in the period',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const leavers = get('leavers');
+      const heads = get('headcount');
+      return leavers === null || heads === null || heads === 0 ? null : leavers / heads;
+    },
+  },
+  {
+    id: 'regretted_attrition',
+    label: 'Regretted attrition',
+    unit: 'percent',
+    polarity: 'lower_is_better',
+    formula: 'regretted leavers ÷ all leavers',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'last',
+    note: 'The share of turnover the business did not choose. Total turnover alone hides it.',
+    compute: (get) => {
+      const regretted = get('regretted_leavers');
+      const leavers = get('leavers');
+      return regretted === null || leavers === null || leavers === 0 ? null : regretted / leavers;
+    },
+  },
+  {
+    id: 'absence_rate',
+    label: 'Absence rate',
+    unit: 'percent',
+    polarity: 'lower_is_better',
+    formula: 'days lost ÷ (headcount × working days)',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const days = get('absence_days');
+      const heads = get('headcount');
+      // Twenty-one working days is the convention this measure states rather than assumes.
+      return days === null || heads === null || heads === 0 ? null : days / (heads * 21);
+    },
+  },
+  {
+    id: 'engagement',
+    label: 'Engagement score',
+    unit: 'percent',
+    polarity: 'higher_is_better',
+    formula: 'engagement points ÷ survey responses',
+    owner: 'Group HR Director',
+    status: 'draft',
+    trend: 'last',
+    note: 'Survey-sourced and not yet owned by Finance, which is the state most people metrics arrive in. Weighted by responses like the promoter score.',
+    compute: (get) => {
+      const points = get('engagement_points');
+      const responses = get('survey_responses');
+      return points === null || responses === null || responses === 0 ? null : points / responses;
+    },
+  },
+  {
+    id: 'project_delivery',
+    label: 'Projects on time and on budget',
+    unit: 'percent',
+    polarity: 'higher_is_better',
+    formula: 'projects delivered on time and on budget ÷ projects delivered',
+    owner: 'Projects Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const onTime = get('projects_on_time');
+      const delivered = get('projects_delivered');
+      return onTime === null || delivered === null || delivered === 0 ? null : onTime / delivered;
+    },
+  },
+  {
+    id: 'repeat_business',
+    label: 'Repeat business',
+    unit: 'percent',
+    polarity: 'higher_is_better',
+    formula: 'revenue from repeat customers ÷ revenue',
+    owner: 'Commercial Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const repeat = get('repeat_revenue');
+      const revenue = get('revenue');
+      return repeat === null || revenue === null || revenue === 0 ? null : repeat / revenue;
+    },
+  },
+  {
+    id: 'defect_rate',
+    label: 'Defects and rework',
+    unit: 'percent',
+    polarity: 'lower_is_better',
+    formula: 'defects ÷ deliveries due',
+    owner: 'Operations Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const defects = get('defects');
+      const due = get('deliveries');
+      return defects === null || due === null || due === 0 ? null : defects / due;
+    },
+  },
+  {
+    id: 'safety_incidents',
+    label: 'Safety incidents',
+    unit: 'count',
+    polarity: 'lower_is_better',
+    formula: 'reportable incidents in the period',
+    owner: 'Operations Director',
+    status: 'approved',
+    trend: 'sum',
+    compute: (get) => get('safety_incidents'),
+  },
+  {
+    id: 'uptime',
+    label: 'System availability',
+    unit: 'percent',
+    polarity: 'higher_is_better',
+    formula: 'minutes available ÷ minutes in the period',
+    owner: 'IT Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const up = get('uptime_minutes');
+      const total = get('service_minutes');
+      return up === null || total === null || total === 0 ? null : up / total;
+    },
+  },
   {
     id: 'working_capital',
     label: 'Working capital',
@@ -597,10 +810,12 @@ export const MEASURES: readonly MeasureDefinition[] = [
     polarity: 'higher_is_better',
     formula: 'weighted pipeline ÷ revenue for the period',
     owner: 'Sales Director',
-    // Draft on purpose: the weighting comes from the CRM and nobody in Finance owns it yet, which is
-    // exactly the state most operational drivers arrive in.
     status: 'draft',
     trend: 'last',
+    /* The reason lives in `note` rather than in a comment, because the comment is for a reader of this
+       file and the draft chip is rendered to a reader of the product. "Why is this draft?" was
+       answerable in the source and not on screen — which is the half that matters. */
+    note: 'The weighting comes from the CRM and nobody in Finance owns it yet, which is the state most operational drivers arrive in.',
     compute: (get) => div(get('pipeline_weighted'), revenue(get)),
   },
   {
@@ -610,10 +825,11 @@ export const MEASURES: readonly MeasureDefinition[] = [
     polarity: 'higher_is_better',
     formula: 'pipeline converted to order ÷ weighted pipeline',
     owner: 'Sales Director',
-    // Draft for the same reason coverage is, and it is the one that raises a board item — so the caveat
-    // travels on the finding rather than living only here.
     status: 'draft',
     trend: 'last',
+    /* Draft for the same reason coverage is, and this is the one that raises a board item — so the
+       caveat also travels on the finding rather than living only here. */
+    note: 'Sourced from the CRM and not yet owned by Finance. It raises a board item, so the caveat travels with the finding as well as with the definition.',
     compute: (get) => div(get('pipeline_converted'), get('pipeline_weighted')),
   },
 ];

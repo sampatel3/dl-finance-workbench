@@ -317,6 +317,181 @@ export const ACCOUNTS = [
     polarity: 'neutral',
     nonMonetary: true,
   },
+  /* ---- Non-financial indicators.
+     The review's argument for them is the one worth recording: *"non-financial indicators often explain
+     future financial performance earlier."* They are held as facts in the same store as revenue, not in a
+     side table, because the moment a KPI lives somewhere else it stops being comparable, sliceable and
+     governed — and an NPS score nobody can attribute to an entity is a number on a slide.
+
+     Every one is `nonMonetary`, so consolidation never translates it: a score of 41 is 41 in every
+     currency, and the group's is a weighted outcome rather than a sum. `avg_balance` for the rates and
+     scores, because averaging a satisfaction score over a quarter is the only reading that means
+     anything; `flow` for the counts, which do add up. */
+  /* ---- Non-financial indicators.
+     The review's argument for them is the one worth recording: *"non-financial indicators often explain
+     future financial performance earlier."* They are held as facts in the same store as revenue, not in a
+     side table, because the moment a KPI lives somewhere else it stops being comparable, sliceable and
+     governed — and an NPS score nobody can attribute to an entity is a number on a slide.
+
+     **Every rate is held as its numerator and its denominator, never as the rate.** This is the rule
+     `pipeline_conversion` exists to demonstrate and the one this file got wrong first time: a score
+     stored directly was summed across five entities, and the group's net promoter score rendered as
+     19,319. A rate cannot be summed. So NPS is points and responses, churn is customers lost and the
+     opening base, resolution is total days and complaints — and the ratio is a measure.
+
+     Every one is `nonMonetary`, so consolidation never translates it: a response is a response in every
+     currency. */
+  {
+    code: 'survey_responses',
+    label: 'Survey responses',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'nps_points',
+    label: 'Net promoter points',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'engagement_points',
+    label: 'Engagement points',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'customers_opening',
+    label: 'Customers at the start of the period',
+    basis: 'balance',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'customers_lost',
+    label: 'Customers lost',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'complaints',
+    label: 'Complaints raised',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'complaint_days_total',
+    label: 'Total days to resolve complaints',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'sla_met',
+    label: 'Deliveries meeting service level',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'deliveries',
+    label: 'Deliveries due',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'leavers',
+    label: 'Leavers',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'regretted_leavers',
+    label: 'Regretted leavers',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'absence_days',
+    label: 'Days lost to absence',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'projects_on_time',
+    label: 'Projects delivered on time and on budget',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'projects_delivered',
+    label: 'Projects delivered',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'repeat_revenue',
+    label: 'Revenue from repeat customers',
+    basis: 'flow',
+    statement: 'pl',
+    polarity: 'higher_is_better',
+  },
+  {
+    code: 'defects',
+    label: 'Quality defects and rework',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'safety_incidents',
+    label: 'Safety incidents',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'uptime_minutes',
+    label: 'Minutes available',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
+    code: 'service_minutes',
+    label: 'Minutes in the period',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
   {
     code: 'chargeable_hours',
     label: 'Chargeable hours',

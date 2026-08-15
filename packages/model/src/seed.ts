@@ -1762,6 +1762,128 @@ function generateEntity(
           (1 + noise(`${seed}|${s.id}|${month}|conv`) * 0.012),
       );
     }
+    /* ---- Non-financial indicators.
+       Seeded from the same drivers as the financial result rather than independently, because that is
+       the claim the review is making: *"non-financial indicators often explain future financial
+       performance earlier."* An NPS series drawn from its own noise cannot explain anything — it is
+       decoration that happens to sit on a finance page.
+
+       So churn tracks satisfaction, complaints track delivery, and delivery tracks the subcontract mix:
+       an entity leaning harder on bought-in labour misses more service levels, raises more complaints and
+       loses more customers, a quarter or two before the revenue line notices. That is a relationship a
+       reader can go and check, and it is the reason these are facts in the store rather than a table.
+
+       Every figure is scaled to minor units by `emit`, counts included — so a score of 41.2 is stored as
+       4120 and read back through a measure that divides. See finding 23: a ratio that skips that step
+       prints two decimal places out. */
+    const subcontractLean =
+      pl.subcontractHours === 0 || pl.chargeableHours === 0
+        ? 0
+        : pl.subcontractHours / (pl.chargeableHours + pl.subcontractHours);
+    /* Zero when nothing is bought in, rising as the mix leans on it. Bounded so a services entity with a
+       genuinely high subcontract share does not read as a business in collapse. */
+    const strain = Math.min(0.4, subcontractLean) * (healthy ? 0.25 : 1);
+
+    /* Survey-sourced figures as points and responses, never as the score.
+       A score emitted directly is summed across entities on consolidation, and the group's net promoter
+       score renders as 19,319 — which is what happened. Points over responses is respondent-weighted,
+       which is also the only defensible way to roll an NPS up: a 400-customer entity and a 40-customer
+       one do not get an equal vote. */
+    const responses = Math.max(12, Math.round(pl.headcount * 0.9));
+    emit(ctx, 'survey_responses', month, responses, { quantity: responses });
+
+    const npsScore = 46 - strain * 38;
+    emit(
+      ctx,
+      'nps_points',
+      month,
+      npsScore * responses * (1 + noise(`${seed}|${s.id}|${month}|nps`) * 0.05),
+    );
+    const engagementScore = 0.76 - strain * 0.24;
+    emit(
+      ctx,
+      'engagement_points',
+      month,
+      engagementScore * responses * (1 + noise(`${seed}|${s.id}|${month}|eng`) * 0.03),
+    );
+
+    /* Churn as customers lost over the opening base. The base is a balance and the losses are a flow,
+       which is also what makes the ratio correct over a quarter rather than only over a month. */
+    const customers = Math.max(30, Math.round(pl.revenue / 210_000));
+    emit(ctx, 'customers_opening', month, customers, { quantity: customers });
+    const lost = Math.max(
+      0,
+      Math.round(
+        customers * (0.028 + strain * 0.05) * (1 + noise(`${seed}|${s.id}|${month}|churn`) * 0.09),
+      ),
+    );
+    emit(ctx, 'customers_lost', month, lost, { quantity: lost });
+
+    const deliveries = Math.max(20, Math.round(pl.revenue / 55_000));
+    emit(ctx, 'deliveries', month, deliveries, { quantity: deliveries });
+    const slaRate = 0.978 - strain * 0.16;
+    const slaMet = Math.round(
+      deliveries * Math.min(1, slaRate * (1 + noise(`${seed}|${s.id}|${month}|sla`) * 0.012)),
+    );
+    emit(ctx, 'sla_met', month, slaMet, { quantity: slaMet });
+
+    const complaints = Math.max(0, Math.round((deliveries - slaMet) * 0.65));
+    emit(ctx, 'complaints', month, complaints, { quantity: complaints });
+    // Total days, not the mean: a mean of means across entities is not the group's mean.
+    const resolutionDays = (4.2 + strain * 9) * (1 + noise(`${seed}|${s.id}|${month}|cdays`) * 0.06);
+    emit(ctx, 'complaint_days_total', month, complaints * resolutionDays);
+
+    /* People. Turnover follows the same strain — a team covering demand with contractors is a team under
+       pressure — and regretted leavers are a share of it rather than a separate series, because the
+       distinction a CFO cares about is how much of the turnover was the business's choice. */
+    const leavers = Math.max(
+      0,
+      Math.round(
+        pl.headcount *
+          (0.011 + strain * 0.016) *
+          (1 + noise(`${seed}|${s.id}|${month}|leavers`) * 0.18),
+      ),
+    );
+    emit(ctx, 'leavers', month, leavers, { quantity: leavers });
+    const regretted = Math.round(leavers * (0.42 + strain * 0.3));
+    emit(ctx, 'regretted_leavers', month, regretted, { quantity: regretted });
+    const absence = Math.round(
+      pl.headcount * (0.34 + strain * 0.5) * (1 + noise(`${seed}|${s.id}|${month}|abs`) * 0.14),
+    );
+    emit(ctx, 'absence_days', month, absence, { quantity: absence });
+
+    /* Delivery and quality. Projects only where the entity sells them, so a manufacturing business does
+       not report a project on-time rate it has no projects for — a KPI reported at every entity whether
+       or not it applies is a KPI nobody trusts at any of them. */
+    if (entity(s.id).division === 'services') {
+      const delivered = Math.max(1, Math.round(deliveries / 9));
+      emit(ctx, 'projects_delivered', month, delivered, { quantity: delivered });
+      const onTime = Math.round(delivered * Math.min(1, 0.91 - strain * 0.34));
+      emit(ctx, 'projects_on_time', month, onTime, { quantity: onTime });
+    }
+    const defects = Math.max(
+      0,
+      Math.round(
+        deliveries * (0.014 + strain * 0.03) * (1 + noise(`${seed}|${s.id}|${month}|def`) * 0.2),
+      ),
+    );
+    emit(ctx, 'defects', month, defects, { quantity: defects });
+    const incidents =
+      entity(s.id).division === 'products' && index % 5 === 2 ? 1 : index % 11 === 4 ? 1 : 0;
+    emit(ctx, 'safety_incidents', month, incidents, { quantity: incidents });
+
+    // Availability as minutes up over minutes in the period, so the group's is weighted by service size.
+    const serviceMinutes = daysInMonth(month) * 24 * 60;
+    emit(ctx, 'service_minutes', month, serviceMinutes, { quantity: serviceMinutes });
+    emit(
+      ctx,
+      'uptime_minutes',
+      month,
+      serviceMinutes * (0.9982 - strain * 0.004) * (1 + noise(`${seed}|${s.id}|${month}|up`) * 0.0004),
+    );
+
+    emit(ctx, 'repeat_revenue', month, pl.revenue * (0.71 - strain * 0.12));
+
     emit(ctx, 'capex', month, s.monthlyCapex * (1 + 0.0018) ** (index - ANCHOR_INDEX));
     emit(ctx, 'dividends', month, pl.netIncome > 0 ? pl.netIncome * s.dividendRate : 0);
     emit(ctx, 'net_borrowing', month, borrowingDraw(s, month, index));

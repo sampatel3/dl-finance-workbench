@@ -1321,3 +1321,16 @@ a:hover { opacity: 0.72; }
   font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
 }
 .story-basis dd { margin: 2px 0 0; font-family: var(--ff-mono); font-size: 12px; }
+
+/* Whether a KPI group leads or lags. Only the leading groups take the accent — they are the ones a
+   reader should look at first, and marking all three equally would say nothing. */
+.horizon-mark {
+  margin-left: 10px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--faint);
+}
+.horizon-leading { color: var(--accent); }
