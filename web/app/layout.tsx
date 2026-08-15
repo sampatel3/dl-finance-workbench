@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
-import { SKIN_COOKIE } from '@demo-kit/shell';
+import {
+  SCHEME_COOKIE,
+  SKIN_COOKIE,
+  STYLE_COOKIE,
+  resolveScheme,
+  resolveStyle,
+} from '@demo-kit/shell';
+import '@demo-kit/shell/themes.css';
 import './globals.css';
 import '@demo-kit/shell/shell.css';
 import { DEMO_DESCRIPTION, DEMO_NAME } from '../lib/demo';
@@ -72,14 +79,21 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const raw = (await cookies()).get(SKIN_COOKIE)?.value;
+  const jar = await cookies();
+  const raw = jar.get(SKIN_COOKIE)?.value;
+  /* `?? 'deeplight'` is this workbench's own palette named, so an absent cookie reproduces
+     exactly what it looked like before the scheme layer existed. Both attributes go on
+     <html>: a custom property that reads another resolves it where it is DECLARED, so a
+     scheme set below `:root` would leave every token in this file on the default brand. */
+  const scheme = resolveScheme(jar.get(SCHEME_COOKIE)?.value ?? 'deeplight');
+  const style = resolveStyle(jar.get(STYLE_COOKIE)?.value);
   /* Only an explicit `light` gets the paper treatment. Anything else — unset, `dark`, or a value
      somebody hand-edited — is the product. */
   const paper = resolveWorkbenchSkin(raw) === 'light';
   const fonts = `${display.variable} ${body.variable} ${mono.variable}`;
 
   return (
-    <html lang="en-GB" className={fonts}>
+    <html lang="en-GB" className={fonts} data-scheme={scheme} data-style={style}>
       <body className={paper ? 'skin-light' : ''}>
         <div className={`skin${paper ? ' skin-light' : ''}`}>{children}</div>
       </body>

@@ -49,7 +49,9 @@
   --faint: #858585;  /* raised to AA for the 9.5–10.5px labels used throughout the workbench */
 
   /* ---- Amber: interactive only. Never a value, and never decorative. */
-  --accent: #f2a900;         /* --dl-amber */
+  /* The brand, from the scheme. `deeplight` sets it to the #f2a900 this file used to state
+     outright, so the workbench looks exactly as it did — and every other scheme now works. */
+  --accent: var(--brand-a);  /* --dl-amber under the deeplight scheme */
   --accent-bright: #ffbb1f;  /* --dl-amber-bright, hover */
   --accent-deep: #c98c00;
   --accent-ink: #0a0a0a;     /* --dl-amber-ink: text on amber is near-black */
