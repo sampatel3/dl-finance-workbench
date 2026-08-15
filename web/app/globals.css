@@ -262,11 +262,19 @@ a:hover { opacity: 0.72; }
 
 /* Two chromes, one product. `?view=inner` means this render is inside the tour's window, so
    it drops the page header the window's own title bar already provides. */
-.product { max-width: 1180px; margin: 0 auto; padding: 20px 20px 56px; }
-.product.inner { padding-top: 14px; }
+/* The content column clears the rail when there is not room to centre, and centres when there is.
+   `max()` rather than a media query because the crossover is a function of the viewport and the
+   column width, not of a device class — at 1300px the rail wins, at 2000px the centring does. */
+.product {
+  max-width: 1180px;
+  margin: 0 auto 0 max(var(--rail-w), calc(50% - 590px));
+  padding: 20px 20px 56px;
+}
+/* The tour's frame renders no rail, so the column goes back to being centred in the whole width. */
+.product.inner { margin-inline: auto; padding-top: 14px; }
 
 .masthead {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: baseline; gap: 10px;
   padding-bottom: 14px; margin-bottom: 18px;
   border-bottom: 1px solid var(--border);
 }
@@ -276,11 +284,13 @@ a:hover { opacity: 0.72; }
   color: var(--accent-ink); font-family: var(--ff-display);
   font-size: 12px; font-weight: 700; letter-spacing: -0.02em;
 }
+/* The page's own name, now that the rail carries the product's. Larger, because it is the first
+   heading a reader meets and it was competing with a nav row that is no longer there. */
 .masthead-name {
-  font-family: var(--ff-display); font-size: 15px; font-weight: 600;
+  font-family: var(--ff-display); font-size: 19px; font-weight: 600;
   letter-spacing: var(--ls-heading); color: var(--text);
 }
-.masthead-sub { font-size: 12px; color: var(--muted); }
+.masthead-sub { font-size: 13px; color: var(--muted); }
 .masthead-right {
   margin-left: auto; font-family: var(--ff-mono); font-size: 12px; color: var(--muted);
 }
@@ -535,8 +545,86 @@ a:hover { opacity: 0.72; }
      up; a reader reading a sentence does not.
    ========================================================================== */
 
+/* ------------------------------------------------------------------------ rail
+
+   Left is where you are; top is what you are looking at. Twelve destinations across a horizontal
+   bar cannot be scanned and leave no room to say what any of them are for — a rail has the vertical
+   space for the four questions to be headings rather than an order somebody has to infer.
+
+   Fixed rather than a grid column because the rail is rendered inside each page's <main>: Next's
+   layouts cannot read search params, and every link in here has to carry the reader's role, period,
+   entity, comparator and currency. Fixed positioning buys that without a wrapper on twelve pages. */
+
+:root { --rail-w: 236px; }
+
+.rail {
+  position: fixed; inset: 0 auto 0 0; z-index: 20;
+  display: flex; flex-direction: column; gap: 22px;
+  width: var(--rail-w); padding: 20px 16px 28px;
+  overflow-y: auto; overscroll-behavior: contain;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+}
+.rail-brand {
+  display: flex; align-items: center; gap: 9px; margin-bottom: 2px; text-decoration: none;
+}
+.rail-brand:hover { opacity: 1; }
+.rail-brand-name {
+  font-family: var(--ff-display); font-size: 14px; font-weight: 600;
+  letter-spacing: var(--ls-heading); color: var(--text);
+}
+.rail-group { display: flex; flex-direction: column; gap: 4px; }
+/* An eyebrow, not a heading in the page's type scale: it labels a group of links and must not
+   compete with the section titles the content column is full of. */
+.rail-eyebrow {
+  margin: 0 0 2px; padding-left: 12px;
+  font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint);
+}
+.rail-list { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.rail .nav-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; font-size: 13.5px;
+}
+.nav-label { flex: 1 1 auto; min-width: 0; }
+
+/* A count, not a severity. It takes the accent because the accent is this product's "here is
+   something you can act on", and it is deliberately not red: red means an adverse variance
+   everywhere else, and "there are two items here" is not a variance. */
+.nav-signal {
+  flex: none; min-width: 17px; padding: 1px 5px; border-radius: 9px;
+  border: 1px solid var(--accent);
+  font-family: var(--ff-mono); font-size: 10.5px; line-height: 1.4; text-align: center;
+  color: var(--accent);
+}
+.nav-link.is-active .nav-signal { background: var(--accent); color: var(--accent-ink); }
+
+/* Below the crossover the rail cannot hold a column, so it lies down into the strip the tour uses
+   and the content column goes back to full width. */
+@media (max-width: 1080px) {
+  .product { margin-inline: auto; }
+  .rail {
+    position: static; width: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
+    gap: 6px 18px; padding: 0 0 12px; margin-bottom: 18px;
+    border-right: 0; border-bottom: 1px solid var(--border); background: transparent;
+  }
+  .rail-brand { margin: 0 8px 0 0; }
+  .rail-group { flex-direction: row; align-items: center; gap: 6px; }
+  .rail-eyebrow { padding: 0; margin: 0; }
+  .rail-list { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+}
+
+/* The tour's strip carries the same groups, separated by their eyebrows rather than by rules. */
+.inner-nav-group { display: flex; align-items: center; gap: 3px; flex: none; }
+.inner-nav-eyebrow {
+  margin: 0 4px 0 10px; font-family: var(--ff-mono); font-size: 9px; font-weight: 500;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); white-space: nowrap;
+}
+.inner-nav-group:first-of-type .inner-nav-eyebrow { margin-left: 0; }
+
 /* ------------------------------------------------------------------ navigation */
 
+/* Kept for the inner treatment only — the full product's sections live in the rail now. */
 .masthead-nav { display: flex; gap: 4px; margin-left: 24px; }
 .nav-link {
   padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid transparent;
