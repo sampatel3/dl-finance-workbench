@@ -102,7 +102,7 @@
   if (!deck || !location.protocol.startsWith('http')) return;
 
   const SCHEMES = ['default', 'deeplight', 'slate', 'signal', 'ember'];
-  const STYLES = ['mesh', 'soft'];
+  const STYLES = ['aurora', 'drift', 'flat'];
 
   let scheme = deck.getAttribute('data-scheme') ?? SCHEMES[0];
   let style = deck.getAttribute('data-style') ?? STYLES[0];

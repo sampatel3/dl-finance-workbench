@@ -58,6 +58,7 @@
   --brand-paper: #ffffff;
   --on-a: #000000;
   --on-b: #000000;
+  --on-field: #ffffff;
 
   /* THE DEVICE'S ONE SIZE, WRITTEN ONCE. Every iPad in the deck is this wide, on every slide,
      in every layout — full-bleed and paired alike — so turning a page never resizes the
@@ -87,93 +88,86 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ================================================================= THE STYLES ========= */
+/*
+ * THREE DESIGN SYSTEMS, EACH COPIED FROM A DECK THAT EXISTS.
+ *
+ * There were two, and they were both the same deck at different brightnesses — which is the
+ * whole reason one reference was unrecognisable in them. Each style below is now taken from a
+ * specific artefact, and the things that separate them are the things a reader actually
+ * notices: what a label is set in, whether a pane is lighter or darker than its ground, and
+ * whether colour arrives as a field, as an object, or not at all.
+ *
+ *   `aurora`  — a saturated full-bleed gradient alternating with pale lavender. Black pills,
+ *               monospace register marks, PURE WHITE panes, big black numerals.
+ *   `drift`   — never dark and never full-bleed. Large soft organic blobs float on a pale
+ *               ground and bleed off the edges. Labels are bold sans in sentence case, panes
+ *               are a barely-there tint rather than white, and there are no filled pills.
+ *   `flat`    — no gradient anywhere. A black ground, DARK panes with a lit hairline,
+ *               monospace labels, and the brand arriving only as accent — the colour on a
+ *               number, a rule, a highlighted word, one button.
+ *
+ * `flat` is the one that inverts the rule the other two share: its panes are darker than the
+ * ground rather than lighter, so `--pane-ink` is light there and dark everywhere else. That is
+ * why panes carry their own ink and accent tokens instead of inheriting the slide’s.
+ */
 
-[data-style='mesh'] {
+/* ---------------------------------------------------------------------- aurora ---- */
+
+[data-style='aurora'] {
   --label-face: var(--mono);
   --label-case: uppercase;
   --label-track: .16em;
   --label-weight: 500;
-  --pill-bg: var(--brand-a);
-  --pill-fg: var(--on-a);
+  /* The pill is BLACK with white monospace in it, not brand-coloured. On a deck whose grounds
+     are already saturated, a brand-coloured pill is one more colour competing with the field;
+     the reference uses black for every one of them and it is the clearest single tell. */
+  --pill-bg: var(--brand-ink);
+  --pill-fg: #ffffff;
   --pill-weight: 600;
-  --radius: 1.1cqi;
-  --body-bg: color-mix(in srgb, var(--brand-ink) 22%, #dcd8e6);
+  --radius: 1.4cqi;
+  --body-bg: color-mix(in srgb, var(--brand-ink) 20%, #dcd8e6);
 }
 
 /*
- * THE GROUNDS, AND WHAT THEY ARE COPIED FROM.
+ * The loud ground: colour edge to edge, no ground showing through.
  *
- * Both references alternate a SATURATED, FULL-BLEED gradient with a NEAR-WHITE one. Neither
- * runs two dark slides in a row, and neither leaves the ground mostly unpainted — an earlier
- * version here did both, which is why it did not look like either reference.
+ * Built from the brand pair carried down toward the scheme’s ink, so the field has real
+ * range — pale where a colour peaks, deep where they hand over — rather than being one flat
+ * saturated slab. The anti-mud rule still holds and is the reason this works for a pair that
+ * is not adjacent on the wheel: the two colours own OPPOSITE diagonals and are transparent
+ * before they reach each other, so blue never lies on top of yellow.
  *
- *   `.vivid` — the loud ground. Colour edge to edge, no ink showing through.
- *   `.deep`  — the quiet ground. Near-white, the brand present only as a wash.
- *
- * WHY THE VIVID GROUND IS BUILT THE WAY IT IS. The reference sweeps magenta through violet to
- * blue — three hues that sit next to each other, so every blend between them is another hue on
- * the same arc. A scheme whose two brand colours are NOT adjacent (Deeplight's yellow and blue)
- * would blend through olive on the same construction. Two rules keep it honest for any pair:
- * the colours are placed on OPPOSITE diagonals so neither is ever mixed into the other, and
- * every mix is with the scheme's own near-black rather than with white. The default scheme
- * reproduces the reference because its two colours are adjacent; the others stay coherent
- * because nothing depends on that.
+ * The ink is `--on-field`, which the scheme states, because whether white or black can be read
+ * on a field of a brand is a fact about that brand: violet takes white, Deeplight’s yellow
+ * takes black, and no formula in a stylesheet can work that out.
  */
-[data-style='mesh'] .vivid {
-  --ink: #ffffff;
-  --mute: rgba(255, 255, 255, .82);
-  --faint: rgba(255, 255, 255, .42);
-  --pane: rgba(255, 255, 255, .97);
+[data-style='aurora'] .vivid {
+  --ink: var(--on-field);
+  --mute: color-mix(in srgb, var(--on-field) 78%, transparent);
+  --faint: color-mix(in srgb, var(--on-field) 40%, transparent);
+  --pane: #ffffff;
   --pane-edge: transparent;
-  /* What a pane's CONTENTS take. On a saturated ground the pane is the opposite value from
-     the slide, so a card that inherited the slide's ink would be white on white — which is
-     exactly what it was until this existed. */
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-b) 34%, #ffffff);
+  --accent-ink: var(--on-field);
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
-  /*
-   * THE FIELD IS BUILT DOWN FROM THE BRAND'S OWN BLACK, NOT UP FROM WHITE.
-   *
-   * It used to be `color-mix(--brand-a 66%, #fff)` — the brand lightened — and carried white
-   * text on top. That cannot be read in ANY scheme: the default violet gave white-on-lilac at
-   * 2.5:1 and Deeplight's yellow gave 1.4:1, which is white on pale yellow, which is nothing.
-   * Lightening a brand colour and then writing white on it is a contradiction, and no choice of
-   * hue fixes it.
-   *
-   * So the ground is near-black lit BY the brand rather than made of it. White clears 12:1 on
-   * every scheme, and the blooms stay fully saturated because they are laid on darkness instead
-   * of being diluted into white. It is also the more faithful rendering of a brand like
-   * Deeplight, which is black and dark grey with yellow and blue in it — not a yellow slide.
-   *
-   * The anti-mud rule still holds: the two brand colours sit on OPPOSITE diagonals, so each
-   * blends with the ground and never with the other. Amber over sky is olive; amber over black
-   * is amber.
-   */
   background:
-    /*
-     * THE TWO COLOURS MUST NOT REACH EACH OTHER. This is the whole construction.
-     *
-     * Blue and yellow overlapping is not blue-and-yellow, it is brown — and a big soft blob is
-     * mostly overlap. A previous version put both at 70-90% radius, which meant they met across
-     * the entire middle of the slide and turned it the exact grey-brown the brand is not.
-     *
-     * Each bloom is now anchored ON a corner at 52%/48% and fully out by 58%. From the centre
-     * of the slide the normalised distance to either is ~1.35, so both are already transparent
-     * there: the middle is the scheme's own black, and the only place a hue appears is the
-     * corner that owns it. Yellow stays yellow because nothing is laid over it.
-     */
-    radial-gradient(52% 48% at 2% 4%, color-mix(in srgb, var(--brand-b) 72%, var(--brand-ink)) 0%, transparent 58%),
-    radial-gradient(52% 48% at 98% 96%, color-mix(in srgb, var(--brand-a) 72%, var(--brand-ink)) 0%, transparent 58%),
-    /* One hue, very weak, wide: stops the middle reading as a flat slab. A single colour cannot
-       muddy anything, so this is the only gradient allowed to cross the centre. */
-    radial-gradient(96% 88% at 62% 40%, color-mix(in srgb, var(--brand-a) 13%, var(--brand-ink)) 0%, transparent 82%),
-    var(--brand-ink);
+    radial-gradient(58% 54% at 4% 6%, color-mix(in srgb, var(--brand-b) 84%, #fff) 0%, transparent 60%),
+    radial-gradient(58% 54% at 96% 94%, color-mix(in srgb, var(--brand-a) 84%, #fff) 0%, transparent 60%),
+    radial-gradient(64% 58% at 78% 14%, color-mix(in srgb, var(--brand-a) 62%, var(--brand-ink)) 0%, transparent 66%),
+    radial-gradient(60% 62% at 18% 88%, color-mix(in srgb, var(--brand-b) 54%, var(--brand-ink)) 0%, transparent 64%),
+    /* The base the corner gradients are lit against. 58/42 is not a taste call: it is the most
+       brand and the least ink that still leaves white type above 4.5:1 for the LIGHTEST pair
+       any scheme has, which is Deeplight's yellow and sky. Raise it and the cover stops being
+       readable in one scheme; lower it and the field stops being saturated in all five. */
+    color-mix(in srgb, var(--brand-a) 58%, var(--brand-ink));
 }
-/* The quiet ground: near-white, with the brand only as a wash at the edges. This is the one
-   most slides in both references actually use. */
-[data-style='mesh'] .deep {
+
+/* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
+   slides in the reference actually use, and its panes are pure white against it. */
+[data-style='aurora'] .deep {
   --ink: var(--brand-ink);
   --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
@@ -183,6 +177,7 @@
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
   --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
   background:
     radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
@@ -191,13 +186,14 @@
     color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
 }
 
+/* ----------------------------------------------------------------------- drift ---- */
 /*
- * The quiet system. Labels are bold sans in sentence case rather than letterspaced monospace,
- * pills lose their fill, radii are generous, and a pane is a shade LIGHTER than its ground
- * rather than lifted off it. Nothing here is a lighter `mesh`; it is a different set of
- * decisions that happens to be light.
+ * The editorial system. Labels are bold sans in sentence case rather than letterspaced
+ * monospace, pills lose their fill entirely, radii are generous, and a pane is a shade of the
+ * ground rather than white laid on it. Nothing here is a lighter `aurora`; it is a different
+ * set of decisions that happens to be light.
  */
-[data-style='soft'] {
+[data-style='drift'] {
   --label-face: var(--display);
   --label-case: none;
   --label-track: 0;
@@ -205,49 +201,132 @@
   --pill-bg: transparent;
   --pill-fg: color-mix(in srgb, var(--brand-ink) 80%, #fff);
   --pill-weight: 500;
-  --radius: 1.6cqi;
+  --radius: 1.8cqi;
   --body-bg: color-mix(in srgb, var(--brand-a) 5%, #f2f0f8);
 }
 
 /*
- * BLOBS, NOT A FIELD. Where `mesh` paints the whole slide, `soft` floats two or three large,
- * heavily blurred shapes on a near-white ground and lets them overlap — which is the second
- * reference exactly. The blur is what makes them read as one soft object rather than as three
- * circles, and keeping them to one side leaves the other side clear for the headline.
+ * BLOBS, NOT A FIELD, AND NEVER A DARK SLIDE.
+ *
+ * The reference floats two or three big soft-edged organic shapes on a pale ground and lets
+ * them run off the edges — so they read as one object passing behind the slide rather than as
+ * decoration placed on it. Each is a gradient that holds its colour most of the way out and
+ * then falls quickly, which is what gives a blob a discernible edge without a hard one.
+ *
+ * Both colours are carried well toward white before they are used. That is what makes overlap
+ * safe here without keeping them apart: two PASTELS crossing make a lighter pastel, where two
+ * saturated colours crossing make mud. It is the opposite solution to `aurora`’s and it is
+ * the reason this system can put its shapes on top of each other at all.
+ *
+ * The ink is always the scheme’s near-black. This system never asks white type to sit on
+ * colour, which is why it has no `--on-field`.
  */
-[data-style='soft'] .vivid {
+[data-style='drift'] .vivid {
   --ink: var(--brand-ink);
   --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --pane: color-mix(in srgb, #fff 90%, var(--brand-a));
+  --pane: color-mix(in srgb, var(--brand-b) 5%, #fdfcff);
   --pane-edge: transparent;
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
   --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
   background:
-    radial-gradient(38% 46% at 74% 34%, color-mix(in srgb, var(--brand-b) 56%, #fff) 0%, transparent 64%),
-    radial-gradient(46% 56% at 92% 74%, color-mix(in srgb, var(--brand-a) 46%, #fff) 0%, transparent 66%),
-    radial-gradient(30% 38% at 52% 62%, color-mix(in srgb, var(--brand-b) 40%, #fff) 0%, transparent 62%),
-    radial-gradient(70% 80% at 12% 20%, color-mix(in srgb, var(--brand-a) 10%, #fff) 0%, transparent 72%),
-    #f3f0f9;
+    /* The big shape, lower right, running off two edges. Two lobes of the pair, adjacent, so
+       they hand over inside the blob the way the reference’s coral does into its blue. */
+    radial-gradient(44% 62% at 88% 78%, color-mix(in srgb, var(--brand-a) 34%, #fff) 0%, color-mix(in srgb, var(--brand-a) 30%, #fff) 58%, transparent 76%),
+    radial-gradient(40% 52% at 74% 96%, color-mix(in srgb, var(--brand-b) 32%, #fff) 0%, color-mix(in srgb, var(--brand-b) 28%, #fff) 56%, transparent 74%),
+    /* The small satellite, upper middle, which is what stops it reading as one corner wash. */
+    radial-gradient(20% 30% at 44% 30%, color-mix(in srgb, var(--brand-b) 26%, #fff) 0%, color-mix(in srgb, var(--brand-a) 22%, #fff) 60%, transparent 78%),
+    #f6f4fb;
 }
-[data-style='soft'] .deep {
+
+/* The same ground with the shapes pulled to the far edges and weakened — a quiet page for the
+   slides that are mostly words. */
+[data-style='drift'] .deep {
   --ink: var(--brand-ink);
   --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --pane: #ffffff;
+  --pane: color-mix(in srgb, var(--brand-b) 4%, #ffffff);
   --pane-edge: transparent;
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
   --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
   background:
-    radial-gradient(52% 64% at 96% 6%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 68%),
-    radial-gradient(48% 60% at 4% 96%, color-mix(in srgb, var(--brand-a) 10%, transparent) 0%, transparent 68%),
+    radial-gradient(34% 48% at 98% 8%, color-mix(in srgb, var(--brand-b) 20%, #fff) 0%, transparent 72%),
+    radial-gradient(30% 42% at 2% 98%, color-mix(in srgb, var(--brand-a) 16%, #fff) 0%, transparent 72%),
     #f8f7fc;
+}
+
+/* ------------------------------------------------------------------------ flat ---- */
+/*
+ * No gradient, anywhere. Copied from the Deeplight Accelerate deck: a black page, panes a
+ * shade above it with a lit hairline, monospace register marks, and the brand arriving ONLY as
+ * accent — a section number, a rule down the side of a list, a highlighted word in the
+ * headline, one button.
+ *
+ * This is the system that inverts the pane rule. In `aurora` and `drift` a pane is lighter than
+ * its ground and therefore takes dark ink; here it is a lift within the dark and takes light
+ * ink. Every ground states `--pane-ink` and `--pane-accent` for exactly this reason.
+ *
+ * The pill has no fill: the reference sets its numbers as bare amber monospace, and a filled
+ * pill on a black page is a brighter object than anything else on the slide.
+ */
+[data-style='flat'] {
+  --label-face: var(--mono);
+  --label-case: uppercase;
+  --label-track: .18em;
+  --label-weight: 500;
+  --pill-bg: transparent;
+  --pill-fg: color-mix(in srgb, var(--brand-a) 62%, #ffffff);
+  --pill-fg: oklch(from var(--brand-a) .8 c h);
+  --pill-weight: 600;
+  /* Tight. The reference’s cards are barely rounded, and it is most of why the deck reads as
+     technical rather than friendly. */
+  --radius: .5cqi;
+  --body-bg: var(--brand-ink);
+}
+
+[data-style='flat'] .vivid,
+[data-style='flat'] .deep {
+  --ink: #ffffff;
+  --mute: rgba(255, 255, 255, .72);
+  --faint: rgba(255, 255, 255, .34);
+  --pane-edge: rgba(255, 255, 255, .1);
+  --pane-ink: #ffffff;
+  --pane-mute: rgba(255, 255, 255, .72);
+  --pane-faint: rgba(255, 255, 255, .3);
+  /*
+   * THE PRIMARY AT A FIXED LIGHTNESS, KEEPING ITS HUE.
+   *
+   * Raw, the brand fails here for any scheme with a dark primary: Slate's navy is 1.95:1 on
+   * black, which is a section number nobody can see. Mixing toward white fixes Slate and ruins
+   * Deeplight — at the ratio Slate needs, the amber this system was drawn from washes out to a
+   * pale gold, and Deeplight's amber is the one colour in this file that has to stay exact.
+   *
+   * `oklch(from …)` takes the brand's own hue and chroma and states only the lightness, so
+   * every scheme lands at the same readable value while keeping its colour: Deeplight's amber
+   * stays amber, Slate's navy becomes the light blue it would have to be anyway. The srgb mix
+   * above it is the fallback for anything that cannot do relative colour — worse for Deeplight,
+   * but readable for everyone, which is the right way round for a fallback.
+   */
+  --accent-ink: color-mix(in srgb, var(--brand-a) 62%, #ffffff);
+  --accent-ink: oklch(from var(--brand-a) .8 c h);
+  --pane-accent: color-mix(in srgb, var(--brand-a) 62%, #ffffff);
+  --pane-accent: oklch(from var(--brand-a) .8 c h);
+  color: var(--ink);
+}
+/* The two grounds differ by one step of value rather than by construction, because the deck
+   this is taken from is black throughout and alternating it would be a different deck. */
+[data-style='flat'] .vivid { background: var(--brand-ink); --pane: var(--brand-grey); }
+[data-style='flat'] .deep  {
+  background: var(--brand-grey);
+  --pane: color-mix(in srgb, var(--brand-ink) 68%, var(--brand-grey));
 }
 
 /* ================================================================== THE PAGE ========== */
@@ -335,7 +414,7 @@ h1 {
   border-radius: .5cqi; background: var(--pill-bg); color: var(--pill-fg);
   font-family: var(--label-face); font-size: .8cqi; letter-spacing: .1em; font-weight: var(--pill-weight);
 }
-[data-style='soft'] .pill { min-width: 0; padding: 0; font-size: .95cqi; letter-spacing: .02em; }
+[data-style='drift'] .pill { min-width: 0; padding: 0; font-size: .95cqi; letter-spacing: .02em; }
 
 .say { font-size: 1.06cqi; line-height: 1.62; color: var(--mute); }
 .say b { font-weight: 650; color: var(--ink); }
@@ -350,7 +429,7 @@ h1 {
   --ink: var(--pane-ink);
   --mute: var(--pane-mute);
   --faint: var(--pane-faint);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --accent-ink: var(--pane-accent);
   color: var(--ink);
 }
 .card {
@@ -439,10 +518,16 @@ h1 {
     inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
     0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 55%, transparent);
 }
-[data-style='soft'] .device {
+/* On a pale ground the device's own drop shadow has to be much lighter or it reads as a hole
+   cut in the page; on `flat` it is removed entirely, because a shadow under a black slab on a
+   black page is only visible as a smudge. */
+[data-style='drift'] .device {
   box-shadow:
     inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
     0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 24%, transparent);
+}
+[data-style='flat'] .device {
+  box-shadow: inset 0 0 0 .09cqi rgba(255, 255, 255, .16);
 }
 /* The screen fills the bezel and takes the device's shape rather than the image's: a capture
    whose section is shorter than the glass letterboxes against the black, which is what a real

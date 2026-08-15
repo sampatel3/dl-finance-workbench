@@ -4,14 +4,19 @@
 <link rel="stylesheet" href="theme.css">
 
 <!--
-  The `build` arc: the reader is our own team, and the ask is our own time. Ten numbered slides
-  plus an appendix.
+  The `court` arc: the reader is a group CFO who has not met us, and the ask is an hour rather
+  than a purchase order. Eight numbered slides.
 
-    title · claim · surface · capability · mechanism · proof · risks · appetite ·
-    alternatives · decision
+    title · change · surface · capability · proof · method · credentials · next
 
-  `data-purpose="build"` is what `deck lint` checks that arc against; folios count the arc only
-  and read `n/10`. `data-style` is the design system and `data-scheme` the brand — the product
+  It was a `build` deck — ten slides asking our own team for its own time — and the arc is the
+  structural difference, not the wording. A `build` deck opens on the fault, because inside your
+  own organisation the fault is shared ground; opening that way on a stranger reads as not
+  knowing their business, so this one opens on the change and lets the fault arrive as its
+  consequence. The last three slides are entirely different: an internal deck ends on what we
+  will spend, and this one ends on what the reader gets for an hour.
+
+  `data-purpose="court"` is what `deck lint` checks that arc against; folios read `n/8`. `data-style` is the design system and `data-scheme` the brand — the product
   carries the same two, so the screenshots on slides 3, 4 and 6 are on the ground the slides
   around them are.
 
@@ -27,54 +32,54 @@
   [[ THIS ]] and nothing ships while one survives.
 -->
 
-<div class="deck" data-purpose="build" data-style="mesh" data-scheme="deeplight" data-live-root="#product">
+<div class="deck" data-purpose="court" data-style="flat" data-scheme="deeplight" data-live-root="#product">
 
-  <!-- 1 — THE TITLE ------------------------------------------------------------ .cover -- -->
+  <!-- 1 — THE TITLE -------------------------------------------------------------- .cover -- -->
   <section class="slide vivid" data-job="title">
     <div class="cover">
       <h1><span class="bracket">[</span>Finance Workbench<span class="bracket">]</span></h1>
-      <div class="tagline">One governed answer, opened at three depths</div>
+      <div class="tagline">One governed answer, opened to the rows, for a group finance function</div>
     </div>
 
-    <div class="foot">A synthetic multi-entity finance group: Kestrel Industrial Group plc, five ledgers, twelve stops from actual to control. <b>Every figure derives from one fixed seed and no real company, ledger or transaction is in it</b>. Read rather than narrated: hand it over, let the room read, take the questions.</div>
-    <div class="folio">1/10</div>
+    <div class="foot">A running build, shown against a synthetic group: Kestrel Industrial Group plc, five ledgers, twelve stops from actual to control. <b>Every figure derives from one fixed seed and no real company, ledger or transaction is in it.</b> Read rather than narrated: hand it over, let the room read, take the questions.</div>
+    <div class="folio">1/8</div>
   </section>
 
-  <!-- 2 — THE CLAIM -------------------------------------------------------------- .grid -- -->
-  <section class="slide deep" data-job="claim">
-    <div class="eyebrow">The fault</div>
-    <h1>The same figure answers three people three different ways</h1>
-    <p class="stand">An executive is shown a number, an analyst rebuilds it, a controller evidences it &mdash; and the three do not have to agree, because nothing forces them to be the same computation.</p>
+  <!-- 2 — THE CHANGE ------------------------------------------------------------- .grid --- -->
+  <section class="slide vivid" data-job="change">
+    <div class="eyebrow">What changed</div>
+    <h1>Writing the commentary got cheap; standing behind it did not</h1>
+    <p class="stand">A model can phrase a month in seconds, so the scarce thing in a close is no longer the words — it is being able to say where a figure came from when somebody asks. For a group closing five ledgers, that question arrives after the pack has gone out.</p>
 
     <div class="grid">
       <div class="card">
-        <div class="label">The executive</div>
-        <div class="num">90s</div>
-        <div class="label">to the position</div>
-        <p>Wants the position and the decisions it raises, not the workings. Gets a pack somebody assembled by hand.</p>
+        <div class="label">What changed</div>
+        <div class="num">seconds</div>
+        <div class="label">to draft a month of commentary</div>
+        <p>Generated narrative is now the cheapest part of a reporting cycle, and it reads as well as the figures underneath it are true.</p>
       </div>
       <div class="card">
-        <div class="label">The analyst</div>
+        <div class="label">What did not</div>
         <div class="num">3</div>
-        <div class="label">rebuilds of the same number</div>
-        <p>Wants movement, drivers, formula and rows. Rebuilds them in a spreadsheet that then disagrees with the pack.</p>
+        <div class="label">versions of one number, in one group</div>
+        <p>An executive is shown a figure, an analyst rebuilds it, a controller evidences it. Nothing forces the three to be the same computation, so they disagree.</p>
       </div>
       <div class="card">
-        <div class="label">The controller</div>
-        <div class="num">1</div>
-        <div class="label">evidence chain, assembled late</div>
-        <p>Wants the source vintage and the close state behind every material figure, and is asked for it after the pack has gone out.</p>
+        <div class="label">What that leaves</div>
+        <div class="num">4 of 5</div>
+        <div class="label">ledgers closed at the July position</div>
+        <p>The figures below are not wrong. They are not final — and a pack that cannot say which has already misled somebody.</p>
       </div>
     </div>
 
-    <div class="foot">Kestrel closed July with <b>four of five ledgers closed and the period not final</b> &mdash; the figures below are not wrong, they are not final. A workbench that cannot say which is a workbench that has already misled somebody.</div>
-    <div class="folio">2/10</div>
+    <div class="foot">The first figure is about the market and the second two are about this synthetic group, measured in the build rather than surveyed. <b>Nothing here is a claim about the reader's own close</b>, which is the thing an hour would establish.</div>
+    <div class="folio">2/8</div>
   </section>
 
-  <!-- 3 — THE SURFACE ---------------------------------------------------------- .screen -- -->
-  <section class="slide vivid" data-job="surface">
+  <!-- 3 — WHAT A USER SEES ------------------------------------------------------- .screen - -->
+  <section class="slide deep" data-job="surface">
     <div class="eyebrow">What a user sees</div>
-    <h1>The position, and what it puts on somebody&rsquo;s desk</h1>
+    <h1>The position, on one screen</h1>
 
     <div class="screen">
       <div class="device">
@@ -84,217 +89,145 @@
         </div>
       </div>
     </div>
-    <div class="folio">3/10</div>
+
+    <div class="foot"><b>This is generated data, not a customer's.</b> The group, its ledgers and every figure here come from one fixed seed.</div>
+    <div class="folio">3/8</div>
   </section>
 
-  <!-- 4 — THE CAPABILITY ---------------------------------------------------------- .duo -- -->
-  <section class="slide deep" data-job="capability">
-    <div class="eyebrow">The thing nothing else does</div>
+  <!-- 4 — THE THING NOTHING ELSE DOES -------------------------------------------- .duo ---- -->
+  <section class="slide vivid" data-job="capability">
+    <div class="eyebrow">The thing to look at</div>
     <h1>Any figure opens into the movement that made it</h1>
 
     <div class="duo">
       <div class="device">
         <div class="frame" data-shot="revenue-bridge" data-route="/app/performance?view=inner&amp;focus=section-bridge" data-viewport="1194x834" style="aspect-ratio:1.4317">
-          <iframe title="The revenue bridge, live"></iframe>
-          <img src="shots/revenue-bridge.jpg" alt="The revenue bridge for July: the movement from forecast to actual broken into its components, with volume the largest single contributor at £582k of the £618k difference.">
+          <iframe title="The revenue bridge from Forecast v6 to the July actual, live"></iframe>
+          <img src="shots/revenue-bridge.jpg" alt="The revenue bridge for July 2026: Forecast v6 at £11.8m moving to £12.4m actual, with the movement split by entity — Kestrel Manufacturing up £285k at 46.1% of the movement, Kestrel Services up £167k, Kestrel Gulf Technical up £149k, and eliminations and unattributed at £17k — each row naming the owner accountable for it.">
         </div>
       </div>
 
       <div class="sum">
-        <div class="line"><span class="num">&pound;618k</span> revenue ahead of Forecast v6</div>
-        <div class="line total"><span class="num">&pound;582k</span> of it a single named driver</div>
-        <div class="note"><b>The bridge is the same computation as the headline, not a second one.</b> An executive reading 5.2% and an analyst reading the driver behind it are looking at one model opened at two depths &mdash; which is what stops the pack and the rebuild disagreeing.</div>
+        <div class="line"><span class="num">12</span> stops from actual to control, each one openable</div>
+        <div class="line"><span class="num">5</span> ledgers, every row attributed to a named owner</div>
+        <div class="note"><b>The evidence chain is the same object as the answer.</b> Movement, drivers, formula, rows and source vintage hang off the figure itself, so a controller asking where a number came from reads the thing that produced it rather than a reconstruction. It stops at the ledger boundary: what the workbench cannot see, it says it cannot see.</div>
       </div>
     </div>
-    <div class="folio">4/10</div>
+    <div class="folio">4/8</div>
   </section>
 
-  <!-- 5 — THE MECHANISM --------------------------------------------------------- .works -- -->
-  <section class="slide vivid" data-job="mechanism">
-    <div class="eyebrow">How it works</div>
-    <h1>Code decides what is true; the model only phrases it</h1>
-    <p class="stand">The figures are deterministic. What a model is allowed to do with them is bounded, and the boundary is the point of the design rather than a caveat on it.</p>
-
-    <div class="works">
-      <div class="say"><b>Every figure is computed, never generated.</b> A model phrases a bounded commentary and answers from governed tools; it never invents a number, changes an assumption, approves a pack or posts a journal. Those four are the whole list, and each is refused in code rather than discouraged in a prompt.</div>
-      <div class="say"><b>The evidence chain is the same object as the answer.</b> Movement, drivers, formula, rows and source vintage hang off the figure itself, so a controller asking where a number came from is reading the thing that produced it rather than a reconstruction of it.</div>
-    </div>
-
-    <div class="foot"><b>The wording check is a word list rather than an understanding.</b> It catches a forecast phrased as a fact and a superlative dressed as a finding; a sentence that implies a cause without using one of the listed words reaches the reader unchanged. That is a named gap, not a solved one.</div>
-    <div class="folio">5/10</div>
-  </section>
-
-  <!-- 6 — THE PROOF ----------------------------------------------------------- .duoflip -- -->
+  <!-- 5 — ONE THING OPENED END TO END -------------------------------------------- .duoflip  -->
   <section class="slide deep" data-job="proof">
     <div class="eyebrow">One figure, opened</div>
     <h1>A number, down to the rows it came from</h1>
 
-    <!-- The column leads and the frame answers it, which is the mirror of slide 4: two framed
-         slides close together built the same way read as one slide shown twice. -->
     <div class="duoflip">
       <div class="sum">
         <div class="line"><span class="num">&pound;12.4m</span> revenue, as the position states it</div>
         <div class="line"><span class="num">&pound;11.8m</span> Forecast v6, the comparator it is read against</div>
         <div class="line total"><span class="num">&pound;618k</span> the difference, and every row behind it</div>
-        <div class="note">The drill reaches the rows, their measure, their period and the vintage of the source they were read from. <b>Nothing is rounded before it is compared</b>, and the comparator is named on the figure rather than assumed by the reader.</div>
+        <div class="rate">
+          <span class="num">+5.24%</span>
+          <div class="against">against <b>Forecast v6</b> as approved before the period opened</div>
+        </div>
+        <div class="note">The drill reaches the rows, their measure, their period and the vintage of the source they were read from. Nothing is rounded before it is compared, and the comparator is named on the figure rather than assumed by the reader. <b>For this to hold on the reader's own data, the comparator has to be a versioned artefact rather than a spreadsheet somebody keeps</b> — which is the first thing an hour would find out.</div>
       </div>
 
       <div class="device">
         <div class="frame" data-shot="source-drill" data-route="/app/explore?view=inner&amp;focus=section-drill&amp;rows=measure&amp;cols=period&amp;drill=0%3A5" data-viewport="1194x834" style="aspect-ratio:1.4317">
-          <iframe title="The source drill, live"></iframe>
-          <img src="shots/source-drill.jpg" alt="The explore view drilled into revenue by measure and period, showing the rows behind the figure with their source and vintage.">
+          <iframe title="The revenue figure drilled to its source rows, live"></iframe>
+          <img src="shots/source-drill.jpg" alt="The explore surface with revenue drilled to source: the measure and period of each contributing row, the ledger it was read from and the vintage of that read, with the £12.4m total reconciling to the rows listed beneath it.">
         </div>
       </div>
     </div>
-    <div class="folio">6/10</div>
+    <div class="folio">5/8</div>
   </section>
 
-  <!-- 7 — THE RISKS ------------------------------------------------------------ .ruled -- -->
-  <section class="slide vivid wide" data-job="risks">
-    <div class="eyebrow">What is evidenced</div>
-    <h1>Built and running is evidence for one risk of the four</h1>
+  <!-- 6 — THE METHOD -------------------------------------------------------------- .rail -- -->
+  <section class="slide vivid" data-job="method">
+    <div class="eyebrow">How the work runs</div>
+    <h1>Evidence before build, and a stop before the money</h1>
 
-    <div class="ruled">
-      <div>
-        <div class="verdict">Feasibility</div>
-        <div class="state on">Evidenced</div>
-        <p>It runs. Twelve surfaces, one model, and every figure on slides 3, 4 and 6 came out of the build rather than out of a slide.</p>
+    <div class="rail">
+      <div class="step">
+        <div class="when">01 / Weeks 1&ndash;3</div>
+        <div class="what">Discovery and data audit</div>
+        <p>One workflow, its baseline, its data and who owns it. Produces a data-quality assessment, the measures success is judged on, and a scope. <b>This is where the work stops if the data is not there.</b></p>
       </div>
-      <div>
-        <div class="verdict">Value</div>
-        <div class="state off">No evidence</div>
-        <p>No group CFO or financial controller has been asked what assembling this pack costs them today, or what the disagreement between pack and rebuild costs them.</p>
+      <div class="step">
+        <div class="when">02 / Weeks 4&ndash;8</div>
+        <div class="what">Build and evaluate</div>
+        <p>The product against the client&rsquo;s own data, with a back-test and an accuracy comparison rather than a demonstration. Produces working software and the evidence it was measured by.</p>
       </div>
-      <div>
-        <div class="verdict">Usability</div>
-        <div class="state off">No evidence</div>
-        <p>Nobody outside the build team has driven it. No controller has been given a figure and asked to evidence it while somebody watched.</p>
+      <div class="step">
+        <div class="when">03 / Weeks 9&ndash;11</div>
+        <div class="what">Integrate and deploy</div>
+        <p>Production systems, permissions, controls, monitoring and the people who use it. Produces a deployment and a runbook, not a pilot that needs a second project to become real.</p>
       </div>
-      <div>
-        <div class="verdict">Viability</div>
-        <div class="state off">No evidence</div>
-        <p>The group is synthetic. Nothing here has been near a real ledger, an audit function or a data-protection review.</p>
+      <div class="step">
+        <div class="when">04 / Week 12</div>
+        <div class="what">Validate and hand over</div>
+        <p>Live performance measured against the week-one baseline, knowledge transferred, ownership named. Produces a live validation and a roadmap the client owns.</p>
       </div>
     </div>
 
-    <div class="foot">Three of the four are named rather than filled, and that is the finding rather than an omission. <b>A written spec is not evidence and neither is this deck</b> &mdash; the only evidence here is the running build, and it counts for feasibility alone.</div>
-    <div class="folio">7/10</div>
+    <div class="foot"><b>There is a hard stop at week three.</b> If the data, the value or the delivery path is not viable the work ends there and the client pays for discovery alone — and keeps the data-quality assessment, the baseline and the scope, whoever builds it.</div>
+    <div class="folio">6/8</div>
   </section>
 
-  <!-- 8 — THE APPETITE ----------------------------------------------------------- .box -- -->
-  <section class="slide deep wide" data-job="appetite">
-    <div class="eyebrow">The box</div>
-    <h1>Five hours of one person&rsquo;s week</h1>
+  <!-- 7 — THE CREDENTIALS --------------------------------------------------------- .roster  -->
+  <section class="slide deep" data-job="credentials">
+    <div class="eyebrow">Who does the work</div>
+    <h1>Production systems inside regulated institutions, not pilots</h1>
 
-    <div class="box">
-      <div>
-        <div class="num big">5h</div>
-        <div class="bigl">one person, one week &mdash;<br>2.5h of calls, 1h writing<br>the questions, 1.5h writing<br>up the answers</div>
-      </div>
-      <div>
-        <div class="label">What fits inside it</div>
-        <ul class="plus">
-          <li>Five finance leaders &mdash; a group CFO, two controllers, two FP&amp;A leads &mdash; each asked the same two questions, written down before the first call.</li>
-          <li>The workbench at its own URL, driven by them rather than shown to them.</li>
-          <li>One page of answers, naming who said what.</li>
-        </ul>
-      </div>
-      <div>
-        <div class="label">Not in it, on purpose</div>
-        <ul class="plus">
-          <li>No build. Five people seeing five different products is five answers to five different questions.</li>
-          <li>No real ledger, not one row. That is what makes the week need nobody&rsquo;s approval.</li>
-          <li>No pricing. That is a different conversation with a different person.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="foot">The appetite is the constraint, not an estimate of the work: five hours is what this is worth before anybody outside the team has said the pack-versus-rebuild gap is a cost they carry. <b>If the week needs a sixth hour it has already failed its own test.</b></div>
-    <div class="folio">8/10</div>
-  </section>
-
-  <!-- 9 — THE ALTERNATIVES ------------------------------------------------------ .opts -- -->
-  <section class="slide vivid wide" data-job="alternatives">
-    <div class="eyebrow">What else fits the box</div>
-    <h1>Three things this appetite buys, including stopping</h1>
-
-    <div class="opts">
+    <div class="roster">
       <div class="card">
         <div class="pill">01</div>
-        <div class="name">One real close</div>
-        <p>Run the workbench alongside a real month-end at one group. Better evidence on every one of the four risks, and the only route that tests viability.</p>
-        <div class="cap2">Cost &mdash; a willing finance function, their ledger data, and a wait on a close calendar nobody here controls</div>
+        <div class="name">A tier-1 UAE bank</div>
+        <p>Two greenfield platforms and four products in production: open finance compliance, treasury and risk data products, an enterprise knowledge assistant and a mobile banking assistant, on governed enterprise data foundations.</p>
+        <div class="cap2">Evidence that this survives a bank&rsquo;s controls</div>
       </div>
-      <div class="card pick">
-        <div class="tagpick">Recommended</div>
+      <div class="card">
         <div class="pill">02</div>
-        <div class="name">One week, five calls</div>
-        <p>Ask five finance leaders what the pack costs to assemble and what it costs when the rebuild disagrees. Tests value directly and usability in passing.</p>
-        <div class="cap2">Cost &mdash; five hours, and the demo stays as it is for another week</div>
+        <div class="name">A national energy buyer</div>
+        <p>One data and AI platform and three products live: load forecasting, solar forecasting and reserve management, with production monitoring on the pipelines that feed them.</p>
+        <div class="cap2">Evidence that the forecasts stay measured after go-live</div>
       </div>
       <div class="card">
         <div class="pill">03</div>
-        <div class="name">Stop here</div>
-        <p>The build stands as a worked answer to a question nobody outside the team has been asked. Feasibility is settled and the model keeps.</p>
-        <div class="cap2">Cost &mdash; nothing spent, and the three open risks stay open indefinitely</div>
+        <div class="name">The people in the room</div>
+        <p>Founder-led, with more than 1,300 models deployed in client programmes and founders carrying twenty years each. <b>The people who scope the work are the people who build it, through to go-live.</b></p>
+        <div class="cap2">Evidence that the scoping hour is done by whoever delivers</div>
       </div>
     </div>
 
-    <div class="foot">Stopping is on this slide because it is a real option and the cheapest one. <b>The real-close route is better evidence and it stays on the table</b> &mdash; it is first rather than second because what blocks it is somebody else's calendar, not its cost.</div>
-    <div class="folio">9/10</div>
+    <div class="foot">Delivered under CBUAE, ADGM and FSRA regimes. <b>What has not been done: this workbench has never been near a real ledger, an audit function or a data-protection review</b> — it is a worked answer to a question, and the credentials above are for the delivery around it rather than for it.</div>
+    <div class="folio">7/8</div>
   </section>
 
-  <!-- 10 — THE DECISION --------------------------------------------------------- .mech -- -->
-  <section class="slide deep" data-job="decision">
-    <div class="eyebrow">The decision</div>
-    <h1>Take the week, and decide again on Friday</h1>
-    <p class="verdict-big">Five conversations with finance leaders, each asked the same two questions: what does assembling the monthly pack cost you, and what does it cost when somebody rebuilds a figure and gets a different answer.</p>
+  <!-- 8 — THE NEXT STEP ----------------------------------------------------------- .mech --- -->
+  <section class="slide vivid" data-job="next">
+    <div class="eyebrow">Start here</div>
+    <h1>One hour, one close, and a written answer on whether this fits</h1>
+    <p class="verdict-big">Bring one month-end that went badly. An hour with the group CFO or financial controller who owns it, and whoever holds the ledger data — and we tell you whether a workbench like this changes it, including when it does not.</p>
 
     <div class="mech">
       <div>
-        <div class="mt">Who approves it</div>
-        <p>Whoever holds this team&rsquo;s time. <b>No budget, no data access, no third party</b> &mdash; five conversations need none of the three, so this starts on the day it is read.</p>
+        <div class="mt">What you bring</div>
+        <p>One close, and the pack that came out of it. <b>Not access, not a data extract, not a project</b> — the smallest thing that makes the hour concrete is the month you already argued about.</p>
       </div>
       <div>
-        <div class="mt">A yes, if</div>
-        <p>Yes, if the five are people we already have a relationship with. <b>Cold outreach turns a five-hour week into a three-week one</b> and the appetite does not cover it.</p>
+        <div class="mt">What you leave with</div>
+        <p>A written fit verdict: which of your figures could carry an evidence chain today, which could not and what blocks them, and the baseline any build would be measured against. <b>Yours whether or not anything follows.</b></p>
       </div>
       <div>
-        <div class="mt">What a go fixes, and what it does not</div>
-        <p>It closes value and starts on usability. <b>Viability stays open either way</b> &mdash; nothing here goes near a real ledger, so nothing here can settle it.</p>
+        <div class="mt">What it costs</div>
+        <p>An hour of two people, and no fee. If the answer is no, it is a paragraph saying which of the four blockers applies to you — and this deck and the running build stay where they are.</p>
       </div>
     </div>
 
-    <div class="foot">If none of the five says the gap is a cost they carry, <b>this stops on Friday</b> &mdash; written into the gate rather than left to whoever gets tired of it first. The unwelcome consequence of a go is worth stating plainly: a week spent asking is a week the build does not move.</div>
-    <div class="folio">10/10</div>
-  </section>
-
-  <!-- APPENDIX — off the numbered arc --------------------------------------------- .tiles -- -->
-  <section class="slide vivid wide" data-job="appendix">
-    <div class="eyebrow">Appendix</div>
-    <h1>What the group is made of</h1>
-    <p class="stand">What every screen resolves to, and what a real deployment supplies instead of a seed.</p>
-
-    <div class="tiles">
-      <div>
-        <div class="label">Entities</div>
-        <div class="num">5</div>
-        <div class="cap2">ledgers across the group, four closed at the July position</div>
-      </div>
-      <div>
-        <div class="label">Period</div>
-        <div class="num">Jul 26</div>
-        <div class="cap2">written down rather than counted back from today, so a screenshot stays true</div>
-      </div>
-      <div>
-        <div class="label">Comparator</div>
-        <div class="num">v6</div>
-        <div class="cap2">the approved forecast every material figure is read against</div>
-      </div>
-    </div>
-
-    <div class="foot"><b>Every figure derives from one fixed seed.</b> A real deployment supplies the same shapes from the group's own ledgers and its own approved forecast; no real company, ledger or transaction is in this demo, and the materiality policy that decides what is flagged is versioned and approved in the product rather than assumed here.</div>
-    <div class="folio">Appendix</div>
+    <div class="foot">To start it, send one month-end pack and a date. <b>The case where we would say this is not a fit</b>: a group whose comparator lives in a spreadsheet nobody versions, or one whose ledgers cannot be read without a data-protection review that has not started — in both, the evidence chain has nothing to attach to, and the honest answer is to fix that first.</div>
+    <div class="folio">8/8</div>
   </section>
 
 </div>

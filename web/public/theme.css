@@ -27,6 +27,17 @@
  * Deeplight than it does in Ember, and the reader has to learn the palette to read the
  * number. They are fixed in the consuming stylesheet, deliberately out of reach here.
  *
+ * TEXT LAID ON A FIELD OF THE BRAND
+ * `--on-field` is the ink for `aurora`'s full-bleed gradient — a whole slide made of the brand
+ * pair. It is separate from `--on-a` because a pill of one flat colour and a field that runs
+ * from a bright peak to a deep base are not the same surface: the default scheme takes black on
+ * a violet pill and white across a violet field.
+ *
+ * Every scheme sets white, and the field is built to earn it — carried down toward the
+ * scheme's own ink until white clears 4.5:1 even for the lightest pair here. It stays a token
+ * rather than a constant because it is the thing that would have to change if a scheme ever
+ * arrived that could not be made to work that way, and a token is a one-line answer to that.
+ *
  * TEXT LAID ON A BRAND COLOUR
  * `--on-a` and `--on-b` are the ink that goes on top of a filled `--brand-a` / `--brand-b` —
  * a pill, a badge, a selected chip. They are stated per scheme rather than assumed, because
@@ -53,20 +64,27 @@
   --brand-paper: #ffffff;
   --on-a: #000000;
   --on-b: #000000;
+  --on-field: #ffffff;
 }
 
 /* Deeplight. Four colours, and the brand names all four: black, dark grey, yellow, blue.
-   The yellow was #f2a900 and the blue #58c7f3 — an amber and a pale sky, which is a half-step
-   off on both and reads as gold-and-ice rather than as the brand. #ffc629 is yellow at the
-   point where it is still legible on black, and #2ea3f2 is blue rather than the tint of it. */
+   These are read off the Accelerate deck rather than guessed at: the amber it sets section
+   numbers, the wordmark and its one CTA in, and the sky blue it sets secondary labels and rules
+   in. Two earlier attempts were both a half-step out — #f2a900/#58c7f3 read as gold-and-ice,
+   and #ffc629/#2ea3f2 as a highlighter yellow beside a UI blue. The pair below is the deck's.
+
+   The CTA on that deck is solid amber with BLACK type, which is why --on-a is near-black: it is
+   how the brand itself sets text on its own yellow, and the alternative is the brown that comes
+   of darkening the amber until white will sit on it. */
 [data-scheme='deeplight'] {
-  --brand-a: #ffc629;
-  --brand-b: #2ea3f2;
-  --brand-ink: #0a0a0a;
-  --brand-grey: #1c1c20;
+  --brand-a: #f5a623;
+  --brand-b: #4fc3f7;
+  --brand-ink: #0d0d0d;
+  --brand-grey: #17171a;
   --brand-paper: #ffffff;
   --on-a: #0a0a0a;
   --on-b: #0a0a0a;
+  --on-field: #ffffff;
 }
 
 /* Signal. The cool one: a working blue against a warm coral, for a demo whose subject is an
@@ -79,6 +97,7 @@
   --brand-paper: #ffffff;
   --on-a: #0b1020;
   --on-b: #0b1020;
+  --on-field: #ffffff;
 }
 
 /* Ember. The warm one. Orange leads and lavender answers it, which keeps the pair away from
@@ -91,6 +110,7 @@
   --brand-paper: #ffffff;
   --on-a: #140f0c;
   --on-b: #140f0c;
+  --on-field: #ffffff;
 }
 
 /* Slate. The kit's own original palette, and the one two of its demos already wear: a working
@@ -106,4 +126,5 @@
   /* The one exception, and the reason these tokens exist: this primary is a dark navy. */
   --on-a: #ffffff;
   --on-b: #0e1720;
+  --on-field: #ffffff;
 }
