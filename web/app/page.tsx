@@ -2,7 +2,13 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import {
   SKIN_COOKIE,
+  SCHEME_COOKIE,
+  STYLE_COOKIE,
+  SchemeToggle,
   SkinToggle,
+  StyleToggle,
+  resolveScheme,
+  resolveStyle,
   TourNotes,
   TourWindow,
   productHref,
@@ -37,7 +43,10 @@ export default async function Shell({
 }) {
   const params = await searchParams;
   const view = resolveShellView(TOUR, params);
-  const skin = resolveWorkbenchSkin((await cookies()).get(SKIN_COOKIE)?.value);
+  const jar = await cookies();
+  const skin = resolveWorkbenchSkin(jar.get(SKIN_COOKIE)?.value);
+  const scheme = resolveScheme(jar.get(SCHEME_COOKIE)?.value ?? 'deeplight');
+  const style = resolveStyle(jar.get(STYLE_COOKIE)?.value);
 
   return (
     <TourWindow
@@ -50,17 +59,16 @@ export default async function Shell({
       view={view}
       skin={skin}
       link={Link}
-      notes={
+      /* In the control bar rather than the notes: `notes` is guided-only, so a reader who
+         switched to free view had no treatment controls at all. */
+      controls={
         <>
-          <TourNotes tour={TOUR} view={view} link={Link} />
-          {/* The treatment control is demo furniture, so it sits with the guided notes. In
-              free view the current demo-kit owns the paired floating controls itself. */}
-          <div className="skin-row">
-            <span>Surface</span>
-            <SkinToggle skin={skin} />
-          </div>
+          <SkinToggle skin={skin} />
+          <SchemeToggle scheme={scheme} />
+          <StyleToggle style={style} />
         </>
       }
+      notes={<TourNotes tour={TOUR} view={view} link={Link} />}
     />
   );
 }
