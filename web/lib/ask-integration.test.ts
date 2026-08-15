@@ -1,6 +1,27 @@
+/**
+ * Ask, end to end against this demo's own tools.
+ *
+ * ## Why every script here carries one more response than it has turns
+ *
+ * The kit runs a **claim check** after the answering turn: a second, tool-free request whose system
+ * prompt is the verifier's own, asking whether the lookups actually said what the sentence says. It is
+ * not opt-in — `ask` runs it whether or not a demo asks for it, on the principle that a guard a demo
+ * has to switch on is a guard most demos do not have.
+ *
+ * So there are two model calls per answer, and these scripts held one. When the kit revision landed,
+ * every question in this file came back `unavailable` with `sdk_error` — which reads like a broken
+ * product and was a test double one response short.
+ *
+ * The fix scripts the verifier's own reply rather than injecting a `verify` that always passes.
+ * Injecting one would make this file green while proving nothing about whether this demo's answers
+ * reach the check at all, so {@link VERIFIER_SYSTEM} is asserted on the last request instead, and one
+ * test drives a rejection through to watch the answer be withheld.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import {
+  VERIFIER_SYSTEM,
   ask,
   type AnthropicCreateParams,
   type AnthropicLike,
@@ -14,6 +35,9 @@ function answer(text: string): AnthropicMessageResult {
   return { content: [{ type: 'text', text }], stop_reason: 'end_turn' };
 }
 
+/** The claim check's own reply: nothing in the answer went beyond the material it was shown. */
+const VERIFIED = answer('{"unsupported": []}');
+
 function toolCalls(
   calls: readonly { id: string; name: string; input: Record<string, unknown> }[],
 ): AnthropicMessageResult {
@@ -23,15 +47,23 @@ function toolCalls(
   };
 }
 
-function fakeClient(responses: readonly AnthropicMessageResult[]): AnthropicLike {
+function fakeClient(responses: readonly AnthropicMessageResult[]): {
+  readonly client: AnthropicLike;
+  readonly sent: AnthropicCreateParams[];
+} {
+  const sent: AnthropicCreateParams[] = [];
   let index = 0;
   return {
-    messages: {
-      create: async () => {
-        const response = responses[index];
-        index += 1;
-        if (response === undefined) throw new Error('scripted client ran out of responses');
-        return response;
+    sent,
+    client: {
+      messages: {
+        create: async (params: AnthropicCreateParams) => {
+          sent.push(params);
+          const response = responses[index];
+          index += 1;
+          if (response === undefined) throw new Error('scripted client ran out of responses');
+          return response;
+        },
       },
     },
   };
@@ -39,20 +71,19 @@ function fakeClient(responses: readonly AnthropicMessageResult[]): AnthropicLike
 
 const selectedView = viewOf();
 
-async function runQuestion(
-  question: string,
-  responses: readonly AnthropicMessageResult[],
-) {
-  return ask({
+async function runQuestion(question: string, responses: readonly AnthropicMessageResult[]) {
+  const { client, sent } = fakeClient(responses);
+  const reply = await ask({
     question,
     system: systemFor(selectedView),
     tools: TOOLS,
     runTool: (call) => runTool(call, { view: selectedView }),
     subjects: ASK_SUBJECTS,
     suggestions: SUGGESTIONS,
-    client: fakeClient(responses),
+    client,
     log: () => {},
   });
+  return { reply, sent };
 }
 
 describe('Ask runs the four illustrated questions through the guarded loop', () => {
@@ -104,7 +135,17 @@ describe('Ask runs the four illustrated questions through the guarded loop', () 
       expectedCalls: 2,
     },
   ])('$question', async ({ question, calls, final, expectedCalls }) => {
-    const reply = await runQuestion(question, [toolCalls(calls), answer(final)]);
+    const { reply, sent } = await runQuestion(question, [
+      toolCalls(calls),
+      answer(final),
+      VERIFIED,
+    ]);
+
+    /* The answer reached the kit's claim check: a third request, no tools on it, the verifier's own
+       system prompt. Asserted rather than assumed, because a demo can only lose this by wiring. */
+    expect(sent).toHaveLength(3);
+    expect(sent[2]?.system).toBe(VERIFIER_SYSTEM);
+    expect(sent[2]?.tools).toBeUndefined();
 
     expect(reply.kind).toBe('chat');
     if (reply.kind !== 'chat') return;
@@ -163,13 +204,31 @@ describe('Ask applies the current demo-kit answer guards to finance subjects', (
   });
 
   it('lets the product state that an invented future prediction is absent', async () => {
-    const reply = await runQuestion('What will EBITDA be in 2028?', [
+    const { reply } = await runQuestion('What will EBITDA be in 2028?', [
       answer('The governed data does not hold a prediction for that future period.'),
+      VERIFIED,
     ]);
 
     expect(reply.kind).toBe('chat');
     if (reply.kind !== 'chat') return;
     expect(reply.toolCalls).toBe(0);
     expect(reply.answer).toMatch(/does not hold a prediction/);
+  });
+
+  it('withholds an answer the claim check will not stand behind', async () => {
+    /* The check is what separates "grounded in the figures" from "contains the figures". A sentence
+       can quote every numeral correctly and still assert a cause the lookups never mentioned, and this
+       is the only guard that can see it — so the demo is asserted to be *subject* to it, not merely
+       to have it available. */
+    const { reply } = await runQuestion(SUGGESTIONS[0] ?? '', [
+      toolCalls([{ id: 'ebitda', name: 'explain_ebitda', input: { against: 'forecast' } }]),
+      answer('EBITDA is behind plan because the Gulf board deferred a contract award.'),
+      answer('{"unsupported": ["the Gulf board deferred a contract award"]}'),
+    ]);
+
+    expect(reply.kind).toBe('unavailable');
+    if (reply.kind !== 'unavailable') return;
+    expect(reply.failure).toBe('unchecked_claim');
+    expect(reply.suggestions.length).toBeGreaterThan(0);
   });
 });
