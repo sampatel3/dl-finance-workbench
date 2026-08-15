@@ -199,6 +199,27 @@
     color-mix(in srgb, var(--brand-a) var(--field-mix), var(--brand-ink));
 }
 
+/* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
+   slides in the reference actually use, and its panes are pure white against it. */
+[data-style='aurora'] .deep {
+  --ink: var(--brand-ink);
+  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
+  --pane: #ffffff;
+  --pane-edge: transparent;
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  color: var(--ink);
+  background:
+    radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
+    radial-gradient(56% 64% at 96% 20%, color-mix(in srgb, var(--brand-a) 14%, transparent) 0%, transparent 62%),
+    radial-gradient(64% 70% at 82% 96%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 66%),
+    color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
+}
+
 /* ----------------------------------------------------------------------- drift ---- */
 /*
  * The editorial system. Labels are bold sans in sentence case rather than letterspaced
@@ -1049,27 +1070,6 @@ ul.plus li::before {
     radial-gradient(70% 70% at 76% 76%, color-mix(in srgb, var(--brand-a) 22%, var(--brand-ink)) 0%, transparent 72%),
     color-mix(in srgb, var(--brand-a) 6%, var(--brand-ink));
   color: rgba(255, 255, 255, .6);
-}
-
-/* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
-   slides in the reference actually use, and its panes are pure white against it. */
-[data-style='aurora'] .deep {
-  --ink: var(--brand-ink);
-  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
-  --pane: #ffffff;
-  --pane-edge: transparent;
-  --pane-ink: var(--brand-ink);
-  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  color: var(--ink);
-  background:
-    radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
-    radial-gradient(56% 64% at 96% 20%, color-mix(in srgb, var(--brand-a) 14%, transparent) 0%, transparent 62%),
-    radial-gradient(64% 70% at 82% 96%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 66%),
-    color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
 }
 
 /* The two ground rules above already beat drift's blob grounds — same specificity, declared
