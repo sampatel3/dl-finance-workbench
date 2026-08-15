@@ -944,7 +944,38 @@ a:hover { opacity: 0.72; }
 }
 .grid tbody th { text-align: left; font-weight: 500; color: var(--label); }
 .grid tbody th a { color: var(--accent-line); text-decoration: none; }
+/* Numeric columns take exactly the width of their content and no more.
+ *
+ * `width: 1%` on a table cell is the browser's instruction to shrink-to-fit once the table is
+ * `width: 100%` — the leftover goes to the columns that did not ask. Without it the browser
+ * distributes width evenly and the label column loses: "Production line 4 — automation" wrapped
+ * to two lines beside a £1.5m sitting in eighty-five points of space it did not need. The label
+ * is the column a reader enters the row through, so it is the one that should get the slack.
+ */
 .grid .num { text-align: right; font-family: var(--ff-mono); color: var(--text); }
+/* Opt-in, on the tables with enough columns to starve their label.
+ *
+ * `width: 1%` is the browser's shrink-to-fit instruction once the table is `width: 100%`: the
+ * leftover goes to the columns that did not ask for it. On a nine-column landing that is exactly
+ * right — "Production line 4 — automation" was wrapping to two lines beside a £1.5m sitting in
+ * eighty-five points it did not need.
+ *
+ * It is **not** global, and the reason is the failure it caused when it was: on a four-column
+ * table all the slack lands in the label column, which stretches to eight hundred points of empty
+ * space and pushes the figures to the far edge, so the eye has to travel from a label to a number
+ * across a void. Wide tables need the slack moved; narrow ones were already fine. */
+.grid-wide thead th.num, .grid-wide tbody td.num { width: 1%; }
+/* Only the figures refuse to wrap. Headers may: "ACTUAL YTD / AT CLOSE" forced onto one line is
+   wider than the figures beneath it, and holding nine of those open pushed the last column off
+   the pane — a table that scrolls to reach its verdict is worse than one that wraps a heading. */
+.grid-wide tbody td.num { white-space: nowrap; }
+.grid-wide tbody th[scope='row'] { min-width: 10rem; max-width: 22rem; }
+
+/* A rule before a derived block, so seven numeric columns read as groups rather than a run.
+   Applied to the first cell of the group: "here the measurements stop and the arithmetic on
+   them begins" is the one boundary a finance reader looks for. */
+.grid .col-divide { border-left: 1px solid var(--border-strong); }
+
 .grid tbody tr:hover { background: var(--surface-2); }
 .grid .pos { color: var(--pos); }
 .grid .neg { color: var(--neg); }
@@ -995,6 +1026,9 @@ a:hover { opacity: 0.72; }
 
 /* A grid wider than the pane scrolls inside it rather than pushing the page sideways. */
 .pane-scroll { width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; }
+/* The column names stay put while the figures move under them. The pivot has had this since it
+   was built; a nine-column landing table needs it for the same reason. */
+.pane-scroll .grid thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
 .grid-pivot { min-width: 720px; }
 .grid-pivot .total { border-left: 1px solid var(--border-strong); color: var(--text); }
 
@@ -1049,6 +1083,12 @@ a:hover { opacity: 0.72; }
 .mono-cell { font-family: var(--ff-mono); font-size: 11px; color: var(--muted); }
 .muted-cell { color: var(--muted); }
 .row-note { display: block; margin-top: 3px; font-size: 11px; color: var(--faint); font-weight: 400; }
+/* An owner beside the label rather than beneath it. One word of accountability should not double
+   the height of a row, and five rows owned by the same team read as a column of repetition when
+   each one is on its own line. */
+/* Wraps with the label rather than forcing the column wider — the point of moving it inline was
+   to stop it claiming a line of its own, not to claim horizontal space instead. */
+.row-owner { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--faint); }
 
 /* A row that breaches something, and one that is the selected version. Both are a left rule rather
    than a fill: a tinted row in a table of twenty reads as a selection the reader did not make. */

@@ -127,7 +127,7 @@ export default async function People({ searchParams }: { searchParams: Promise<P
           </span>
         </div>
         <div className="pane pane-scroll">
-          <table className="grid">
+          <table className="grid grid-wide">
             <thead>
               <tr>
                 <th scope="col">Department</th>

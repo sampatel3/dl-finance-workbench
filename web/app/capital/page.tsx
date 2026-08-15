@@ -84,7 +84,7 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
           </span>
         </div>
         <div className="pane pane-scroll">
-          <table className="grid">
+          <table className="grid grid-wide">
             <thead>
               <tr>
                 <th scope="col">Project</th>
@@ -102,7 +102,7 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
                 <th scope="col" className="num">
                   To complete
                 </th>
-                <th scope="col" className="num">
+                <th scope="col" className="num col-divide">
                   Expected total
                 </th>
                 <th scope="col" className="num">
@@ -133,7 +133,7 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
                   <td className="num muted-cell">
                     {formatValue(row.project.forecastToCompleteMinor, 'currency')}
                   </td>
-                  <td className="num">
+                  <td className="num col-divide">
                     <strong>{formatValue(row.expectedTotalMinor, 'currency')}</strong>
                   </td>
                   <td className={`num ${row.remainingMinor < 0 ? 'neg' : 'pos'}`}>
