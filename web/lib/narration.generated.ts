@@ -9,28 +9,27 @@
 import type { BriefRecord } from './narration';
 
 export const NARRATION: Readonly<Record<string, BriefRecord>> = {
-  'overview:2026-07': {
-    title: 'Jul 2026 commentary',
-    month: '2026-07',
-    figures: {
-      revenue: 1239322034,
-      gross_margin: 0.4180426134503794,
-      ebitda: 209554568,
-      cash: 479485248,
-      revenue_movement: 0.05247724884508832,
-      gross_margin_movement: -194.19172508795103,
-      ebitda_movement: -0.004756698594180022,
-      cash_movement: -0.18095939260143273,
-      ledgersClosed: 4,
-      ledgersTotal: 5,
+  "overview:2026-07": {
+    "title": "Jul 2026 commentary",
+    "month": "2026-07",
+    "figures": {
+      "revenue": 1239322034,
+      "gross_margin": 0.4180426134503794,
+      "ebitda": 209554568,
+      "cash": 479485248,
+      "revenue_movement": 0.05247724884508832,
+      "gross_margin_movement": -194.19172508795103,
+      "ebitda_movement": -0.029629522850643023,
+      "cash_movement": -0.18429261185372736,
+      "ledgersClosed": 4,
+      "ledgersTotal": 5
     },
-    finding:
-      "Projects margin 404bps behind forecast. Projects gross margin of 27.4% is 404bps behind forecast, which is £62k of gross profit on the segment's £1.5m of revenue.",
-    narration: {
-      headline: '9 items need a decision in Jul 2026',
-      body: '9 findings in Jul 2026: 3 adverse, 2 favourable, 3 risks and 1 opportunity. 4 are forward items where a decision is still available. Revenue was £12.4m and EBITDA £2.1m, measured against version v6. 4/5 ledgers closed — period not final. Outstanding: Kestrel Inc has submitted but not closed.',
-      narratedBy: 'template',
-      generatedAt: '2026-08-13T07:45:05.757Z',
-    },
-  },
+    "finding": "Projects margin 404bps behind forecast. Projects gross margin of 27.4% is 404bps behind forecast, which is £62k of gross profit on the segment's £1.5m of revenue.",
+    "narration": {
+      "headline": "9 items need a decision in Jul 2026",
+      "body": "9 findings in Jul 2026: 3 adverse, 2 favourable, 3 risks and 1 opportunity. 4 are forward items where a decision is still available. Revenue was £12.4m and EBITDA £2.1m, measured against version v6. 4/5 ledgers closed — period not final. Outstanding: Kestrel Inc has submitted but not closed.",
+      "narratedBy": "template",
+      "generatedAt": "2026-08-13T07:45:05.757Z"
+    }
+  }
 };

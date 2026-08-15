@@ -10,14 +10,29 @@
  * demo's prose and show up as a diff nobody asked for. Keyless builds ship what is
  * committed, which is the whole reason the file is committed. The only exception is a file
  * that does not exist yet: then the fallback is written so the app compiles.
+ *
+ * ## `--figures-only`
+ *
+ * There is a third case the two modes above could not express, and it is the common one when the
+ * change is to the seed rather than to the wording: **the figures moved and the sentences are still
+ * true.** Making headcount follow the volume assumption moved EBITDA against forecast by two points;
+ * the committed paragraph, which is about a segment's margin, quotes neither figure.
+ *
+ * Without this flag the only ways forward were to hold a key or to hand-edit a file whose own header
+ * says do not edit — and at four in the afternoon it is always the second. So it is a mode with a
+ * guard instead: the pinned figures are refreshed from a fresh build, the committed prose is kept,
+ * and **the run aborts if that prose no longer validates against the new pack.** Prose that has
+ * stopped being supported by its own figures needs rewriting, and no flag should let it past.
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateClaims, validateNumerals } from '@demo-kit/llm';
 import { liveClient } from '../lib/anthropic.ts';
-import { buildBriefs, type BriefRecord } from '../lib/narration.ts';
+import { NARRATION } from '../lib/narration.generated.ts';
+import { buildBriefs, packFor, type BriefRecord } from '../lib/narration.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TARGET = resolve(HERE, '../lib/narration.generated.ts');
@@ -38,10 +53,58 @@ function render(briefs: Record<string, BriefRecord>): string {
   return `${HEADER}${JSON.stringify(briefs, null, 2)};\n`;
 }
 
+/**
+ * Refresh the pinned figures, keep the committed prose.
+ *
+ * The guard is the whole feature. Every committed sentence is re-run through the same two validators
+ * the generator uses before it writes anything, against the **new** pack — so a paragraph that quoted a
+ * figure the seed has since moved fails here rather than shipping. What survives is prose whose every
+ * numeral and claim the fresh data still supports, which is exactly the set that did not need a model.
+ */
+function refreshFigures(fresh: Record<string, BriefRecord>): Record<string, BriefRecord> {
+  const out: Record<string, BriefRecord> = {};
+  const failures: string[] = [];
+
+  for (const [key, record] of Object.entries(fresh)) {
+    const committed = NARRATION[key];
+    if (committed === undefined) {
+      out[key] = record;
+      continue;
+    }
+
+    const pack = packFor(record.month);
+    const written = `${committed.narration.headline} ${committed.narration.body}`;
+    const numerals = validateNumerals(written, pack);
+    const claims = validateClaims(written, pack);
+    if (numerals.offending.length > 0 || claims.offending.length > 0) {
+      failures.push(
+        `${key}: ${[...numerals.offending, ...claims.offending].join(', ')}`,
+      );
+      continue;
+    }
+
+    /* The fresh record with the committed narration put back. Everything else — figures, finding,
+       month, title — comes from the new build, which is the point of the mode. */
+    out[key] = { ...record, narration: committed.narration };
+  }
+
+  if (failures.length > 0) {
+    console.error(
+      '[narrate] --figures-only refused: the committed prose is no longer supported by the data.\n' +
+        failures.map((line) => `  ${line}`).join('\n') +
+        '\nRun with ANTHROPIC_API_KEY set so the sentences are rewritten from the figures they claim.',
+    );
+    process.exit(1);
+  }
+
+  return out;
+}
+
 async function main(): Promise<void> {
+  const figuresOnly = process.argv.includes('--figures-only');
   const client = await liveClient();
 
-  if (client === undefined) {
+  if (client === undefined && !figuresOnly) {
     if (existsSync(TARGET)) {
       console.log('[narrate] no ANTHROPIC_API_KEY — keeping the committed narration.');
       return;
@@ -49,16 +112,20 @@ async function main(): Promise<void> {
     console.log('[narrate] no ANTHROPIC_API_KEY and no committed file — writing the fallback.');
   }
 
-  const briefs = await buildBriefs({
+  const fresh = await buildBriefs({
     ...(client === undefined ? {} : { client }),
     onReject: (reason, detail) => console.warn(`[narrate] rejected (${reason}): ${detail}`),
   });
+  const briefs = figuresOnly ? refreshFigures(fresh) : fresh;
 
   await mkdir(dirname(TARGET), { recursive: true });
   await writeFile(TARGET, render(briefs), 'utf8');
 
   for (const [key, record] of Object.entries(briefs)) {
-    console.log(`[narrate] ${key}: ${record.narration.narratedBy} — ${record.narration.headline}`);
+    console.log(
+      `[narrate] ${key}: ${record.narration.narratedBy}${figuresOnly ? ' (prose kept)' : ''} — ` +
+        `${record.narration.headline}`,
+    );
   }
 }
 

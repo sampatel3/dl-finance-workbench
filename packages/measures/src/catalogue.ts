@@ -792,6 +792,92 @@ export const MEASURES: readonly MeasureDefinition[] = [
     },
   },
   {
+    /* The people section's headline. Annualised, because a monthly cost per head is a number nobody
+       benchmarks against anything — every salary conversation in the business is an annual one. */
+    id: 'cost_per_fte',
+    label: 'Cost per FTE (annualised)',
+    unit: 'currency',
+    polarity: 'neutral',
+    formula: 'staff cost ÷ headcount, annualised',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'mean',
+    annualise: true,
+    note: 'Excludes subcontract labour, which is bought by the hour and not employed — the contractor mix beside it is where that cost shows. Annualised on the window’s real days, because seven months is not seven twelfths of a year.',
+    compute: (get) => {
+      const heads = get('headcount');
+      const cost = get('staff_cost');
+      return heads === null || cost === null || heads === 0 ? null : div(cost, heads / 100);
+    },
+  },
+  {
+    /* Contractors over the total workforce. Two balances, so the ratio holds over any window — and the
+       whole point of the line is that it moves before the margin does. */
+    id: 'contractor_share',
+    label: 'Contractor share of workforce',
+    unit: 'percent',
+    polarity: 'neutral',
+    formula: 'contractor FTE ÷ (contractor FTE + headcount)',
+    owner: 'Operations Director',
+    status: 'approved',
+    trend: 'last',
+    note: 'Neutral polarity on purpose: a contractor mix is a decision, not a failure. It becomes a finding when it moves and the margin moves with it.',
+    compute: (get) => {
+      const contractors = get('contractor_fte');
+      const heads = get('headcount');
+      if (contractors === null || heads === null) return null;
+      const total = contractors + heads;
+      return total === 0 ? null : contractors / total;
+    },
+  },
+  {
+    id: 'open_roles',
+    label: 'Open roles',
+    unit: 'count',
+    polarity: 'lower_is_better',
+    formula: 'vacancies open at the period end',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'last',
+    compute: (get) => {
+      const roles = get('open_roles');
+      return roles === null ? null : roles / 100;
+    },
+  },
+  {
+    id: 'vacancy_rate',
+    label: 'Vacancy rate',
+    unit: 'percent',
+    polarity: 'lower_is_better',
+    formula: 'open roles ÷ (headcount + open roles)',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'last',
+    note: 'Against the establishment rather than against filled posts, so a team that has lost a third of itself does not report a 50% vacancy rate.',
+    compute: (get) => {
+      const roles = get('open_roles');
+      const heads = get('headcount');
+      if (roles === null || heads === null) return null;
+      const establishment = roles + heads;
+      return establishment === 0 ? null : roles / establishment;
+    },
+  },
+  {
+    id: 'training_completion',
+    label: 'Mandatory training completed',
+    unit: 'percent',
+    polarity: 'higher_is_better',
+    formula: 'training completed ÷ training assigned',
+    owner: 'Group HR Director',
+    status: 'approved',
+    trend: 'mean',
+    compute: (get) => {
+      const done = get('training_completed');
+      const due = get('training_required');
+      return done === null || due === null || due === 0 ? null : done / due;
+    },
+  },
+  {
     id: 'utilisation',
     label: 'Utilisation',
     unit: 'percent',

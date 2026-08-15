@@ -233,10 +233,15 @@ describe('polarity, not sign', () => {
   });
 
   it('an unchanged measure is neutral rather than adverse by default', () => {
-    const unchangedCost = compareMeasure('staff_cost', ctx(), {
-      id: 'budget',
-      versionId: 'budget-fy26',
-    });
+    /* Compared against its own version, so the zero is by construction rather than by coincidence.
+       This used to reach for staff cost against budget, which was zero only because nothing in the
+       model varied payroll by plan — and it went red the moment headcount started following the
+       volume assumption. A test whose subject depends on a seeded accident is testing the seed. */
+    const unchangedCost = compareMeasure(
+      'staff_cost',
+      ctx({ scenario: 'BUDGET', versionId: 'budget-fy26' }),
+      { id: 'budget', versionId: 'budget-fy26' },
+    );
     expect(unchangedCost.movement).toBe(0);
     expect(unchangedCost.favourable).toBeNull();
   });

@@ -645,6 +645,15 @@ export interface AssumptionSet {
   readonly pipelineConversion: number;
 }
 
+/**
+ * How far headcount follows a volume assumption.
+ *
+ * Well under one: payroll is a step cost. A plan assuming ten per cent less volume plans fewer people,
+ * but not ten per cent fewer in the same month, and the difference between the two is operational
+ * gearing — the thing that turns a small revenue miss into a large margin one.
+ */
+export const HEADCOUNT_ELASTICITY = 0.45;
+
 export const ACTUAL_ASSUMPTIONS: AssumptionSet = {
   volume: 1,
   price: 1,
@@ -913,7 +922,22 @@ function monthPl(
   const availableHours =
     s.availableHours === undefined ? 0 : drift(s.availableHours, 0.0014, index);
 
-  const headcount = Math.round(drift(s.headcount, s.headcountGrowth, index));
+  /* Headcount follows the volume assumption, partially and with a floor.
+   *
+   * It used to follow nothing at all: every version generated identical headcount and identical
+   * payroll, so the People surface reported staff cost, cost per FTE and open roles as exactly on
+   * plan — seven rows of +0.0% — for every version ever made. That is not a page saying "payroll is
+   * under control", it is a page that cannot say anything, and it is wrong about the business too: a
+   * plan assuming 5% less volume does not assume the same number of people.
+   *
+   * `HEADCOUNT_ELASTICITY` is well under one on purpose. Payroll is a step cost, not a variable one —
+   * a business that loses 10% of its volume does not shed 10% of its people in the same month, and the
+   * gap between what volume did and what headcount could do is precisely the operational-gearing
+   * problem a finance workbench exists to show.
+   */
+  const headcount = Math.round(
+    drift(s.headcount, s.headcountGrowth, index) * (1 + (a.volume - 1) * HEADCOUNT_ELASTICITY),
+  );
   const staffCost = (headcount * drift(s.costPerHead, s.costPerHeadDrift, index)) / 12;
   const otherOpex =
     revenue * s.otherOpexRate * (1 + noise(`${seed}|${s.id}|${month}|opex`) * 0.017);
@@ -1730,6 +1754,14 @@ function generateEntity(
     );
 
     // ---- operational drivers and cash flow
+
+    /* Headcount by cost centre as well as in total, on the same weights the payroll is split on.
+       Without the split the People surface's "by department" table is empty, and — worse — a cost per
+       FTE at a cost centre divides that department's payroll by the whole group's heads. The two have
+       to come from the same weights or the departments disagree with the payroll that pays them. */
+    for (const part of splitByCostCentre(s.costCentreWeights, cents(pl.headcount))) {
+      emitMinor(ctx, 'headcount', month, part.amountMinor, part.costCentre);
+    }
     emit(ctx, 'headcount', month, pl.headcount, { quantity: pl.headcount });
     if (pl.chargeableHours !== 0)
       emit(ctx, 'chargeable_hours', month, pl.chargeableHours, {
@@ -1851,6 +1883,44 @@ function generateEntity(
       pl.headcount * (0.34 + strain * 0.5) * (1 + noise(`${seed}|${s.id}|${month}|abs`) * 0.14),
     );
     emit(ctx, 'absence_days', month, absence, { quantity: absence });
+
+    /* Open roles, contractors and training — the three the review's people section asks for that the
+       ledger does not already carry.
+
+       Open roles rise with the leavers the strain produced, which is the loop a CFO is actually looking
+       at: pressure raises attrition, attrition raises vacancies, vacancies get covered with bought-in
+       labour, and the bought-in labour is what compressed the margin in the first place. Seeding them
+       independently would give a page where none of the numbers explained each other.
+
+       Contractor FTE is anchored to the entity's own subcontract hours rather than to a group constant,
+       so the mix moves for the reason the profit and loss says it moved. */
+    const openRoles = Math.max(
+      0,
+      Math.round(
+        pl.headcount * (0.018 + strain * 0.055) * (1 + noise(`${seed}|${s.id}|${month}|open`) * 0.15),
+      ),
+    );
+    for (const part of splitByCostCentre(s.costCentreWeights, cents(openRoles))) {
+      emitMinor(ctx, 'open_roles', month, part.amountMinor, part.costCentre);
+    }
+    emit(ctx, 'open_roles', month, openRoles, { quantity: openRoles });
+
+    const contractorFte = Math.max(
+      0,
+      Math.round(pl.headcount * subcontractLean * (1 + noise(`${seed}|${s.id}|${month}|ctr`) * 0.08)),
+    );
+    emit(ctx, 'contractor_fte', month, contractorFte, { quantity: contractorFte });
+
+    /* Training assigned per head per quarter rather than per month, so completion is a real rate with a
+       denominator somebody could audit. It falls under strain for the ordinary reason: a team covering
+       demand does the compliance module last. */
+    const trainingDue = Math.max(1, Math.round(pl.headcount / 3));
+    emit(ctx, 'training_required', month, trainingDue, { quantity: trainingDue });
+    const trainingDone = Math.round(
+      trainingDue *
+        Math.min(1, (0.94 - strain * 0.29) * (1 + noise(`${seed}|${s.id}|${month}|trn`) * 0.03)),
+    );
+    emit(ctx, 'training_completed', month, trainingDone, { quantity: trainingDone });
 
     /* Delivery and quality. Projects only where the entity sells them, so a manufacturing business does
        not report a project on-time rate it has no projects for — a KPI reported at every entity whether

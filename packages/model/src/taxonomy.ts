@@ -414,6 +414,45 @@ export const ACCOUNTS = [
     nonMonetary: true,
   },
   {
+    /* Vacancies open at the period end. A balance, not a flow: three roles open all quarter is three
+       roles, not nine. The review asks for "open roles and hiring pipeline", and this is the half a
+       finance system can actually hold — a pipeline of named candidates belongs in an ATS. */
+    code: 'open_roles',
+    label: 'Open roles',
+    basis: 'balance',
+    statement: 'cf',
+    polarity: 'lower_is_better',
+    nonMonetary: true,
+  },
+  {
+    /* Contractors on site, as full-time equivalents at the period end, so the permanent/contractor mix
+       is a ratio of two balances rather than a headcount against a cost. Held rather than derived from
+       subcontract hours: dividing bought-in hours by an assumed working month is an assumption dressed
+       as a measurement, and the assumption is the part that would be wrong. */
+    code: 'contractor_fte',
+    label: 'Contractor FTE',
+    basis: 'balance',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'training_required',
+    label: 'Mandatory training assignments due',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'neutral',
+    nonMonetary: true,
+  },
+  {
+    code: 'training_completed',
+    label: 'Mandatory training completed',
+    basis: 'flow',
+    statement: 'cf',
+    polarity: 'higher_is_better',
+    nonMonetary: true,
+  },
+  {
     code: 'leavers',
     label: 'Leavers',
     basis: 'flow',
