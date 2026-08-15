@@ -21,14 +21,30 @@
  */
 
 import { memoise } from '@demo-kit/data';
-import type { AssumptionSet } from '@kestrel/model';
-import { buildWorld } from '@kestrel/model';
+import type { AssumptionSet, VersionSpec } from '@kestrel/model';
+import { CALENDAR_YEAR, VERSIONS, buildWorld, fiscalYearOf, fiscalYearScope } from '@kestrel/model';
 import type { MeasureContext } from '@kestrel/measures';
 import { computeMeasure } from '@kestrel/measures';
-import type { DirectForecast } from '@kestrel/analysis';
-import { MINIMUM_CASH, activeApprovedForecast, directForecast, version } from '@kestrel/analysis';
+import type {
+  Confidence,
+  DirectForecast,
+  FundingPlan,
+  ImpliedDecision,
+  Precedent,
+} from '@kestrel/analysis';
+import {
+  MINIMUM_CASH,
+  activeApprovedForecast,
+  confidenceOf,
+  directForecast,
+  fundingPlan,
+  impliedDecisions,
+  precedentFor,
+  version,
+} from '@kestrel/analysis';
 
 import { DEMO_SEED } from './demo';
+import { movement } from './format';
 import { hrefFor, type Params, type View } from './world';
 
 /** The scenario version's id. One name, so a URL never has to carry it. */
@@ -40,12 +56,25 @@ export const SCENARIO_ID = 'scenario';
  * Bounded on purpose. An unbounded slider invites a demo audience to push revenue to zero and watch the
  * model produce nonsense, which teaches them that the model produces nonsense. These ranges are the ones
  * a plausible re-forecast moves within, and the surface says so.
+ *
+ * ## A step is a movement against the approved forecast, not an absolute assumption
+ *
+ * It used to be absolute, and that was wrong in a way nothing on the surface would have shown. A
+ * version's assumptions are multipliers on the drivers, and Forecast v6 assumes volume × 0.946 — so a
+ * chip labelled "−10%" that set the assumption to 0.9 was proposing a **4.9%** cut against the approved
+ * plan, while the saved scenario beside it was called *Revenue down 10%*. Two claims about one link and
+ * neither of them true. Nobody would have caught it without recomputing v6's assumption by hand, which
+ * is precisely the reading the audit trail below now makes unnecessary.
+ *
+ * A step is applied to the approved forecast's own value: `0.9` means ten per cent below plan, whatever
+ * plan assumes. `dsoDays` is a count of days rather than a factor, so it carries `mode: 'delta'`.
  */
 export const LEVERS = [
   {
     key: 'volume',
     label: 'Volume',
     owner: 'Operations Director',
+    mode: 'factor',
     steps: [0.9, 0.95, 1, 1.05, 1.1],
     note: 'Units in every unitised segment, and project revenue.',
   },
@@ -53,6 +82,7 @@ export const LEVERS = [
     key: 'price',
     label: 'Price',
     owner: 'Commercial Director',
+    mode: 'factor',
     steps: [0.96, 0.98, 1, 1.02, 1.04],
     note: 'Realised price per unit.',
   },
@@ -60,6 +90,7 @@ export const LEVERS = [
     key: 'serviceDeliveryCost',
     label: 'Cost to serve',
     owner: 'Services Director',
+    mode: 'factor',
     steps: [0.94, 0.97, 1, 1.03, 1.06],
     note: 'Delivery cost on contracts and projects only — the assumption every version has under-called.',
   },
@@ -67,6 +98,7 @@ export const LEVERS = [
     key: 'subcontractRate',
     label: 'Subcontract rate',
     owner: 'Operations Director',
+    mode: 'factor',
     steps: [0.96, 0.98, 1, 1.02, 1.04],
     note: 'The blended rate paid for bought-in labour.',
   },
@@ -74,6 +106,7 @@ export const LEVERS = [
     key: 'dsoDays',
     label: 'Collection days',
     owner: 'Group Treasurer',
+    mode: 'delta',
     steps: [-10, -5, 0, 5, 10],
     note: 'Added to every entity’s days sales outstanding. The path a revenue assumption takes to cash.',
   },
@@ -81,40 +114,62 @@ export const LEVERS = [
   key: keyof AssumptionSet;
   label: string;
   owner: string;
+  mode: 'factor' | 'delta';
   steps: readonly number[];
   note: string;
 }[];
 
 export type LeverKey = (typeof LEVERS)[number]['key'];
+export type Lever = (typeof LEVERS)[number];
+
+export function lever(key: LeverKey): Lever {
+  const found = LEVERS.find((candidate) => candidate.key === key);
+  if (found === undefined) throw new Error(`Unknown lever: ${key}`);
+  return found;
+}
+
+/** The step that leaves an assumption where the approved forecast left it. */
+export function neutralStep(key: LeverKey): number {
+  return lever(key).mode === 'delta' ? 0 : 1;
+}
+
+/** A step applied to the approved forecast's own assumption. */
+export function applyStep(key: LeverKey, base: number, step: number): number {
+  return lever(key).mode === 'delta' ? base + step : base * step;
+}
 
 /** The assumption set a scenario runs, read from the URL over the approved forecast's. */
 export function assumptionsFrom(params: Params): {
   readonly assumptions: AssumptionSet;
   readonly moved: readonly LeverKey[];
+  /** The step each moved lever was set to — what the URL carries and what the audit trail states. */
+  readonly steps: Readonly<Record<string, number>>;
 } {
   const base = activeApprovedForecast().assumptions;
   const out: Record<string, number> = { ...base };
   const moved: LeverKey[] = [];
+  const steps: Record<string, number> = {};
 
-  for (const lever of LEVERS) {
-    const raw = params[lever.key];
+  for (const entry of LEVERS) {
+    const raw = params[entry.key];
     const text = Array.isArray(raw) ? raw[0] : raw;
     if (text === undefined) continue;
     const value = Number(text);
     /* Only a value the lever actually offers. A hand-edited URL asking for volume × 40 is not a
        scenario, it is a way to make the model print nonsense in front of a client. */
-    if (!(lever.steps as readonly number[]).includes(value)) continue;
-    if (value === base[lever.key]) continue;
-    out[lever.key] = value;
-    moved.push(lever.key);
+    if (!(entry.steps as readonly number[]).includes(value)) continue;
+    if (value === neutralStep(entry.key)) continue;
+    out[entry.key] = applyStep(entry.key, base[entry.key], value);
+    steps[entry.key] = value;
+    moved.push(entry.key);
   }
 
-  return { assumptions: out as unknown as AssumptionSet, moved };
+  return { assumptions: out as unknown as AssumptionSet, moved, steps };
 }
 
 /** A stable key for one assumption set, so identical scenarios reuse one world. */
 function keyOf(assumptions: AssumptionSet): string {
-  return LEVERS.map((lever) => `${lever.key}=${assumptions[lever.key]}`).join('|');
+  return LEVERS.map((entry) => `${entry.key}=${assumptions[entry.key]}`).join('|');
 }
 
 const worlds = new Map<string, ReturnType<typeof buildWorld>>();
@@ -158,16 +213,35 @@ export interface ScenarioLine {
   readonly unit: 'currency' | 'percent' | 'days';
   readonly baseValue: number | null;
   readonly scenarioValue: number | null;
+  /**
+   * The same measure on the approved **budget**.
+   *
+   * The review asks for side-by-side against Forecast v6 *and* Budget, and the second column is not a
+   * courtesy. A scenario that lands below the approved forecast may still be above budget, and the two
+   * facts imply opposite conversations — one is a re-forecast, the other is a problem. A surface showing
+   * only the forecast column cannot tell them apart.
+   */
+  readonly budgetValue: number | null;
   readonly movement: number | null;
+  /** Scenario against budget, which is the comparison a board paper is written against. */
+  readonly vsBudget: number | null;
   /** From the measure's polarity, so a cost that rose is not painted green. */
   readonly favourable: boolean | null;
+  readonly budgetFavourable: boolean | null;
 }
 
-/** The measures a scenario reports, in the order the plan asks for them. */
+/**
+ * The measures a scenario reports.
+ *
+ * The review names *"Revenue, EBITDA, PAT and Cash"*. Gross margin, working capital and net debt stay
+ * because they are where three of the five levers actually land — a cost-to-serve move that shows in
+ * EBITDA and nowhere else has lost the reason it happened.
+ */
 const REPORTED = [
   { id: 'revenue', unit: 'currency' as const },
   { id: 'gross_margin', unit: 'percent' as const },
   { id: 'ebitda', unit: 'currency' as const },
+  { id: 'net_income', unit: 'currency' as const },
   { id: 'working_capital', unit: 'currency' as const },
   { id: 'cash', unit: 'currency' as const },
   { id: 'net_debt', unit: 'currency' as const },
@@ -175,8 +249,12 @@ const REPORTED = [
 
 export interface ScenarioResult {
   readonly moved: readonly LeverKey[];
+  readonly steps: Readonly<Record<string, number>>;
   readonly assumptions: AssumptionSet;
   readonly lines: readonly ScenarioLine[];
+  /** The same measures at fiscal-year scope, so a month's scenario says where the year lands. */
+  readonly yearLines: readonly ScenarioLine[];
+  readonly fiscalYear: number;
   readonly baseCash: DirectForecast;
   readonly scenarioCash: DirectForecast;
   /** Headroom against the board floor at the low point, in both worlds. */
@@ -184,15 +262,83 @@ export interface ScenarioResult {
   readonly scenarioHeadroom: number;
   /** Absent when nothing moved, which is a real answer rather than an empty screen. */
   readonly isBase: boolean;
+  /** The versions both comparison columns read, named so the surface never has to guess. */
+  readonly approved: VersionSpec;
+  readonly budget: VersionSpec;
+  /** Every assumption this scenario changed, with the value it changed from. */
+  readonly trail: readonly AuditRow[];
+  /** What the outcome asks management to decide, and how far outside experience it sits. */
+  readonly decisions: readonly ImpliedDecision[];
+  readonly confidence: Confidence;
+  /** The funding route where the scenario puts the group through the floor. */
+  readonly funding?: FundingPlan;
+}
+
+/** One changed assumption, as a governance record rather than a slider position. */
+export interface AuditRow {
+  readonly key: LeverKey;
+  readonly label: string;
+  readonly owner: string;
+  /** The approved forecast's own value, and the scenario's. */
+  readonly from: number;
+  readonly to: number;
+  /** The step chosen, in the terms the chip is labelled with. */
+  readonly step: number;
+  readonly mode: 'factor' | 'delta';
+  readonly note: string;
+  readonly precedent: Precedent;
+}
+
+/** The approved budget both the surface and the decision layer compare against. */
+function approvedBudget(): VersionSpec {
+  const found = [...VERSIONS]
+    .filter((candidate) => candidate.scenario === 'BUDGET' && candidate.status === 'approved')
+    .pop();
+  if (found === undefined) throw new Error('no approved budget version');
+  return found;
+}
+
+function lineFor(
+  measureId: string,
+  unit: ScenarioLine['unit'],
+  baseCtx: MeasureContext,
+  scenarioCtx: MeasureContext,
+  budgetCtx: MeasureContext,
+): ScenarioLine {
+  const b = computeMeasure(measureId, baseCtx);
+  const s = computeMeasure(measureId, scenarioCtx);
+  const budget = computeMeasure(measureId, budgetCtx);
+  const move = b.value === null || s.value === null ? null : s.value - b.value;
+  const vsBudget = budget.value === null || s.value === null ? null : s.value - budget.value;
+  const direction = (movement: number | null): boolean | null =>
+    movement === null || movement === 0 || b.polarity === 'neutral'
+      ? null
+      : b.polarity === 'higher_is_better'
+        ? movement > 0
+        : movement < 0;
+
+  return {
+    measureId,
+    label: b.label,
+    unit,
+    baseValue: b.value,
+    scenarioValue: s.value,
+    budgetValue: budget.value,
+    movement: move,
+    vsBudget,
+    favourable: direction(move),
+    budgetFavourable: direction(vsBudget),
+  };
 }
 
 export function runScenario(view: View, params: Params): ScenarioResult {
-  const { assumptions, moved } = assumptionsFrom(params);
+  const { assumptions, moved, steps } = assumptionsFrom(params);
   const isBase = moved.length === 0;
 
   const baseWorld = base();
   const scenario = isBase ? baseWorld : scenarioWorld(assumptions);
   const approved = activeApprovedForecast();
+  const budget = approvedBudget();
 
   const shared = {
     scope: view.scope,
@@ -217,77 +363,194 @@ export function runScenario(view: View, params: Params): ScenarioResult {
     scenario: 'FORECAST',
     versionId: isBase ? approved.id : SCENARIO_ID,
   };
+  /* The budget column reads the base world: a budget is a stored version, and rebuilding it under the
+     scenario's assumptions would produce a budget nobody approved. */
+  const budgetCtx: MeasureContext = {
+    ...baseCtx,
+    scenario: 'BUDGET',
+    versionId: budget.id,
+  };
 
-  const lines = REPORTED.map((entry): ScenarioLine => {
-    const b = computeMeasure(entry.id, baseCtx);
-    const s = computeMeasure(entry.id, scenarioCtx);
-    const move = b.value === null || s.value === null ? null : s.value - b.value;
-    const favourable =
-      move === null || move === 0 || b.polarity === 'neutral'
-        ? null
-        : b.polarity === 'higher_is_better'
-          ? move > 0
-          : move < 0;
-    return {
-      measureId: entry.id,
-      label: b.label,
-      unit: entry.unit,
-      baseValue: b.value,
-      scenarioValue: s.value,
-      movement: move,
-      favourable,
-    };
-  });
+  const lines = REPORTED.map((entry) =>
+    lineFor(entry.id, entry.unit, baseCtx, scenarioCtx, budgetCtx),
+  );
+
+  /* The same measures across the fiscal year, because the review asks scenarios to link to the Forecast
+     and Year to Go outcomes. A lever moved in one month and reported only in that month leaves a reader
+     to multiply by five, which is exactly the arithmetic the year-to-go surface exists to stop. */
+  const year = fiscalYearScope(fiscalYearOf(view.scope.endMonth, CALENDAR_YEAR), CALENDAR_YEAR);
+  const yearLines = REPORTED.map((entry) =>
+    lineFor(
+      entry.id,
+      entry.unit,
+      { ...baseCtx, scope: year },
+      { ...scenarioCtx, scope: year },
+      { ...budgetCtx, scope: year },
+    ),
+  );
 
   const baseCash = directForecast(baseCtx);
   const scenarioCash = directForecast(scenarioCtx);
+  const baseHeadroom = baseCash.low.amount - MINIMUM_CASH.amountMinor;
+  const scenarioHeadroom = scenarioCash.low.amount - MINIMUM_CASH.amountMinor;
+
+  const trail = moved.map((key): AuditRow => {
+    const entry = lever(key);
+    return {
+      key,
+      label: entry.label,
+      owner: entry.owner,
+      from: approved.assumptions[key],
+      to: assumptions[key],
+      step: steps[key] ?? neutralStep(key),
+      mode: entry.mode,
+      note: entry.note,
+      precedent: precedentFor(key, assumptions[key]),
+    };
+  });
+
+  /* Where the scenario breaches, the decision needs the same funding arithmetic the cash surface uses —
+     not a second, looser version of it. The plan is computed once here and handed to the decision
+     layer, so "fund it by week seven" on this page and on the cash page are the same claim. */
+  const breach = scenarioCash.breach;
+  const funding =
+    breach === undefined
+      ? undefined
+      : fundingPlan(scenarioCtx, breach.shortfall, breach.index, view.scope.endMonth);
+
+  const ebitda = lines.find((line) => line.measureId === 'ebitda');
+  const margin = lines.find((line) => line.measureId === 'gross_margin');
+  const decisions = impliedDecisions({
+    movedLevers: moved,
+    leverMovement: Object.fromEntries(
+      trail.map((row) => [row.key, row.mode === 'delta' ? row.to - row.from : row.to / row.from - 1]),
+    ),
+    ebitdaBase: ebitda?.baseValue ?? null,
+    ebitdaMovement: ebitda?.movement ?? null,
+    /* A margin movement is a ratio difference, and the whole product quotes those in basis points. */
+    marginMovementBps: margin?.movement === null ? null : (margin?.movement ?? 0) * 10_000,
+    baseHeadroom,
+    scenarioHeadroom,
+    breachWeek: breach?.index ?? null,
+    shortfallMinor: breach?.shortfall ?? 0,
+    ...(funding === undefined ? {} : { funding }),
+  });
 
   return {
     moved,
+    steps,
     assumptions,
     lines,
+    yearLines,
+    fiscalYear: fiscalYearOf(view.scope.endMonth, CALENDAR_YEAR),
     baseCash,
     scenarioCash,
-    baseHeadroom: baseCash.low.amount - MINIMUM_CASH.amountMinor,
-    scenarioHeadroom: scenarioCash.low.amount - MINIMUM_CASH.amountMinor,
+    baseHeadroom,
+    scenarioHeadroom,
     isBase,
+    approved,
+    budget,
+    trail,
+    decisions,
+    confidence: confidenceOf(trail.map((row) => row.precedent)),
+    ...(funding === undefined ? {} : { funding }),
   };
 }
 
 /**
- * The seeded scenario library: each entry a link.
+ * The seeded scenario library: each entry a link, and each one a governed record.
  *
  * Held here rather than in a store because nothing a visitor does persists on this tier, and a library
  * that pretended otherwise would lose a saved scenario on reload — the one failure a demo audience
  * always finds. A link cannot be lost.
+ *
+ * ## Author, date and standing are on the record, not on the run
+ *
+ * The review asks scenarios to *"show author, date, assumptions and version"* and to be *"clearly
+ * labelled as not the approved forecast unless approved"*. Both belong to a **saved** scenario. A
+ * visitor dragging a lever has produced a working scenario with no author but the session and no date
+ * but now, and stamping a name and a timestamp on it would be inventing a governance record rather
+ * than keeping one — the version of this feature that quietly makes a demo look more governed than the
+ * product is.
+ *
+ * So the library entries carry provenance, an unsaved run says plainly that it has none, and neither
+ * of them is ever *approved*: the approved plan is Forecast v6, and nothing on this surface changes it.
  */
-export const LIBRARY = [
+export type ScenarioStanding =
+  /** Circulated for discussion, and named as such in a board or operating pack. */
+  | 'tabled'
+  /** Prepared and held, not yet put to anyone. */
+  | 'prepared'
+  /** Prepared, put forward, and turned down — kept because the reason it was turned down is evidence. */
+  | 'declined';
+
+export const STANDING_LABELS: Readonly<Record<ScenarioStanding, string>> = {
+  tabled: 'Tabled for discussion',
+  prepared: 'Prepared, not yet tabled',
+  declined: 'Considered and declined',
+};
+
+export interface LibraryEntry {
+  readonly name: string;
+  readonly why: string;
+  readonly params: Readonly<Record<string, string>>;
+  readonly author: string;
+  /** Stated, never read from a clock — the same rule every other dated record in this model follows. */
+  readonly preparedAt: string;
+  readonly standing: ScenarioStanding;
+  /** Where it has been, in one line. The audit trail a saved scenario carries and a run does not. */
+  readonly history: string;
+}
+
+export const LIBRARY: readonly LibraryEntry[] = [
   {
     name: 'Revenue down 10%',
     why: 'The downside the board asks for first. Watch the cash line, not the margin.',
     params: { volume: '0.9' },
+    author: 'Group FP&A lead',
+    preparedAt: '2026-08-04',
+    standing: 'tabled',
+    history: 'Prepared for the August board pack from Forecast v6. Not put to a vote.',
   },
   {
     name: 'Cost to serve up 6%',
     why: 'The condition every forecast has under-called, pushed one step further.',
     params: { serviceDeliveryCost: '1.06' },
+    author: 'Group financial controller',
+    preparedAt: '2026-08-06',
+    standing: 'tabled',
+    history: 'Raised at the July operating review after the third consecutive delivery-cost miss.',
   },
   {
     name: 'Collections slip 10 days',
     why: 'No profit-and-loss effect at all, and it breaches the floor. The reason cash is its own surface.',
     params: { dsoDays: '10' },
+    author: 'Group Treasurer',
+    preparedAt: '2026-08-07',
+    standing: 'tabled',
+    history: 'Prepared for the treasury committee. The funding route below is the reason it was tabled.',
   },
   {
     name: 'Pricing holds, volume soft',
     why: 'The mix a commercial team argues for: hold price and accept the volume.',
     params: { volume: '0.95', price: '1.02' },
+    author: 'Commercial Director',
+    preparedAt: '2026-07-29',
+    standing: 'declined',
+    history:
+      'Put to the July commercial review and declined: the price step assumes a renewal book that ' +
+      'does not reprice until Q4.',
   },
   {
     name: 'Recovery case',
     why: 'Volume and price both up a step, cost to serve back under control.',
     params: { volume: '1.05', price: '1.02', serviceDeliveryCost: '0.97' },
+    author: 'Group FP&A lead',
+    preparedAt: '2026-08-04',
+    standing: 'prepared',
+    history: 'Held beside the downside for the same board pack. Not circulated on its own.',
   },
-] as const;
+];
 
 /** The href for a library entry, or for one lever moved to one step. */
 export function scenarioHref(
@@ -328,7 +591,162 @@ export function scenarioHref(
   return query === '' ? '/app/scenarios' : `/app/scenarios?${query}`;
 }
 
-/** The approved forecast's own value for a lever, so a surface can mark the base step. */
-export function baseStep(key: LeverKey): number {
+/** The approved forecast's own value for a lever, which is where every step is measured from. */
+export function baseAssumption(key: LeverKey): number {
   return version(activeApprovedForecast().id).assumptions[key];
 }
+
+/**
+ * A step as a reader should see it: a movement against plan, or a count of days.
+ *
+ * Rounded before the whole-number test, because `(0.9 - 1) * 100` is `-10.000000000000009` in binary
+ * floating point and would otherwise render as "−10.0%" beside a "+5%" — one decimal on some chips and
+ * none on others, from arithmetic rather than from intent.
+ */
+export function stepLabel(key: LeverKey, step: number): string {
+  if (lever(key).mode === 'delta') return `${step > 0 ? '+' : ''}${step}d`;
+  const percent = Math.round((step - 1) * 1000) / 10;
+  return `${percent > 0 ? '+' : ''}${percent.toFixed(Number.isInteger(percent) ? 0 : 1)}%`;
+}
+
+// ---------------------------------------------------------------------------
+// Governance
+// ---------------------------------------------------------------------------
+
+/**
+ * What this scenario is, who made it, and what it is not.
+ *
+ * The load-bearing field is `approved`, and it is `false` for every scenario this surface can produce.
+ * The review's instruction — *"label scenarios clearly as not the approved forecast unless approved"* —
+ * is a warning about a specific failure: a scenario screenshot reaching a board pack without the label,
+ * and being read as the plan. So the label is not a footnote here, it is the first thing on the page,
+ * and it names the version that *is* approved so a reader knows where to go instead.
+ */
+export interface Governance {
+  readonly approved: false;
+  /** The line that has to survive being screenshotted. */
+  readonly label: string;
+  /** Who made it. A saved scenario names a person; a run names the session. */
+  readonly author: string;
+  /** Stated where a record exists, and absent — honestly — where one does not. */
+  readonly preparedAt?: string;
+  readonly standing?: ScenarioStanding;
+  readonly history?: string;
+  readonly saved: boolean;
+  /** The approved plan this was built from, and the budget beside it. */
+  readonly basedOn: string;
+  readonly basedOnStatus: string;
+  readonly budgetLabel: string;
+  /** The whole scenario, as one address. The audit record on a tier that stores nothing. */
+  readonly permalink: string;
+}
+
+/** Match a run back to a saved scenario, so a library link keeps its provenance when opened. */
+export function libraryEntryFor(steps: Readonly<Record<string, number>>): LibraryEntry | undefined {
+  const keys = Object.keys(steps).sort().join(',');
+  return LIBRARY.find((entry) => {
+    const entryKeys = Object.keys(entry.params).sort().join(',');
+    if (entryKeys !== keys) return false;
+    return Object.entries(entry.params).every(([key, value]) => steps[key] === Number(value));
+  });
+}
+
+export function governanceOf(view: View, result: ScenarioResult, permalink: string): Governance {
+  const saved = libraryEntryFor(result.steps);
+  return {
+    approved: false,
+    label: result.isBase
+      ? `This is ${result.approved.label} shown against itself — nothing has been moved.`
+      : `Not the approved forecast. The approved plan remains ${result.approved.label}, ` +
+        `owned by ${result.approved.owner}; this is a proposal held beside it and written nowhere.`,
+    author: saved?.author ?? `${view.principal.label} (this session)`,
+    ...(saved === undefined ? {} : { preparedAt: saved.preparedAt }),
+    ...(saved === undefined ? {} : { standing: saved.standing }),
+    ...(saved === undefined ? {} : { history: saved.history }),
+    saved: saved !== undefined,
+    basedOn: result.approved.label,
+    basedOnStatus: `${result.approved.status}, actuals through ${result.approved.actualsThrough}`,
+    budgetLabel: result.budget.label,
+    permalink,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The route into commentary
+// ---------------------------------------------------------------------------
+
+/**
+ * The paragraph a material scenario would carry into the executive commentary.
+ *
+ * The review asks to *"push material scenarios into executive commentary"*. What that cannot mean here
+ * is a button that claims to file something: the commentary workflow is draft → review → approved →
+ * published, nothing on this tier persists, and a control that appeared to submit a draft and lost it on
+ * reload would be the demo's one outright lie.
+ *
+ * What it can mean, and does: the surface **composes the paragraph** — from the same figures the tables
+ * above show, in the same house style as the monthly story — stamps it with the same governance line,
+ * and hands it to whoever may draft commentary. The workflow's own rule decides who that is, so an
+ * executive sees the paragraph and no submit affordance, exactly as the commentary queue behaves.
+ */
+export interface CommentaryDraft {
+  /** Null where the scenario moved nothing material enough to be worth a paragraph. */
+  readonly text: string | null;
+  readonly why: string;
+  /** True where this principal could raise a commentary draft in the real workflow. */
+  readonly mayDraft: boolean;
+}
+
+export function commentaryDraft(view: View, result: ScenarioResult): CommentaryDraft {
+  const mayDraft = view.principal.role === 'analyst' || view.principal.role === 'controller';
+
+  if (result.isBase || result.decisions.length === 0) {
+    return {
+      text: null,
+      why: result.isBase
+        ? 'Nothing has moved, so there is nothing to carry into commentary.'
+        : 'The scenario implies no management decision, so it does not belong in an executive ' +
+          'paragraph. A commentary queue that carries every sensitivity run is one nobody reads.',
+      mayDraft,
+    };
+  }
+
+  const named = `${result.trail
+    .map((row) => `${row.label.toLowerCase()} ${stepLabel(row.key, row.step)}`)
+    .join(' and ')} against plan`;
+  const ebitda = result.lines.find((line) => line.measureId === 'ebitda');
+  const cash = result.scenarioCash.breach;
+  const decision = result.decisions[0];
+
+  const sentences = [
+    `A scenario with ${named} has been run against ${result.approved.label}.`,
+    ebitda?.movement === null || ebitda === undefined
+      ? ''
+      : `EBITDA moves ${formatMoney(ebitda.movement)} in the month and ` +
+        `${formatMoney(result.yearLines.find((l) => l.measureId === 'ebitda')?.movement ?? 0)} ` +
+        `across FY${String(result.fiscalYear).slice(-2)}.`,
+    cash === undefined
+      ? `The board's cash floor holds throughout the thirteen weeks.`
+      : `The cash floor is breached in week ${cash.index}.`,
+    decision === undefined
+      ? ''
+      : `The decision implied is to ${decision.label.charAt(0).toLowerCase()}${decision.label.slice(1)}, ` +
+        `owned by ${decision.owner}, by ${decision.by}.`,
+    `${result.confidence.label}: ${result.confidence.statement}`,
+    'This is not the approved forecast.',
+  ].filter((sentence) => sentence !== '');
+
+  return {
+    text: sentences.join(' '),
+    why: mayDraft
+      ? 'Composed from the figures above. Raising it as a draft is a workflow step, and this tier ' +
+        'stores nothing — so the paragraph is here to be taken, not filed.'
+      : `${view.principal.label} reads commentary rather than drafting it, which is the same rule the ` +
+        'commentary queue applies. The paragraph is shown; the draft action is not offered.',
+    mayDraft,
+  };
+}
+
+/* The app's own movement formatter, so a paragraph destined for the commentary queue reads in the same
+   hand as the tables above it. A locally-rolled one printed "−£714,696" where every figure beside it
+   read "−£715k", which is how one product starts looking like two. */
+const formatMoney = (minor: number): string => movement(minor, 'currency');

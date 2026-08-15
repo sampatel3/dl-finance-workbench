@@ -1336,3 +1336,63 @@ a:hover { opacity: 0.72; }
   color: var(--faint);
 }
 .horizon-leading { color: var(--accent); }
+
+/* ------------------------------------------------------------------ the stamp
+
+   What a scenario is, above the numbers rather than under them. The review's instruction — label a
+   scenario as not the approved forecast unless it is approved — is a warning about one specific
+   failure: a screenshot of this page reaching a board pack and being read as the plan. A footnote
+   loses that argument, because a footnote is not in the screenshot. */
+
+.stamp {
+  margin: 0 0 24px; padding: 14px 0 14px 16px;
+  border-left: 2px solid var(--border-strong);
+}
+.stamp-warn { border-left-color: var(--warn); }
+.stamp-label {
+  margin: 0; font-size: 14px; line-height: 1.5; font-weight: 500; color: var(--text);
+}
+/* The four governance facts on one row, so the stamp stays a stamp rather than becoming a panel. */
+.stamp-facts {
+  display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 12px 0 0;
+}
+.stamp-facts dt {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+}
+.stamp-facts dd { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+.stamp-note {
+  margin: 10px 0 0; font-size: 12px; line-height: 1.55; color: var(--faint);
+}
+.stamp-link { font-family: var(--ff-mono); font-size: 11.5px; word-break: break-all; }
+
+/* A decision that carries a date is the one that arrives on a Tuesday. It takes the accent; the ones
+   that belong to a forum do not, because marking all of them urgent marks none of them. */
+.finding-tag {
+  flex: none; padding: 2px 7px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong); background: transparent;
+  font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+  white-space: nowrap;
+}
+.finding-tag.is-dated { border-color: var(--accent); color: var(--accent); }
+.finding-urgent { border-color: var(--border-strong); }
+.finding-detail {
+  margin: 10px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--faint);
+}
+.finding-when {
+  margin: 10px 0 0; font-family: var(--ff-mono); font-size: 11.5px; line-height: 1.55;
+  color: var(--muted);
+}
+.finding-when-key {
+  font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+}
+/* Outside experience is a caution, not an unfavourable variance — and red already means the second
+   one everywhere else in this product. */
+.precedent-out { color: var(--warn); }
+
+/* The paragraph a scenario would carry into commentary. Quoted rather than styled as body text,
+   because it is a draft of something for somewhere else — the indent is the point. */
+.draft-quote {
+  margin: 0; padding: 0 0 0 16px; border-left: 2px solid var(--accent);
+  font-size: 14px; line-height: 1.65; color: var(--text);
+}
