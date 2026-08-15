@@ -755,7 +755,9 @@ a:hover { opacity: 0.72; }
    says whether it is good news, and a red chip on the favourable board would be the same error
    as colouring a movement by its arithmetic sign. High gets weight instead of hue. */
 .chip-high, .chip-medium, .chip-low, .chip-draft {
-  flex: none; padding: 2px 7px; border-radius: var(--radius-md);
+  /* `nowrap` because these are two-word labels in a narrow column, and "Over budget" broke across two
+     lines inside its own border — which reads as a rendering fault rather than as a status. */
+  flex: none; white-space: nowrap; padding: 2px 7px; border-radius: var(--radius-md);
   border: 1px solid var(--border-strong); background: transparent;
   font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);

@@ -21,3 +21,4 @@ export * from './landing.ts';
 export * from './funding.ts';
 export * from './decisions.ts';
 export * from './outlook.ts';
+export * from './capital.ts';

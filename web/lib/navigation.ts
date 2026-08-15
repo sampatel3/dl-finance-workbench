@@ -38,6 +38,12 @@ export const SURFACES: readonly Surface[] = [
     ariaLabel: 'Cash and working capital',
   },
   {
+    path: '/app/capital',
+    activePaths: ['/app/capital'],
+    label: 'Capex & Procurement',
+    ariaLabel: 'Capital projects and procurement commitments',
+  },
+  {
     path: '/app/people',
     activePaths: ['/app/people'],
     label: 'People',

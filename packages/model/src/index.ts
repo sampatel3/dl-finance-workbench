@@ -26,6 +26,7 @@ export * from './vintages.ts';
 export * from './sources.ts';
 export * from './mappings.ts';
 export * from './gl-codes.ts';
+export * from './capital.ts';
 export * from './facts.ts';
 export * from './consolidate.ts';
 export * from './seed.ts';
