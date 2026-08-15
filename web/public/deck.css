@@ -24,14 +24,23 @@
  *
  *   --ink     text on this ground        --pane       a surface laid on this ground
  *   --mute    secondary text             --pane-edge  its hairline
- *   --faint   rules, folios, disabled
+ *   --faint   rules, folios, disabled     --accent-ink brand colour used AS TEXT here
+ *
+ * `--accent-ink` exists because a brand colour is a fill, not an ink, and the two are not
+ * interchangeable. Deeplight's yellow set as text is invisible on white and nearly invisible
+ * on its own ground; every scheme has at least one colour with that problem. So no block below
+ * ever writes `color: var(--brand-a)`. Each ground states the one version of the brand that is
+ * readable ON IT — darkened toward the ink on a light ground, lightened toward white on a
+ * saturated one — and a pane re-states it, because a pane is light in every ground. The rule
+ * that keeps it true: if a colour is going to be read as words, it comes from here.
  *
  * So `mesh` sets them light-on-dark and `soft` sets them ink-on-near-white, and not one of the
  * forty-odd blocks below has to know which it is in.
  *
  * WHERE THE COLOUR COMES FROM
- * `theme.css` sets three primitives — `--brand-a`, `--brand-b`, `--brand-ink` — and everything
- * here is derived from them. `--pos` and `--neg` are the exception and are stated here rather
+ * `theme.css` sets the primitives — `--brand-a`, `--brand-b`, `--brand-ink`, `--brand-grey`,
+ * `--brand-paper` and the two inks that go on a brand fill — and everything here is derived
+ * from them. `--pos` and `--neg` are the exception and are stated here rather
  * than in the scheme: favourable and unfavourable are meaning, not brand.
  *
  * EVERYTHING IS SIZED IN `cqi`
@@ -45,7 +54,17 @@
   --brand-a: #8b5cf6;
   --brand-b: #ec4899;
   --brand-ink: #14101f;
+  --brand-grey: #221c33;
   --brand-paper: #ffffff;
+  --on-a: #000000;
+  --on-b: #000000;
+
+  /* THE DEVICE'S ONE SIZE, WRITTEN ONCE. Every iPad in the deck is this wide, on every slide,
+     in every layout — full-bleed and paired alike — so turning a page never resizes the
+     product. The number is not chosen for looks: it is the largest width whose 1194x834 body
+     still clears a two-line headline inside the slide's height. Make it bigger and slide 3
+     overflows; `deck slides` says so rather than letting it crop. */
+  --device-w: 52.5cqi;
 
   --pos: #2fbf8f;
   --neg: #ef8b93;
@@ -59,7 +78,7 @@
   --label-track: .16em;
   --label-weight: 500;
   --pill-bg: var(--brand-a);
-  --pill-fg: var(--brand-ink);
+  --pill-fg: var(--on-a);
   --pill-weight: 600;
   --radius: 1.1cqi;
   --body-bg: color-mix(in srgb, var(--brand-ink) 22%, #dcd8e6);
@@ -75,7 +94,7 @@
   --label-track: .16em;
   --label-weight: 500;
   --pill-bg: var(--brand-a);
-  --pill-fg: var(--brand-ink);
+  --pill-fg: var(--on-a);
   --pill-weight: 600;
   --radius: 1.1cqi;
   --body-bg: color-mix(in srgb, var(--brand-ink) 22%, #dcd8e6);
@@ -93,12 +112,12 @@
  *
  * WHY THE VIVID GROUND IS BUILT THE WAY IT IS. The reference sweeps magenta through violet to
  * blue — three hues that sit next to each other, so every blend between them is another hue on
- * the same arc. A scheme whose two brand colours are NOT adjacent (Deeplight's amber and sky)
- * would blend through olive on the same construction. So the field is built from ONE brand
- * colour lightened and darkened — which is always a hue that works — and the second brand
- * colour is placed where the first has already faded, rather than laid on top of it. The
- * default scheme reproduces the reference because its two colours are adjacent; the others
- * stay coherent because nothing depends on that.
+ * the same arc. A scheme whose two brand colours are NOT adjacent (Deeplight's yellow and blue)
+ * would blend through olive on the same construction. Two rules keep it honest for any pair:
+ * the colours are placed on OPPOSITE diagonals so neither is ever mixed into the other, and
+ * every mix is with the scheme's own near-black rather than with white. The default scheme
+ * reproduces the reference because its two colours are adjacent; the others stay coherent
+ * because nothing depends on that.
  */
 [data-style='mesh'] .vivid {
   --ink: #ffffff;
@@ -112,17 +131,45 @@
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-b) 34%, #ffffff);
   color: var(--ink);
+  /*
+   * THE FIELD IS BUILT DOWN FROM THE BRAND'S OWN BLACK, NOT UP FROM WHITE.
+   *
+   * It used to be `color-mix(--brand-a 66%, #fff)` — the brand lightened — and carried white
+   * text on top. That cannot be read in ANY scheme: the default violet gave white-on-lilac at
+   * 2.5:1 and Deeplight's yellow gave 1.4:1, which is white on pale yellow, which is nothing.
+   * Lightening a brand colour and then writing white on it is a contradiction, and no choice of
+   * hue fixes it.
+   *
+   * So the ground is near-black lit BY the brand rather than made of it. White clears 12:1 on
+   * every scheme, and the blooms stay fully saturated because they are laid on darkness instead
+   * of being diluted into white. It is also the more faithful rendering of a brand like
+   * Deeplight, which is black and dark grey with yellow and blue in it — not a yellow slide.
+   *
+   * The anti-mud rule still holds: the two brand colours sit on OPPOSITE diagonals, so each
+   * blends with the ground and never with the other. Amber over sky is olive; amber over black
+   * is amber.
+   */
   background:
-    /* The deep blob, low and left, which is what stops the field reading as a flat wash. */
-    radial-gradient(58% 52% at 26% 82%, color-mix(in srgb, var(--brand-ink) 62%, var(--brand-a)) 0%, transparent 62%),
-    /* The bright corner, and the pale sweep opposite it. */
-    radial-gradient(72% 62% at 4% 10%, color-mix(in srgb, var(--brand-b) 78%, #fff) 0%, transparent 66%),
-    radial-gradient(70% 66% at 96% 86%, color-mix(in srgb, var(--brand-a) 34%, #fff) 0%, transparent 68%),
-    /* The body of the field: one brand colour, deepened one side and lifted the other. */
-    radial-gradient(86% 80% at 88% 22%, color-mix(in srgb, var(--brand-a) 76%, var(--brand-ink)) 0%, transparent 74%),
-    radial-gradient(90% 84% at 40% 44%, color-mix(in srgb, var(--brand-a) 72%, #fff) 0%, transparent 78%),
-    color-mix(in srgb, var(--brand-a) 66%, #fff);
+    /*
+     * THE TWO COLOURS MUST NOT REACH EACH OTHER. This is the whole construction.
+     *
+     * Blue and yellow overlapping is not blue-and-yellow, it is brown — and a big soft blob is
+     * mostly overlap. A previous version put both at 70-90% radius, which meant they met across
+     * the entire middle of the slide and turned it the exact grey-brown the brand is not.
+     *
+     * Each bloom is now anchored ON a corner at 52%/48% and fully out by 58%. From the centre
+     * of the slide the normalised distance to either is ~1.35, so both are already transparent
+     * there: the middle is the scheme's own black, and the only place a hue appears is the
+     * corner that owns it. Yellow stays yellow because nothing is laid over it.
+     */
+    radial-gradient(52% 48% at 2% 4%, color-mix(in srgb, var(--brand-b) 72%, var(--brand-ink)) 0%, transparent 58%),
+    radial-gradient(52% 48% at 98% 96%, color-mix(in srgb, var(--brand-a) 72%, var(--brand-ink)) 0%, transparent 58%),
+    /* One hue, very weak, wide: stops the middle reading as a flat slab. A single colour cannot
+       muddy anything, so this is the only gradient allowed to cross the centre. */
+    radial-gradient(96% 88% at 62% 40%, color-mix(in srgb, var(--brand-a) 13%, var(--brand-ink)) 0%, transparent 82%),
+    var(--brand-ink);
 }
 /* The quiet ground: near-white, with the brand only as a wash at the edges. This is the one
    most slides in both references actually use. */
@@ -135,6 +182,7 @@
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
   background:
     radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
@@ -155,7 +203,7 @@
   --label-track: 0;
   --label-weight: 650;
   --pill-bg: transparent;
-  --pill-fg: color-mix(in srgb, var(--brand-ink) 50%, #fff);
+  --pill-fg: color-mix(in srgb, var(--brand-ink) 80%, #fff);
   --pill-weight: 500;
   --radius: 1.6cqi;
   --body-bg: color-mix(in srgb, var(--brand-a) 5%, #f2f0f8);
@@ -176,6 +224,7 @@
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
   background:
     radial-gradient(38% 46% at 74% 34%, color-mix(in srgb, var(--brand-b) 56%, #fff) 0%, transparent 64%),
@@ -193,6 +242,7 @@
   --pane-ink: var(--brand-ink);
   --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
   --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
   background:
     radial-gradient(52% 64% at 96% 6%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 68%),
@@ -230,7 +280,7 @@ body {
   font-family: var(--label-face); font-size: .82cqi; letter-spacing: var(--label-track);
   text-transform: var(--label-case); font-weight: var(--label-weight);
   margin-bottom: 1.5cqi;
-  color: color-mix(in srgb, var(--brand-a) 62%, var(--ink));
+  color: var(--accent-ink);
 }
 
 /*
@@ -300,6 +350,7 @@ h1 {
   --ink: var(--pane-ink);
   --mute: var(--pane-mute);
   --faint: var(--pane-faint);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
   color: var(--ink);
 }
 .card {
@@ -311,7 +362,7 @@ h1 {
 .card.pick { outline: .16cqi solid var(--brand-a); outline-offset: -.16cqi; }
 .card .tagpick {
   position: absolute; top: -1cqi; left: 1.5cqi;
-  background: var(--brand-a); color: var(--brand-ink); border-radius: .45cqi;
+  background: var(--brand-a); color: var(--on-a); border-radius: .45cqi;
   padding: .3cqi .8cqi; font-family: var(--label-face); font-size: .7cqi;
   letter-spacing: .12em; text-transform: uppercase; font-weight: 600;
 }
@@ -369,35 +420,46 @@ h1 {
  * tall, and one past 580 needs a one-line headline or no foot. `deck slides` is the arbiter.
  */
 .device {
-  /* 72cqi is 1152px, holding a ~1097px screen inside a bezel you can actually see. Capped so a
-     capture is never displayed wider than it was taken, and centred in what is left. */
-  width: 100%; max-width: 72cqi; margin: 1.4cqi auto 0;
-  padding: 2.4%; border-radius: 3.6%;
-  background: linear-gradient(158deg, #4a4d55 0%, #23252b 40%, #121317 100%);
+  /* ONE SIZE, EVERYWHERE, AND IT IS THE DEVICE'S OWN SHAPE.
+     `--device-w` is 52.5cqi — 840px, holding an 799x558 screen, which is 1194x834 at 67%: the
+     iPad's true landscape ratio and nothing else. Every device in the deck is this size on
+     every slide, full-bleed or beside a column, because an iPad that is wider on one slide
+     than the next is not an iPad, it is a rectangle that changes its mind. The column beside
+     it gets 91.6 − 52.5 − 3.4 = 35.7cqi, which is why one size can serve both layouts.
+
+     The ratio is held by `aspect-ratio`, so it CANNOT stretch: a capture that comes back the
+     wrong shape is cropped by the frame's `object-fit: cover` and reported by `deck lint`,
+     rather than quietly widening the device to fit itself. */
+  width: var(--device-w); aspect-ratio: 1194 / 834; margin: 1.4cqi auto 0;
+  padding: 2.45%; border-radius: 3.4%;
+  /* Black, because that is what the object is. The lit inner edge is the only concession —
+     without it a black rectangle on a dark ground has no edge at all. */
+  background: #0b0b0d;
   box-shadow:
-    inset 0 0 0 .1cqi rgba(255, 255, 255, .18),
+    inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
     0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 55%, transparent);
 }
 [data-style='soft'] .device {
   box-shadow:
-    inset 0 0 0 .1cqi rgba(255, 255, 255, .18),
+    inset 0 0 0 .09cqi rgba(255, 255, 255, .14),
     0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 24%, transparent);
 }
-/* Inside the bezel the frame keeps its own rules — width from the layout, height from itself —
-   and only its corner changes, because a screen inside a device has one. */
-.device .frame { border-radius: 1.2%; }
-/* In a two-column layout the device takes the column rather than the content row, so the cap
-   above would leave it floating short of the grid. */
-.duo .device, .duoflip .device { max-width: none; margin-top: 0; }
+/* The screen fills the bezel and takes the device's shape rather than the image's: a capture
+   whose section is shorter than the glass letterboxes against the black, which is what a real
+   screen does, instead of stretching the device to fit the picture. */
+.device .frame { height: 100%; border-radius: 1.1%; overflow: hidden; }
+.device .frame img { height: 100%; width: 100%; object-fit: cover; object-position: top center; }
+/* In a two-column layout the device keeps exactly the size it has anywhere else. */
+.duo .device, .duoflip .device { margin-top: 0; }
 
 /* A block, not a flex row: a lone `flex: none` frame in a flex container takes its width from
    the image's own pixels and runs off the side of the slide. */
 .screen { margin-top: 1.4cqi; }
 /* Frame beside a column. 58.1cqi is 930px; the column beside it is 91.6 − 58.1 − 3.4 = 30.1. */
-.duo { display: grid; grid-template-columns: 58.1cqi 1fr; gap: 3.4cqi; margin-top: 1cqi; align-items: start; }
+.duo { display: grid; grid-template-columns: var(--device-w) 1fr; gap: 3.4cqi; margin-top: 1cqi; align-items: start; }
 /* The mirror. Two framed slides close together read as one slide shown twice unless the second
    puts the picture on the other side. */
-.duoflip { display: grid; grid-template-columns: 1fr 58.1cqi; gap: 3.4cqi; margin-top: 1cqi; align-items: start; }
+.duoflip { display: grid; grid-template-columns: 1fr var(--device-w); gap: 3.4cqi; margin-top: 1cqi; align-items: start; }
 
 .cap { margin-top: .55cqi; font-size: .84cqi; line-height: 1.42; color: var(--mute); }
 .cap b { display: block; font-size: .96cqi; color: var(--ink); font-weight: 650; margin-bottom: .16cqi; }
@@ -408,7 +470,7 @@ h1 {
    the one deliberate exception to the single headline size. */
 .cover { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .cover h1 { max-width: 24ch; font-size: 5.6cqi; letter-spacing: -0.038em; line-height: 1.02; font-weight: 400; }
-.cover .bracket { color: color-mix(in srgb, var(--brand-a) 72%, var(--ink)); }
+.cover .bracket { color: var(--accent-ink); }
 .cover .tagline {
   margin-top: 2.2cqi; font-family: var(--label-face); font-size: .92cqi;
   letter-spacing: var(--label-track); text-transform: var(--label-case);
@@ -473,7 +535,7 @@ h1 {
 .roster .who {
   font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
   text-transform: var(--label-case); font-weight: var(--label-weight);
-  color: color-mix(in srgb, var(--brand-a) 62%, var(--ink));
+  color: var(--accent-ink);
 }
 .roster .what { margin: .9cqi 0 .7cqi; font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
 .roster p { margin: 0; font-size: .94cqi; line-height: 1.6; color: var(--mute); }
@@ -547,7 +609,7 @@ ul.plus { margin: 1.1cqi 0 0; padding: 0; list-style: none; display: flex; flex-
 ul.plus li { font-size: .98cqi; line-height: 1.58; padding-left: 1.7cqi; position: relative; color: var(--mute); }
 ul.plus li::before {
   content: "+"; position: absolute; left: 0; top: -.04cqi;
-  font-family: var(--label-face); font-size: .95cqi; color: var(--brand-a);
+  font-family: var(--label-face); font-size: .95cqi; color: var(--accent-ink);
 }
 
 /* ------------------------------------------------------------------- the two columns -- */
@@ -578,7 +640,7 @@ ul.plus li::before {
 .rail .step { padding-top: 1.4cqi; border-top: .16cqi solid var(--brand-a); }
 .rail .when {
   font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
-  text-transform: var(--label-case); font-weight: var(--label-weight); color: var(--brand-a);
+  text-transform: var(--label-case); font-weight: var(--label-weight); color: var(--accent-ink);
 }
 .rail .what { margin: .8cqi 0 .6cqi; font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
 .rail p { margin: 0; font-size: .92cqi; line-height: 1.6; color: var(--mute); }
@@ -590,7 +652,7 @@ ul.plus li::before {
 .mech .mt {
   font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
   text-transform: var(--label-case); font-weight: var(--label-weight);
-  color: color-mix(in srgb, var(--brand-a) 62%, var(--ink));
+  color: var(--accent-ink);
 }
 .mech p { margin: .8cqi 0 0; font-size: .98cqi; line-height: 1.6; color: var(--mute); }
 .mech b { font-weight: 650; color: var(--ink); }
@@ -613,3 +675,48 @@ ul.plus li::before {
   .frame[data-render="live"] iframe { display: none; }
   .frame[data-render="live"] img { visibility: visible; }
 }
+
+/* ------------------------------------------------------ the treatment control ---- */
+/*
+ * The deck's own scheme and style toggle, added by deck.js. Fixed to the viewport rather than
+ * placed on a slide, because it belongs to the reader and not to the argument.
+ *
+ * Quiet until wanted: it sits at a third opacity and comes up on hover or keyboard focus. A
+ * control that is legible from the back of a room is a control that is IN the deck, and this
+ * one is furniture.
+ *
+ * `@media print` removes it, which is what keeps it out of `deck pdf` — the exported file has
+ * exactly the treatment it was exported in, and no picture of a widget.
+ */
+.deck-treat {
+  position: fixed; z-index: 40; left: 1.1rem; bottom: 1.1rem;
+  display: flex; align-items: center; gap: .34rem;
+  padding: .34rem .44rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-grey) 88%, transparent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 .5rem 1.5rem rgba(0, 0, 0, .3);
+  opacity: .34; transition: opacity .18s ease;
+  backdrop-filter: blur(8px);
+}
+.deck-treat:hover, .deck-treat:focus-within { opacity: 1; }
+
+.deck-sw {
+  width: 1.05rem; height: 1.05rem; padding: 0; border: 0; border-radius: 50%;
+  cursor: pointer; position: relative;
+  /* Each swatch carries `data-scheme`, so theme.css gives it that scheme's own two colours —
+     the button is a sample of the thing it does. */
+  background: linear-gradient(135deg, var(--brand-a) 0 50%, var(--brand-b) 50% 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .22);
+}
+.deck-sw[aria-pressed='true'] { box-shadow: 0 0 0 2px #fff; }
+
+.deck-treat-sep { width: 1px; height: 1rem; background: rgba(255, 255, 255, .2); }
+
+.deck-st {
+  border: 0; cursor: pointer; border-radius: 999px;
+  padding: .2rem .5rem; font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .08em; text-transform: uppercase;
+  background: transparent; color: rgba(255, 255, 255, .62);
+}
+.deck-st[aria-pressed='true'] { background: rgba(255, 255, 255, .16); color: #fff; }
+
+@media print { .deck-treat { display: none; } }

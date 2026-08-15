@@ -50,20 +50,27 @@
  * How much brand the panes carry. A percentage rather than a colour, so the two treatments
  * below each mix it into their OWN base and neither has to know which style is on.
  *
- * `mesh` keeps the panes close to the ground: a dense working surface reading as an
- * instrument. `soft` lifts and warms them: the same data reading as a document. That is the
- * difference between the systems on a product page, and it is deliberately larger than the
- * border radius it used to be — a style nobody can see is not a style.
+ * SMALL, AND SMALLER THAN IT WAS. The first attempt mixed 4-11% of the brand into every pane,
+ * which on Deeplight turned a near-black surface brown: amber into dark grey is mud, and mud
+ * is not a brand. Deeplight is black, amber and blue, and its panes are supposed to be BLACK —
+ * the brand belongs in the accent, the chart ink and the wash behind the page, not smeared
+ * through the surface a figure sits on.
+ *
+ * So this is 1.5-4%: enough that the same card in two schemes is not literally identical,
+ * little enough that nobody would call it tinted. The visible difference between the two
+ * systems is carried by the radius and by the ground wash, which can be bold precisely
+ * because nothing is written on it.
  */
-:root { --tint: 4%; --tint-2: 5%; }
-[data-style='soft'] { --tint: 9%; --tint-2: 11%; }
+/* The greys are the SCHEME'S greys now, not a fixed grey with brand mixed in. Mixing amber into
+   #141414 is how Deeplight went brown, and the ratio was never the bug — the hue was. A scheme
+   states the grey it actually uses and every pane in the product is cut from it. */
 
 :root {
   /* ---- Surfaces. Depth is surface lightness plus a hairline, never a shadow. */
   --bg: #0a0a0a;          /* --dl-night */
-  --surface: color-mix(in srgb, var(--brand-a) var(--tint), #141414);     /* a pane, not a slab */
-  --surface-2: color-mix(in srgb, var(--brand-a) var(--tint-2), #1c1c1c);   /* --dl-night-2, wells and rows */
-  --surface-3: #242424;   /* --dl-night-3, hover and raised */
+  --surface: var(--brand-grey);                                            /* a pane, not a slab */
+  --surface-2: color-mix(in srgb, var(--brand-grey) 82%, var(--brand-paper));   /* wells and rows */
+  --surface-3: color-mix(in srgb, var(--brand-grey) 68%, var(--brand-paper));   /* hover and raised */
 
   --border: #2a2a2a;         /* --dl-line */
   --border-strong: #3f3f3f;  /* --dl-line-strong */
@@ -129,9 +136,9 @@
  */
 .skin-light {
   --bg: #ececE8;          /* --dl-paper-soft */
-  --surface: color-mix(in srgb, var(--brand-a) var(--tint), #ffffff);     /* --dl-canvas */
-  --surface-2: color-mix(in srgb, var(--brand-a) var(--tint-2), #f4f4f2);   /* --dl-paper */
-  --surface-3: #ececE8;
+  --surface: var(--brand-paper);                                           /* --dl-canvas */
+  --surface-2: color-mix(in srgb, var(--brand-grey) 4%, var(--brand-paper));   /* --dl-paper */
+  --surface-3: color-mix(in srgb, var(--brand-grey) 9%, var(--brand-paper));
   --border: #d4d4d0;      /* --dl-rule */
   --border-strong: #b4b4b0;
   --control-border: #8a8a86;
