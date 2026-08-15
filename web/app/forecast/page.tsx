@@ -11,12 +11,12 @@ import {
   versionList,
 } from '@kestrel/analysis';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { directionClass, movement } from '../../../lib/format';
-import type { Params } from '../../../lib/world';
-import { contextOf, forecastVersionIdOr, hrefFor, viewOf } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { directionClass, movement } from '../../lib/format';
+import type { Params } from '../../lib/world';
+import { contextOf, forecastVersionIdOr, hrefFor, viewOf } from '../../lib/world';
 
 /**
  * Forecast — the version in force, its drivers, and what changed since another version.
@@ -76,14 +76,14 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
       if (single !== undefined && k !== 'from') next.set(k, single);
     }
     next.set('from', id);
-    return `/app/forecast?${next.toString()}`;
+    return `/forecast?${next.toString()}`;
   };
 
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/forecast" view={view} />
-      <Selectors path="/app/forecast" view={view} />
+      <Masthead path="/forecast" view={view} />
+      <Selectors path="/forecast" view={view} />
 
       <section
         className="section focusable"
@@ -190,7 +190,7 @@ export default async function Forecast({ searchParams }: { searchParams: Promise
                   <td>{v.owner}</td>
                   <td className="num">
                     {v.scenario === 'FORECAST' ? (
-                      <a href={hrefFor('/app/forecast', view, { version: v.id })}>select</a>
+                      <a href={hrefFor('/forecast', view, { version: v.id })}>select</a>
                     ) : (
                       '—'
                     )}

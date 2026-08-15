@@ -3,9 +3,9 @@ import { SEGMENTS, VERSIONS, closeCompleteness, entity } from '@kestrel/model';
 import { compareMeasure, formatValue, measure } from '@kestrel/measures';
 import { DIMENSIONS, DIMENSION_LABELS, drillCell } from '@kestrel/analysis';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
 import {
   ALL_EXPLORE_MEASURES,
   EXPLORE_PRESETS,
@@ -16,12 +16,12 @@ import {
   exploreHref,
   explorePresetHref,
   exploreState,
-} from '../../../lib/explore';
-import { directionClass, movement } from '../../../lib/format';
-import { SUGGESTIONS } from '../../../lib/tools';
-import { Ask } from '../../../components/Ask';
-import type { Params } from '../../../lib/world';
-import { hrefFor, paramsForView, world } from '../../../lib/world';
+} from '../../lib/explore';
+import { directionClass, movement } from '../../lib/format';
+import { SUGGESTIONS } from '../../lib/tools';
+import { Ask } from '../../components/Ask';
+import type { Params } from '../../lib/world';
+import { hrefFor, paramsForView, world } from '../../lib/world';
 
 /**
  * Explore — the analyst's pivot.
@@ -119,8 +119,8 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/explore" view={view} />
-      <Selectors path="/app/explore" view={view} />
+      <Masthead path="/explore" view={view} />
+      <Selectors path="/explore" view={view} />
 
       <section className="section focusable" id="section-ask" aria-label="Ask finance">
         <div className="section-head">
@@ -518,7 +518,7 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             <p className="chart-note">
               The rows terminate the drill spine. They are seeded and shaped like ledger lines; they
               are not ledger lines, which is the accepted weakness this demo states rather than
-              implies. <a href={hrefFor('/app/controls', view)}>Controls</a> holds the lineage.
+              implies. <a href={hrefFor('/controls', view)}>Controls</a> holds the lineage.
             </p>
           </details>
         </section>

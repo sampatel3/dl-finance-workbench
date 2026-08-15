@@ -2,13 +2,13 @@ import { resolveView } from '@demo-kit/shell';
 import { formatMonthLong } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { directionClass, movement } from '../../../lib/format';
-import { HORIZON_LABELS, kpisFor, type PriorPeriodDirection } from '../../../lib/kpis';
-import type { Params } from '../../../lib/world';
-import { contextOf, viewOf } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { directionClass, movement } from '../../lib/format';
+import { HORIZON_LABELS, kpisFor, type PriorPeriodDirection } from '../../lib/kpis';
+import type { Params } from '../../lib/world';
+import { contextOf, viewOf } from '../../lib/world';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +29,8 @@ export default async function Kpis({ searchParams }: { searchParams: Promise<Par
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/kpis" view={view} />
-      <Selectors path="/app/kpis" view={view} />
+      <Masthead path="/kpis" view={view} />
+      <Selectors path="/kpis" view={view} />
 
       <section className="section focusable" id="section-kpi-summary" aria-label="KPI basis">
         <div className="section-head">

@@ -324,7 +324,7 @@ const revenueAheadOfForecast: DetectorDefinition = {
           kind: 'expand_commentary',
           label: 'Open revenue commentary and evidence',
           href:
-            `/app/commentary?focus=section-commentary&measure=revenue&month=${dctx.ctx.scope.endMonth}` +
+            `/commentary?focus=section-commentary&measure=revenue&month=${dctx.ctx.scope.endMonth}` +
             `&comparator=${choice.id}` +
             (choice.versionId === undefined ? '' : `&version=${choice.versionId}`),
           owner: 'Commercial Director',
@@ -399,7 +399,7 @@ const segmentMarginBehindForecast: DetectorDefinition = {
           kind: 'expand_commentary',
           label: `Open ${spec.label} commentary and evidence`,
           href:
-            `/app/commentary?focus=section-commentary&measure=gross_margin` +
+            `/commentary?focus=section-commentary&measure=gross_margin` +
             `&month=${dctx.ctx.scope.endMonth}&segment=${spec.code}&comparator=${choice.id}`,
           owner: 'Operations Director',
         },
@@ -518,7 +518,7 @@ const driverAboveAssumption: DetectorDefinition = {
           kind: 'open_forecast_drivers',
           label: 'Open the subcontract rate assumption',
           href:
-            `/app/forecast?focus=section-drivers&month=${dctx.ctx.scope.endMonth}` +
+            `/forecast?focus=section-drivers&month=${dctx.ctx.scope.endMonth}` +
             `&driver=subcontract_rate&version=${forecast.id}`,
           owner: 'Operations Director',
         },
@@ -594,7 +594,7 @@ const currencyDistortsGrowth: DetectorDefinition = {
           kind: 'expand_commentary',
           label: 'Open revenue commentary and evidence',
           href:
-            `/app/commentary?focus=section-commentary&measure=revenue&month=${dctx.ctx.scope.endMonth}` +
+            `/commentary?focus=section-commentary&measure=revenue&month=${dctx.ctx.scope.endMonth}` +
             '&comparator=prior_year&lens=constant',
           owner: 'Group Treasurer',
         },
@@ -685,7 +685,7 @@ const collectionsSlipping: DetectorDefinition = {
           kind: 'run_scenario',
           label: 'Model the collections recovery',
           href:
-            `/app/scenarios?focus=section-levers&month=${dctx.ctx.scope.endMonth}` +
+            `/scenarios?focus=section-levers&month=${dctx.ctx.scope.endMonth}` +
             `&entity=${entityId}&dsoDays=-10`,
           owner: 'Group Treasurer',
         },
@@ -762,7 +762,7 @@ const cashFloorBreach: DetectorDefinition = {
           kind: 'run_scenario',
           label: 'Stress the cash floor',
           href:
-            `/app/scenarios?focus=section-headroom&month=${dctx.ctx.scope.endMonth}` +
+            `/scenarios?focus=section-headroom&month=${dctx.ctx.scope.endMonth}` +
             '&dsoDays=10',
           owner: 'Group Treasurer',
         },
@@ -828,7 +828,7 @@ const unmappedAccounts: DetectorDefinition = {
         action: {
           kind: 'open_mapping',
           label: 'Open the mapping set',
-          href: `/app/controls?focus=section-mappings&set=${set.id}`,
+          href: `/controls?focus=section-mappings&set=${set.id}`,
           owner: set.owner,
         },
         fingerprint: fingerprint(unmappedAccounts.id, dctx, [set.id]),
@@ -885,7 +885,7 @@ const intercompanyMismatch: DetectorDefinition = {
           kind: 'open_reconciliation',
           label: 'Open the intercompany reconciliation',
           href:
-            `/app/controls?focus=section-checks&check=intercompany_trading` +
+            `/controls?focus=section-checks&check=intercompany_trading` +
             `&month=${dctx.ctx.scope.endMonth}`,
           owner: 'Group Financial Controller',
         },
@@ -951,7 +951,7 @@ const forecastBias: DetectorDefinition = {
           kind: 'open_forecast_drivers',
           label: 'Open forecast quality',
           href:
-            `/app/quality?focus=section-bias&month=${dctx.ctx.scope.endMonth}` +
+            `/quality?focus=section-bias&month=${dctx.ctx.scope.endMonth}` +
             `&measure=${measureId}`,
           owner: 'Group FP&A',
         },
@@ -1025,7 +1025,7 @@ const closeIncomplete: DetectorDefinition = {
         action: {
           kind: 'open_close',
           label: 'Open close readiness',
-          href: `/app/controls?focus=section-close&month=${month}`,
+          href: `/controls?focus=section-close&month=${month}`,
           owner: completeness.open[0]?.owner ?? 'Group Financial Controller',
         },
         fingerprint: fingerprint(
@@ -1103,7 +1103,7 @@ const restatementInLoad: DetectorDefinition = {
         action: {
           kind: 'open_vintages',
           label: 'Open the load register',
-          href: `/app/controls?focus=section-vintages&vintage=${vintage.id}`,
+          href: `/controls?focus=section-vintages&vintage=${vintage.id}`,
           owner: 'Group Financial Controller',
         },
         fingerprint: fingerprint(restatementInLoad.id, dctx, [vintage.id]),
@@ -1182,7 +1182,7 @@ const pipelineAheadOfAssumption: DetectorDefinition = {
           /* Pipeline conversion is a draft observed measure, not one of the bounded scenario levers.
              Land on the real scenario surface without smuggling an ignored `scenario=pipeline` claim
              into the URL. A future governed pipeline lever can make this link more specific. */
-          href: `/app/scenarios?focus=section-levers&month=${dctx.ctx.scope.endMonth}`,
+          href: `/scenarios?focus=section-levers&month=${dctx.ctx.scope.endMonth}`,
           owner: 'Sales Director',
         },
         fingerprint: fingerprint(pipelineAheadOfAssumption.id, dctx, ['pipeline_conversion']),

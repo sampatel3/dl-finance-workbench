@@ -178,7 +178,7 @@ describe('get_measure', () => {
     // The definition is in the body, not only in a citation — a citation grounds nothing.
     expect(out.content).toMatch(/defined as/);
     const evidence = new URL(out.citations?.[0]?.href ?? '', 'https://demo.invalid');
-    expect(evidence.pathname).toBe('/app/explore');
+    expect(evidence.pathname).toBe('/explore');
     expect(evidence.searchParams.get('measure')).toBe('revenue');
     expect(evidence.searchParams.get('focus')).toBe('section-cited-measure');
   });
@@ -239,7 +239,7 @@ describe('compare_measures', () => {
     expect(out.content).toMatch(/£618k/);
     expect(out.content).toMatch(/ahead by|behind by/);
     const evidence = new URL(out.citations?.[0]?.href ?? '', 'https://demo.invalid');
-    expect(evidence.pathname).toBe('/app/explore');
+    expect(evidence.pathname).toBe('/explore');
     expect(evidence.searchParams.get('measure')).toBe('revenue');
   });
 

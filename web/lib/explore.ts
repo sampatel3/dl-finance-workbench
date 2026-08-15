@@ -218,7 +218,7 @@ export function explorePresetHref(params: Params, id: ExplorePresetId): string {
   next.set('cols', 'period');
   next.set('measure', preset.measures.join(','));
   const query = next.toString();
-  return query === '' ? '/app/explore' : `/app/explore?${query}`;
+  return query === '' ? '/explore' : `/explore?${query}`;
 }
 
 function fillAxis(
@@ -251,7 +251,7 @@ export function exploreHref(
     if (key === 'scenario' && value === 'actual') next.delete('scenario');
     else next.set(key, value);
     const query = next.toString();
-    return query === '' ? '/app/explore' : `/app/explore?${query}`;
+    return query === '' ? '/explore' : `/explore?${query}`;
   }
 
   if (key === 'grain') {
@@ -260,7 +260,7 @@ export function exploreHref(
     next.set('cols', axes.columns.join(','));
     next.set('grain', value);
     const query = next.toString();
-    return query === '' ? '/app/explore' : `/app/explore?${query}`;
+    return query === '' ? '/explore' : `/explore?${query}`;
   }
 
   const current = normaliseExploreAxes(params);
@@ -274,7 +274,7 @@ export function exploreHref(
   next.set('rows', rows.join(','));
   next.set('cols', columns.join(','));
   const query = next.toString();
-  return `/app/explore?${query}`;
+  return `/explore?${query}`;
 }
 
 /** Link to a CSV computed from the same address, without an open-cell coordinate. */
@@ -291,7 +291,7 @@ export function exploreDrillHref(params: Params, row: number, column: number): s
   const next = paramsIntoSearch(params);
   next.set('drill', `${row}:${column}`);
   next.set('focus', 'section-drill');
-  return `/app/explore?${next.toString()}`;
+  return `/explore?${next.toString()}`;
 }
 
 /** Close the selected cell while preserving the pivot and returning focus to the grid. */
@@ -308,7 +308,7 @@ export function exploreCloseDrillHref(params: Params): string {
       : `explore-cell-${origin[1]}-${origin[2]}`,
   );
   const query = next.toString();
-  return query === '' ? '/app/explore' : `/app/explore?${query}`;
+  return query === '' ? '/explore' : `/explore?${query}`;
 }
 
 export interface CellProvenance {

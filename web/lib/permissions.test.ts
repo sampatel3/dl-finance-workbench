@@ -111,7 +111,7 @@ describe('the shared URL resolver', () => {
     expect(view.entityId).toBe('gulf');
     expect(contextOf(view).entityIds).toEqual(['gulf']);
     expect(selectableEntities(view.principal).map((entry) => entry.id)).toEqual(['gulf']);
-    expect(hrefFor('/app/performance', view)).toContain('as=gulf-controller');
+    expect(hrefFor('/performance', view)).toContain('as=gulf-controller');
   });
 
   it('clamps a forbidden group URL to Gulf and records the fallback', () => {
@@ -126,11 +126,11 @@ describe('the shared URL resolver', () => {
   it('changes role without changing a still-permitted organisational scope', () => {
     const manufacturing = viewOf({ entity: 'manufacturing' });
     const groupRole = new URL(
-      hrefFor('/app', manufacturing, { persona: 'group-fpa' }),
+      hrefFor('/', manufacturing, { persona: 'group-fpa' }),
       'https://demo.invalid',
     );
     const narrowerRole = new URL(
-      hrefFor('/app', manufacturing, { persona: 'gulf-controller' }),
+      hrefFor('/', manufacturing, { persona: 'gulf-controller' }),
       'https://demo.invalid',
     );
 
@@ -160,7 +160,7 @@ describe('the shared URL resolver', () => {
     });
     const finding = new URL(
       hrefForTarget(
-        '/app/scenarios?focus=section-levers&dsoDays=10&as=group-executive&entity=group&view=full',
+        '/scenarios?focus=section-levers&dsoDays=10&as=group-executive&entity=group&view=full',
         view,
       ),
       'https://demo.invalid',
@@ -187,10 +187,10 @@ describe('the shared URL resolver', () => {
     const free = viewOf({ view: 'inner', shell: 'free' });
     const guided = viewOf({ view: 'inner' });
     expect(free.surfaceNav).toBe(true);
-    expect(new URL(hrefFor('/app/cash', free), 'https://demo.invalid').searchParams.get('shell')).toBe(
+    expect(new URL(hrefFor('/cash', free), 'https://demo.invalid').searchParams.get('shell')).toBe(
       'free',
     );
     expect(guided.surfaceNav).toBe(false);
-    expect(hrefFor('/app/cash', guided)).not.toContain('shell=');
+    expect(hrefFor('/cash', guided)).not.toContain('shell=');
   });
 });

@@ -9,15 +9,15 @@ import {
   principalDriver,
 } from '@kestrel/analysis';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { MultiTrend } from '../../../components/MultiTrend';
-import { Selectors } from '../../../components/Selectors';
-import { ThreeWaySplit } from '../../../components/ThreeWaySplit';
-import { Waterfall } from '../../../components/Waterfall';
-import { directionClass, movement } from '../../../lib/format';
-import { DIVERGENCE_POINTS, TREND_MEASURES, buildTrend, selectedTrend } from '../../../lib/trend';
-import type { Params } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { MultiTrend } from '../../components/MultiTrend';
+import { Selectors } from '../../components/Selectors';
+import { ThreeWaySplit } from '../../components/ThreeWaySplit';
+import { Waterfall } from '../../components/Waterfall';
+import { directionClass, movement } from '../../lib/format';
+import { DIVERGENCE_POINTS, TREND_MEASURES, buildTrend, selectedTrend } from '../../lib/trend';
+import type { Params } from '../../lib/world';
 import {
   ALL_MONTHS,
   contextForEntity,
@@ -26,7 +26,7 @@ import {
   scopeLabel,
   selectableEntities,
   viewOf,
-} from '../../../lib/world';
+} from '../../lib/world';
 
 /**
  * Performance — the surface a variance is explained on.
@@ -60,7 +60,7 @@ function trendHref(
 ): string {
   const on = selected.includes(measureId);
   const next = on ? selected.filter((id) => id !== measureId) : [...selected, measureId];
-  const target = new URL(hrefFor('/app/performance', view), 'https://finance-workbench.invalid');
+  const target = new URL(hrefFor('/performance', view), 'https://finance-workbench.invalid');
   target.searchParams.set('trend', (next.length === 0 ? selected : next).join(','));
   target.searchParams.set('focus', 'section-trend');
   return `${target.pathname}${target.search}`;
@@ -72,7 +72,7 @@ function commentaryHref(
   options: { readonly entity?: string; readonly segment?: string } = {},
 ): string {
   const base = hrefFor(
-    '/app/commentary',
+    '/commentary',
     view,
     options.entity === undefined ? {} : { entity: options.entity },
   );
@@ -163,9 +163,9 @@ export default async function Performance({ searchParams }: { searchParams: Prom
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
 
-      <Masthead path="/app/performance" view={view} />
+      <Masthead path="/performance" view={view} />
 
-      <Selectors path="/app/performance" view={view} />
+      <Selectors path="/performance" view={view} />
 
       <section className="section focusable" id="section-bridge" aria-label="Revenue bridge">
         <div className="section-head">

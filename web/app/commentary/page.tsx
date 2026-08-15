@@ -14,9 +14,9 @@ import {
 } from '@kestrel/model';
 import { formatValue, measure } from '@kestrel/measures';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
 import {
   COMMENTARY_STATES,
   COMMENTARY_STATE_LABELS,
@@ -28,12 +28,12 @@ import {
   commentaryPeriodLabel,
   commentarySelectionForView,
   commentaryState,
-} from '../../../lib/commentary';
-import type { CommentaryEvidence } from '../../../lib/commentary';
-import { directionClass, movement } from '../../../lib/format';
-import { buildMovements, buildStory } from '../../../lib/story';
-import type { Params, View } from '../../../lib/world';
-import { monthLabel, viewOf, world } from '../../../lib/world';
+} from '../../lib/commentary';
+import type { CommentaryEvidence } from '../../lib/commentary';
+import { directionClass, movement } from '../../lib/format';
+import { buildMovements, buildStory } from '../../lib/story';
+import type { Params, View } from '../../lib/world';
+import { monthLabel, viewOf, world } from '../../lib/world';
 
 /**
  * Commentary — the governed narrative, never detached prose.
@@ -435,8 +435,8 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/commentary" view={view} />
-      <Selectors path="/app/commentary" view={view} />
+      <Masthead path="/commentary" view={view} />
+      <Selectors path="/commentary" view={view} />
 
       <section
         className="section focusable"

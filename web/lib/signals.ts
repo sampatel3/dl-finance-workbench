@@ -89,7 +89,7 @@ function compute(view: View): RailSignals {
   const brief = briefFor(view);
   const decisions = brief.boards.reduce((sum, board) => sum + board.triage.kept.length, 0);
   if (decisions > 0) {
-    out['/app'] = {
+    out['/'] = {
       count: decisions,
       label: `${decisions} ${decisions === 1 ? 'item needs' : 'items need'} a decision`,
     };
@@ -99,7 +99,7 @@ function compute(view: View): RailSignals {
      a single event with a week attached, and "3" would imply three separate problems. */
   const cash = directForecast(ctx);
   if (cash.breach !== undefined) {
-    out['/app/cash'] = {
+    out['/cash'] = {
       count: 1,
       label: `Cash floor breached in week ${cash.breach.index}`,
     };
@@ -110,7 +110,7 @@ function compute(view: View): RailSignals {
   const outlook = buildOutlook(ctx);
   const behind = outlook.lines.filter((line) => line.trajectory === 'behind').length;
   if (behind > 0) {
-    out['/app/year-to-go'] = {
+    out['/year-to-go'] = {
       count: behind,
       label: `${behind} ${behind === 1 ? 'measure lands' : 'measures land'} behind budget`,
     };
@@ -122,7 +122,7 @@ function compute(view: View): RailSignals {
     (row) => row.verdict === 'over_budget' || row.verdict === 'at_risk',
   ).length;
   if (exposed > 0) {
-    out['/app/capital'] = {
+    out['/capital'] = {
       count: exposed,
       label: `${exposed} ${exposed === 1 ? 'project has' : 'projects have'} no budget headroom left`,
     };
@@ -135,7 +135,7 @@ function compute(view: View): RailSignals {
     (item) => commentaryAffordances(item, view.principal).length > 0,
   ).length;
   if (waiting > 0) {
-    out['/app/commentary'] = {
+    out['/commentary'] = {
       count: waiting,
       label: `${waiting} ${waiting === 1 ? 'item is' : 'items are'} waiting on you`,
     };
@@ -146,7 +146,7 @@ function compute(view: View): RailSignals {
     .filter((position) => view.permission.entityIds.includes(position.entityId))
     .filter((position) => position.state !== 'closed').length;
   if (open > 0) {
-    out['/app/controls'] = {
+    out['/controls'] = {
       count: open,
       label: `${open} ${open === 1 ? 'ledger is' : 'ledgers are'} not closed`,
     };

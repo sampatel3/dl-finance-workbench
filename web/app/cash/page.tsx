@@ -12,13 +12,13 @@ import {
   indirectBridge,
 } from '@kestrel/analysis';
 
-import { CashColumns } from '../../../components/CashColumns';
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { movement } from '../../../lib/format';
-import type { Params } from '../../../lib/world';
-import { contextForEntity, contextOf, selectableEntities, viewOf } from '../../../lib/world';
+import { CashColumns } from '../../components/CashColumns';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { movement } from '../../lib/format';
+import type { Params } from '../../lib/world';
+import { contextForEntity, contextOf, selectableEntities, viewOf } from '../../lib/world';
 
 /**
  * Cash — the surface a treasurer reads.
@@ -74,8 +74,8 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/cash" view={view} />
-      <Selectors path="/app/cash" view={view} />
+      <Masthead path="/cash" view={view} />
+      <Selectors path="/cash" view={view} />
 
       <section
         className="section focusable"

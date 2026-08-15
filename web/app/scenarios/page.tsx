@@ -2,11 +2,11 @@ import { resolveView } from '@demo-kit/shell';
 import { formatValue } from '@kestrel/measures';
 import { MINIMUM_CASH, noDecisionBecause } from '@kestrel/analysis';
 
-import { CashColumns } from '../../../components/CashColumns';
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { directionClass, movement } from '../../../lib/format';
+import { CashColumns } from '../../components/CashColumns';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { directionClass, movement } from '../../lib/format';
 import {
   LEVERS,
   LIBRARY,
@@ -17,9 +17,9 @@ import {
   runScenario,
   scenarioHref,
   stepLabel,
-} from '../../../lib/scenario';
-import type { Params } from '../../../lib/world';
-import { viewOf } from '../../../lib/world';
+} from '../../lib/scenario';
+import type { Params } from '../../lib/world';
+import { viewOf } from '../../lib/world';
 
 /**
  * Scenarios — assumptions moved, the generator re-run, the difference shown, and the decision named.
@@ -63,8 +63,8 @@ export default async function Scenarios({ searchParams }: { searchParams: Promis
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/scenarios" view={view} />
-      <Selectors path="/app/scenarios" view={view} />
+      <Masthead path="/scenarios" view={view} />
+      <Selectors path="/scenarios" view={view} />
 
       <section className="section focusable" id="section-standing" aria-label="Standing">
         <div className={`stamp${result.isBase ? '' : ' stamp-warn'}`}>
@@ -466,7 +466,7 @@ export default async function Scenarios({ searchParams }: { searchParams: Promis
               <blockquote className="draft-quote">{draft.text}</blockquote>
               <p className="chart-note">{draft.why}</p>
               <p className="chart-note">
-                <a className="finding-action" href="/app/commentary">
+                <a className="finding-action" href="/commentary">
                   {draft.mayDraft ? 'Open the commentary queue' : 'Read the commentary queue'}
                 </a>
               </p>

@@ -1,9 +1,20 @@
 /**
- * The finance context: a readable summary first, with its URL-backed selectors in a native disclosure.
+ * The finance context: a readable summary, with its URL-backed selectors in a native disclosure.
  *
  * Every choice remains a **link**, not component state. The href *is* the view, so copying a URL, using
  * the browser's back button, and opening a guided tour step all reproduce the same finance context. The
  * disclosure changes only how much control furniture a reader meets before the figures.
+ *
+ * ## It lives in the rail
+ *
+ * It used to be a horizontal band above every page — five facts and an Edit button, taking a full strip
+ * of vertical space at the top of a surface whose job is to show figures. In the rail it is read the
+ * same way and costs the content column nothing, and it sits directly under the sections, which is
+ * right: the sections are where you are and the context is what you are looking at, and both are
+ * navigation in the sense that matters — they change what is on the page.
+ *
+ * The tour's frame has no rail, so there the band is what renders. {@link ContextPanel} is the same
+ * markup either way and the container decides the axis.
  */
 
 import React from 'react';
@@ -71,7 +82,24 @@ const LENS_LABELS: Readonly<Record<CurrencyLens, string>> = {
 
 const REPORT_LENSES = ['reported', 'constant'] as const satisfies readonly CurrencyLens[];
 
-export function Selectors({ path, view }: { readonly path: string; readonly view: View }) {
+/**
+ * The access-refusal banner.
+ *
+ * Stays in the content column rather than moving to the rail with the rest of the context: it is not a
+ * setting, it is the product telling a reader that what they asked for was refused and what they are
+ * looking at instead. That belongs above the figures it is describing.
+ */
+export function Selectors({ view }: { readonly path?: string; readonly view: View }) {
+  if (view.deniedEntityId === undefined) return null;
+  return (
+    <p className="banner banner-warn" role="status">
+      Access refused for {view.principal.label}: {entity(view.deniedEntityId).name} is outside this
+      persona&rsquo;s entity scope. Showing {entity(view.entityId).name} instead.
+    </p>
+  );
+}
+
+export function ContextPanel({ path, view }: { readonly path: string; readonly view: View }) {
   /* `SELECTABLE_MONTHS` is newest-first, so "older" is the next index and "newer" the previous one.
      Undefined at either end, which is what the stepper renders as a dead arrow. */
   const at = SELECTABLE_MONTHS.indexOf(view.through);
@@ -84,13 +112,6 @@ export function Selectors({ path, view }: { readonly path: string; readonly view
 
   return (
     <section className="context-shell" aria-label="Finance context">
-      {view.deniedEntityId === undefined ? null : (
-        <p className="banner banner-warn" role="status">
-          Access refused for {view.principal.label}: {entity(view.deniedEntityId).name} is outside
-          this persona&rsquo;s entity scope. Showing {entity(view.entityId).name} instead.
-        </p>
-      )}
-
       <div className="context-bar">
         <p className="context-current">
           <span className="context-value">

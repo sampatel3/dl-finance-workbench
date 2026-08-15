@@ -2,14 +2,14 @@ import { resolveView } from '@demo-kit/shell';
 import { entity, glCodeControl } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { QualityControlsNav } from '../../../components/QualityControlsNav';
-import { controlsFor } from '../../../lib/controls';
-import { PERSONAS } from '../../../lib/permissions';
-import type { Params } from '../../../lib/world';
-import { hrefFor, monthLabel, viewOf } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { QualityControlsNav } from '../../components/QualityControlsNav';
+import { controlsFor } from '../../lib/controls';
+import { PERSONAS } from '../../lib/permissions';
+import type { Params } from '../../lib/world';
+import { hrefFor, monthLabel, viewOf } from '../../lib/world';
 
 /**
  * Controls — the evidence behind the finance surfaces.
@@ -107,7 +107,7 @@ export default async function Controls({ searchParams }: { searchParams: Promise
   const closeHold = controls.close.open[0];
   const failedCheck = controls.checks?.find((check) => check.status === 'failed');
   const focusHref = (section: string, exact?: Readonly<Record<string, string>>): string => {
-    const base = hrefFor('/app/controls', view);
+    const base = hrefFor('/controls', view);
     const query = new URLSearchParams({ focus: section, ...exact });
     return `${base}${base.includes('?') ? '&' : '?'}${query.toString()}`;
   };
@@ -115,8 +115,8 @@ export default async function Controls({ searchParams }: { searchParams: Promise
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/controls" view={view} />
-      <Selectors path="/app/controls" view={view} />
+      <Masthead path="/controls" view={view} />
+      <Selectors path="/controls" view={view} />
       <QualityControlsNav active="controls" view={view} />
 
       {controls.requestedRefusal === null ? null : (
@@ -919,7 +919,7 @@ export default async function Controls({ searchParams }: { searchParams: Promise
                 <a
                   key={persona.id}
                   className={`chip-link${view.principal.id === persona.id ? ' is-active' : ''}`}
-                  href={hrefFor('/app/controls', view, { persona: persona.id })}
+                  href={hrefFor('/controls', view, { persona: persona.id })}
                 >
                   {persona.label}
                 </a>

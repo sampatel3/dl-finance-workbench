@@ -206,7 +206,7 @@ export function commentaryFilterHref(
   }
   if (state !== undefined) next.set('state', state);
   const query = next.toString();
-  return query === '' ? '/app/commentary' : `/app/commentary?${query}`;
+  return query === '' ? '/commentary' : `/commentary?${query}`;
 }
 
 export interface CommentaryFactor {
