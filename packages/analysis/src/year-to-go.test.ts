@@ -136,13 +136,17 @@ describe('the Year-to-Go projection', () => {
     expect(line('gross_profit').materiality).toMatch(/below/i);
   });
 
-  it('is deterministic and carries exactly the five supported landing measures', () => {
+  it('is deterministic and carries exactly the supported landing measures', () => {
+    /* Profit after tax joined the list when the review asked for it by name. The assertion stays exact
+       rather than becoming a `toContain`: the point of pinning the set is that a measure cannot appear
+       on a board's landing page without somebody deciding it should. */
     expect(buildYearToGo({ ctx: ctx() })).toEqual(projection);
     expect(projection.lines.map((value) => value.measureId)).toEqual([
       'revenue',
       'gross_profit',
       'gross_margin',
       'ebitda',
+      'net_income',
       'cash',
     ]);
   });

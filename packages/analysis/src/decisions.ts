@@ -109,6 +109,14 @@ export interface ScenarioOutcome {
   readonly shortfallMinor: number;
   /** Present where the breach could be costed against the group's own balances. */
   readonly funding?: FundingPlan;
+  /**
+   * What the movements are measured against, for the prose only.
+   *
+   * A scenario's outcome is a difference from the approved forecast; the year-to-go gap is a difference
+   * from budget. Same engine, same thresholds, and a sentence that names the wrong comparator is the
+   * kind of error a reader catches instantly and never trusts the page again after.
+   */
+  readonly basisLabel?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,6 +136,7 @@ const money = (minor: number): string => formatValue(Math.abs(minor), 'currency'
  */
 export function impliedDecisions(outcome: ScenarioOutcome): readonly ImpliedDecision[] {
   const out: ImpliedDecision[] = [];
+  const basis = outcome.basisLabel ?? 'the approved forecast';
 
   if (outcome.breachWeek !== null) {
     const plan = outcome.funding;
@@ -173,7 +182,7 @@ export function impliedDecisions(outcome: ScenarioOutcome): readonly ImpliedDeci
       label: 'Put the receivables book on a weekly collections call',
       owner: 'Group Treasurer, with each entity controller',
       because:
-        `Collection days are ${daysAdded} above the approved forecast, which reaches cash without ` +
+        `Collection days are ${daysAdded} above ${basis}, which reaches cash without ` +
         'touching a single profit-and-loss line',
       by: 'this month',
       dated: false,
@@ -194,7 +203,8 @@ export function impliedDecisions(outcome: ScenarioOutcome): readonly ImpliedDeci
             id: 'cost_to_serve_action',
             label: 'Re-price the delivery book or take cost out of it',
             owner: 'Services Director, with the Commercial Director',
-            because: `Gross margin compresses ${marginFall.toFixed(0)}bps, from the delivery cost side`,
+            because:
+              `Gross margin is ${marginFall.toFixed(0)}bps below ${basis}, from the delivery cost side`,
             by: 'the next operating review',
             dated: false,
           }
@@ -202,7 +212,7 @@ export function impliedDecisions(outcome: ScenarioOutcome): readonly ImpliedDeci
             id: 'price_action',
             label: 'Hold price on renewal rather than defend volume',
             owner: 'Commercial Director',
-            because: `Gross margin compresses ${marginFall.toFixed(0)}bps, from the price side`,
+            because: `Gross margin is ${marginFall.toFixed(0)}bps below ${basis}, from the price side`,
             by: 'the next commercial review',
             dated: false,
           },
@@ -219,8 +229,8 @@ export function impliedDecisions(outcome: ScenarioOutcome): readonly ImpliedDeci
       label: 'Take a fixed-cost reduction to the board',
       owner: 'Chief Financial Officer',
       because:
-        `EBITDA falls ${money(outcome.ebitdaMovement ?? 0)}, which is ` +
-        `${(ebitdaShare * 100).toFixed(1)}% of the approved forecast`,
+        `EBITDA is ${money(outcome.ebitdaMovement ?? 0)} below ${basis}, which is ` +
+        `${(ebitdaShare * 100).toFixed(1)}% of it`,
       by: 'the next board meeting',
       dated: false,
     });
@@ -231,7 +241,7 @@ export function impliedDecisions(outcome: ScenarioOutcome): readonly ImpliedDeci
       label: 'Freeze recruitment outside delivery roles',
       owner: 'Chief Financial Officer, with the Group HR Director',
       because:
-        `The EBITDA fall of ${(ebitdaShare * 100).toFixed(1)}% is past the ` +
+        `The EBITDA shortfall against ${basis} of ${(ebitdaShare * 100).toFixed(1)}% is past the ` +
         `${(DECISION_POLICY.ebitdaFreezeShare * 100).toFixed(0)}% point where cost actions stop ` +
         'being discretionary',
       by: 'immediately, if the scenario is adopted',
@@ -253,7 +263,7 @@ export function noDecisionBecause(): string {
     'No management decision is implied. The scenario stays inside every threshold this surface tests: ' +
     `the cash floor holds with at least ${money(DECISION_POLICY.headroomFallMinor)} of headroom kept, ` +
     `gross margin moves less than ${DECISION_POLICY.marginFallBps}bps, EBITDA moves less than ` +
-    `${(DECISION_POLICY.ebitdaFallShare * 100).toFixed(0)}% of the approved forecast, and collection ` +
+    `${(DECISION_POLICY.ebitdaFallShare * 100).toFixed(0)}% of the comparison, and collection ` +
     `days move less than ${DECISION_POLICY.collectionSlipDays}.`
   );
 }

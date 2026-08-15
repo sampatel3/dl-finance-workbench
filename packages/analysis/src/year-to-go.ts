@@ -36,11 +36,20 @@ import {
 import { activeApprovedForecast } from './forecast.ts';
 import { buildThreeWaySplit } from './three-way.ts';
 
+/**
+ * The lines a landing page carries.
+ *
+ * `net_income` is profit after tax, and the review named it: *"include Revenue, Gross Margin, EBITDA,
+ * PAT, Cash"*. It was the one missing, and a full-year landing without the bottom line is one a board
+ * cannot take a decision from — the gap between EBITDA and PAT is interest and tax, and both of those
+ * move when a year lands differently.
+ */
 export const YEAR_TO_GO_MEASURES = [
   'revenue',
   'gross_profit',
   'gross_margin',
   'ebitda',
+  'net_income',
   'cash',
 ] as const;
 
@@ -261,6 +270,7 @@ export function buildYearToGo(request: YearToGoRequest): YearToGoProjection {
     calendar,
   });
   const ebitda = buildThreeWaySplit({ measureId: 'ebitda', ctx: request.ctx, calendar });
+  const netIncome = buildThreeWaySplit({ measureId: 'net_income', ctx: request.ctx, calendar });
 
   const selectedBoundarySupportsForecast = compareMonths(through, forecast.actualsThrough) >= 0;
   const remainingScope = selectedBoundarySupportsForecast ? revenue.slices[2].scope : null;
@@ -276,6 +286,7 @@ export function buildYearToGo(request: YearToGoRequest): YearToGoProjection {
   const expectedRevenue = flowLanding(revenue);
   const expectedGrossProfit = flowLanding(grossProfit);
   const expectedEbitda = flowLanding(ebitda);
+  const expectedNetIncome = flowLanding(netIncome);
   const expectedGrossMargin =
     expectedRevenue === null || expectedGrossProfit === null || expectedRevenue === 0
       ? null
@@ -347,6 +358,17 @@ export function buildYearToGo(request: YearToGoRequest): YearToGoProjection {
       selectedBoundarySupportsForecast ? (ebitda.slices[2].value?.value ?? null) : null,
       'flow',
       expectedEbitda,
+      request.ctx,
+      fullYearScope,
+      forecast,
+      budget,
+    ),
+    lineFor(
+      'net_income',
+      netIncome.slices[1].value.value,
+      selectedBoundarySupportsForecast ? (netIncome.slices[2].value?.value ?? null) : null,
+      'flow',
+      expectedNetIncome,
       request.ctx,
       fullYearScope,
       forecast,
