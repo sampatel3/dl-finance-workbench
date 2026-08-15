@@ -1,0 +1,615 @@
+/*
+ * The deck's design system — one stylesheet, four arcs, two styles, any brand.
+ *
+ * THREE AXES, AND THEY ARE INDEPENDENT
+ *   · purpose — which arc the deck runs.   `data-purpose`  build | sell | court | invest
+ *   · style   — which design system.       `data-style`    mesh | soft
+ *   · scheme  — which brand.               `data-scheme`   default | deeplight | signal | ember
+ * All three sit on the deck root, and none knows about the others. A deck can be a `court`
+ * deck in `soft` wearing `deeplight`, and every slide follows.
+ *
+ * THE TWO STYLES
+ *   `mesh` — dark grounds with the brand glowing at the edges, monospace register markers,
+ *            filled pills, tight radii, panes lifted off the ground. Loud and technical.
+ *   `soft` — near-white grounds with large blurred blobs of brand colour, bold sans labels in
+ *            sentence case, no pill fills, generous radii, panes a shade lighter than their
+ *            ground. Quiet and editorial.
+ * They are not a light mode and a dark mode. They are two design systems that happen to sit at
+ * opposite ends of the value range, and swapping one for the other changes the register of the
+ * deck rather than the time of day.
+ *
+ * HOW A STYLE CAN REPAINT EVERYTHING
+ * No block below names a colour or a ground. A slide's ground role — `.vivid` (loud) or
+ * `.deep` (quiet) — sets five tokens, and every block reads only those:
+ *
+ *   --ink     text on this ground        --pane       a surface laid on this ground
+ *   --mute    secondary text             --pane-edge  its hairline
+ *   --faint   rules, folios, disabled
+ *
+ * So `mesh` sets them light-on-dark and `soft` sets them ink-on-near-white, and not one of the
+ * forty-odd blocks below has to know which it is in.
+ *
+ * WHERE THE COLOUR COMES FROM
+ * `theme.css` sets three primitives — `--brand-a`, `--brand-b`, `--brand-ink` — and everything
+ * here is derived from them. `--pos` and `--neg` are the exception and are stated here rather
+ * than in the scheme: favourable and unfavourable are meaning, not brand.
+ *
+ * EVERYTHING IS SIZED IN `cqi`
+ * 1cqi is 1% of the deck's own width, so slides hold their proportions at any window size and
+ * print identically. At the 1600px the PDF prints at, 1cqi = 16px.
+ */
+
+:root {
+  /* Restated so this stylesheet reads on its own and a missing theme.css is still a deck.
+     theme.css is linked after it and wins. */
+  --brand-a: #8b5cf6;
+  --brand-b: #ec4899;
+  --brand-ink: #14101f;
+  --brand-paper: #ffffff;
+
+  --pos: #2fbf8f;
+  --neg: #ef8b93;
+
+  --display: "Helvetica Neue", Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* The style's knobs, defaulted to `mesh` so a deck declaring no style still works. */
+  --label-face: var(--mono);
+  --label-case: uppercase;
+  --label-track: .16em;
+  --label-weight: 500;
+  --pill-bg: var(--brand-a);
+  --pill-fg: var(--brand-ink);
+  --pill-weight: 600;
+  --radius: 1.1cqi;
+  --body-bg: color-mix(in srgb, var(--brand-ink) 22%, #dcd8e6);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ================================================================= THE STYLES ========= */
+
+[data-style='mesh'] {
+  --label-face: var(--mono);
+  --label-case: uppercase;
+  --label-track: .16em;
+  --label-weight: 500;
+  --pill-bg: var(--brand-a);
+  --pill-fg: var(--brand-ink);
+  --pill-weight: 600;
+  --radius: 1.1cqi;
+  --body-bg: color-mix(in srgb, var(--brand-ink) 22%, #dcd8e6);
+}
+
+/*
+ * THE GROUNDS, AND WHAT THEY ARE COPIED FROM.
+ *
+ * Both references alternate a SATURATED, FULL-BLEED gradient with a NEAR-WHITE one. Neither
+ * runs two dark slides in a row, and neither leaves the ground mostly unpainted — an earlier
+ * version here did both, which is why it did not look like either reference.
+ *
+ *   `.vivid` — the loud ground. Colour edge to edge, no ink showing through.
+ *   `.deep`  — the quiet ground. Near-white, the brand present only as a wash.
+ *
+ * WHY THE VIVID GROUND IS BUILT THE WAY IT IS. The reference sweeps magenta through violet to
+ * blue — three hues that sit next to each other, so every blend between them is another hue on
+ * the same arc. A scheme whose two brand colours are NOT adjacent (Deeplight's amber and sky)
+ * would blend through olive on the same construction. So the field is built from ONE brand
+ * colour lightened and darkened — which is always a hue that works — and the second brand
+ * colour is placed where the first has already faded, rather than laid on top of it. The
+ * default scheme reproduces the reference because its two colours are adjacent; the others
+ * stay coherent because nothing depends on that.
+ */
+[data-style='mesh'] .vivid {
+  --ink: #ffffff;
+  --mute: rgba(255, 255, 255, .82);
+  --faint: rgba(255, 255, 255, .42);
+  --pane: rgba(255, 255, 255, .97);
+  --pane-edge: transparent;
+  /* What a pane's CONTENTS take. On a saturated ground the pane is the opposite value from
+     the slide, so a card that inherited the slide's ink would be white on white — which is
+     exactly what it was until this existed. */
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  color: var(--ink);
+  background:
+    /* The deep blob, low and left, which is what stops the field reading as a flat wash. */
+    radial-gradient(58% 52% at 26% 82%, color-mix(in srgb, var(--brand-ink) 62%, var(--brand-a)) 0%, transparent 62%),
+    /* The bright corner, and the pale sweep opposite it. */
+    radial-gradient(72% 62% at 4% 10%, color-mix(in srgb, var(--brand-b) 78%, #fff) 0%, transparent 66%),
+    radial-gradient(70% 66% at 96% 86%, color-mix(in srgb, var(--brand-a) 34%, #fff) 0%, transparent 68%),
+    /* The body of the field: one brand colour, deepened one side and lifted the other. */
+    radial-gradient(86% 80% at 88% 22%, color-mix(in srgb, var(--brand-a) 76%, var(--brand-ink)) 0%, transparent 74%),
+    radial-gradient(90% 84% at 40% 44%, color-mix(in srgb, var(--brand-a) 72%, #fff) 0%, transparent 78%),
+    color-mix(in srgb, var(--brand-a) 66%, #fff);
+}
+/* The quiet ground: near-white, with the brand only as a wash at the edges. This is the one
+   most slides in both references actually use. */
+[data-style='mesh'] .deep {
+  --ink: var(--brand-ink);
+  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
+  --pane: #ffffff;
+  --pane-edge: transparent;
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  color: var(--ink);
+  background:
+    radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
+    radial-gradient(56% 64% at 96% 20%, color-mix(in srgb, var(--brand-a) 14%, transparent) 0%, transparent 62%),
+    radial-gradient(64% 70% at 82% 96%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 66%),
+    color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
+}
+
+/*
+ * The quiet system. Labels are bold sans in sentence case rather than letterspaced monospace,
+ * pills lose their fill, radii are generous, and a pane is a shade LIGHTER than its ground
+ * rather than lifted off it. Nothing here is a lighter `mesh`; it is a different set of
+ * decisions that happens to be light.
+ */
+[data-style='soft'] {
+  --label-face: var(--display);
+  --label-case: none;
+  --label-track: 0;
+  --label-weight: 650;
+  --pill-bg: transparent;
+  --pill-fg: color-mix(in srgb, var(--brand-ink) 50%, #fff);
+  --pill-weight: 500;
+  --radius: 1.6cqi;
+  --body-bg: color-mix(in srgb, var(--brand-a) 5%, #f2f0f8);
+}
+
+/*
+ * BLOBS, NOT A FIELD. Where `mesh` paints the whole slide, `soft` floats two or three large,
+ * heavily blurred shapes on a near-white ground and lets them overlap — which is the second
+ * reference exactly. The blur is what makes them read as one soft object rather than as three
+ * circles, and keeping them to one side leaves the other side clear for the headline.
+ */
+[data-style='soft'] .vivid {
+  --ink: var(--brand-ink);
+  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --pane: color-mix(in srgb, #fff 90%, var(--brand-a));
+  --pane-edge: transparent;
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  color: var(--ink);
+  background:
+    radial-gradient(38% 46% at 74% 34%, color-mix(in srgb, var(--brand-b) 56%, #fff) 0%, transparent 64%),
+    radial-gradient(46% 56% at 92% 74%, color-mix(in srgb, var(--brand-a) 46%, #fff) 0%, transparent 66%),
+    radial-gradient(30% 38% at 52% 62%, color-mix(in srgb, var(--brand-b) 40%, #fff) 0%, transparent 62%),
+    radial-gradient(70% 80% at 12% 20%, color-mix(in srgb, var(--brand-a) 10%, #fff) 0%, transparent 72%),
+    #f3f0f9;
+}
+[data-style='soft'] .deep {
+  --ink: var(--brand-ink);
+  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --pane: #ffffff;
+  --pane-edge: transparent;
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  color: var(--ink);
+  background:
+    radial-gradient(52% 64% at 96% 6%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 68%),
+    radial-gradient(48% 60% at 4% 96%, color-mix(in srgb, var(--brand-a) 10%, transparent) 0%, transparent 68%),
+    #f8f7fc;
+}
+
+/* ================================================================== THE PAGE ========== */
+
+body {
+  margin: 0; padding: 2vmin;
+  background: var(--body-bg);
+  font-family: var(--display);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+
+.deck { width: 100%; max-width: 1600px; margin: 0 auto; container-type: inline-size; }
+
+.slide {
+  /* The SIDE padding is load-bearing — 4.2cqi is what makes a full content row 91.6cqi, which
+     is the width a full-bleed frame is captured at. Change it and every frame needs
+     re-shooting; the vertical values are free, and they are tight because a device-framed shot
+     is tall. */
+  height: 56.25cqi; padding: 3cqi 4.2cqi 2.6cqi;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+  color: var(--ink);
+}
+.slide + .slide { margin-top: 2vmin; }
+
+/* The register marker, top left of every slide. It names the act, so a reader landing mid-deck
+   knows which part of the argument they are in. Letterspaced monospace in `mesh`, bold sans in
+   sentence case in `soft` — the clearest single tell between the two systems. */
+.eyebrow {
+  font-family: var(--label-face); font-size: .82cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); font-weight: var(--label-weight);
+  margin-bottom: 1.5cqi;
+  color: color-mix(in srgb, var(--brand-a) 62%, var(--ink));
+}
+
+/*
+ * ONE HEADLINE SIZE, DECK-WIDE, IN BOTH STYLES. There is no per-slide variant.
+ *
+ * An earlier version shrank the headline on slides that gave most of their height to a
+ * picture. It worked per slide and failed as a deck: the reader turns a page and the type
+ * changes size, which reads as two decks stapled together and quietly says the small-headline
+ * slides matter less. So the size is fixed and the LENGTH gives — a headline that runs to three
+ * lines has words in it that could go. Where a frame cannot fit under a two-line headline the
+ * answer is a shorter headline or a shorter capture, never smaller type.
+ */
+h1 {
+  margin: 0; max-width: 32ch;
+  font-size: 3cqi; line-height: 1.08; letter-spacing: -0.03em; font-weight: 500;
+}
+
+.stand { margin: 1.2cqi 0 0; max-width: 72ch; font-size: 1.18cqi; line-height: 1.58; color: var(--mute); }
+
+/* A limit belongs on the slide it qualifies, in plain words — never collected into a
+   "limitations" slide that gets skipped. `margin-top: auto` pins it to the foot however tall
+   the slide's content turns out. */
+.foot {
+  margin-top: auto; padding-top: 1cqi;
+  border-top: .07cqi solid var(--faint);
+  font-size: .8cqi; line-height: 1.62; max-width: 116ch; color: var(--mute);
+}
+.foot b { font-weight: 650; color: var(--ink); }
+
+.folio {
+  position: absolute; right: 4.2cqi; bottom: 1.5cqi;
+  font-family: var(--label-face); font-size: .72cqi; letter-spacing: var(--label-track);
+  color: var(--faint);
+}
+
+/* ------------------------------------------------------------------- shared type ------ */
+.num { font-weight: 500; letter-spacing: -0.038em; line-height: .95; font-variant-numeric: tabular-nums; }
+.label {
+  font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); font-weight: var(--label-weight); color: var(--mute);
+}
+
+/* The index of a column, an option or a row. A filled lozenge in `mesh`; in `soft` the fill
+   drops away and it is a small quiet numeral beside the thing it numbers, which is what the
+   reference does — and why this is a token rather than two components.
+
+   `align-self` is load-bearing, not tidiness: a pill inside a flex column is a flex item, and
+   the default `stretch` runs it the full width of the card into a solid bar. */
+.pill {
+  display: inline-flex; align-items: center; justify-content: center; align-self: flex-start;
+  min-width: 2.9cqi; padding: .38cqi .7cqi;
+  border-radius: .5cqi; background: var(--pill-bg); color: var(--pill-fg);
+  font-family: var(--label-face); font-size: .8cqi; letter-spacing: .1em; font-weight: var(--pill-weight);
+}
+[data-style='soft'] .pill { min-width: 0; padding: 0; font-size: .95cqi; letter-spacing: .02em; }
+
+.say { font-size: 1.06cqi; line-height: 1.62; color: var(--mute); }
+.say b { font-weight: 650; color: var(--ink); }
+.yes { color: var(--pos); }
+.no  { color: var(--neg); }
+
+/* The pane. Where a figure or a column has to carry a slide it sits on its own surface — the
+   one place a deck introduces a plane. Opaque, always: a translucent card over a mesh takes
+   whatever is behind it, so three cards in a row are three different colours and the figures on
+   them stop being comparable. */
+.card, .quad {
+  --ink: var(--pane-ink);
+  --mute: var(--pane-mute);
+  --faint: var(--pane-faint);
+  color: var(--ink);
+}
+.card {
+  border-radius: var(--radius); padding: 1.5cqi 1.6cqi 1.4cqi;
+  display: flex; flex-direction: column; position: relative;
+  background: var(--pane); border: .07cqi solid var(--pane-edge);
+}
+.card p { margin: 0; color: var(--mute); }
+.card.pick { outline: .16cqi solid var(--brand-a); outline-offset: -.16cqi; }
+.card .tagpick {
+  position: absolute; top: -1cqi; left: 1.5cqi;
+  background: var(--brand-a); color: var(--brand-ink); border-radius: .45cqi;
+  padding: .3cqi .8cqi; font-family: var(--label-face); font-size: .7cqi;
+  letter-spacing: .12em; text-transform: uppercase; font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- the frame ---- */
+/* A frame declares WHAT TO SHOW — a route and a viewport — and has two renderings of it. On
+   screen the product runs live in a same-origin iframe laid out at exactly that viewport and
+   scaled to the frame's width. `deck pdf` swaps in the captured still: the rendering a live
+   frame cannot be, and what shows when the app is not reachable.
+
+   The one rule that makes a stretch impossible: an image takes its WIDTH from the layout and
+   its HEIGHT from itself. `flex: none` is load-bearing — a flex column that runs long shrinks
+   its items, which squashes the picture. Held at its own height, an over-long column overflows
+   the slide instead, which `deck slides` says out loud. */
+.frame { flex: none; border-radius: .6cqi; overflow: hidden; position: relative; background: var(--brand-paper); }
+.frame img { display: block; width: 100%; height: auto; }
+/* A live frame is inert. A deck is a document, not a playground: a reader who can scroll a
+   frame is looking at something the author never framed. */
+.frame iframe {
+  display: none; position: absolute; top: 0; left: 0; border: 0;
+  transform-origin: top left; background: #fff; pointer-events: none;
+}
+.frame[data-render="live"] iframe { display: block; }
+.frame[data-render="live"] img { visibility: hidden; }
+:root[data-render="still"] .frame[data-render="live"] iframe { display: none; }
+:root[data-render="still"] .frame[data-render="live"] img { visibility: visible; }
+
+/* --------------------------------------------------------------------- the device ---- */
+/*
+ * THE TABLET IS THE STANDARD FRAME FOR A PRODUCT SHOT.
+ *
+ * A screenshot pasted onto a slide reads as a screenshot. The same picture inside a device
+ * reads as the product, and the difference costs a bezel.
+ *
+ * IT HAS TO LOOK LIKE HARDWARE or it is just a border, which is what a 1.3% hairline was. The
+ * bezel is thick enough to see, it is darker than anything else on the slide in either style,
+ * it carries a lit edge so it reads as a moulded object rather than a filled rectangle, and its
+ * outer corner is rounded well past the screen's. Those four things are what separate a device
+ * from a box.
+ *
+ * The iPad is the device, and landscape, for the reason `@demo-kit/shell` gives for its own
+ * preview: a tall device in a wide window is fitted by its height and renders too small to
+ * read. Its 1194pt landscape width is also a better column for most products than the deck's
+ * full 1466px content row, which stretches a centred layout into a letterbox.
+ *
+ * WHAT IS CAPTURED. The app is shot at the iPad's own logical width so its media queries
+ * resolve where they would on the device. The HEIGHT is the section's, not the device's full
+ * 834: a slide has a headline and a foot to carry, and a bezel drawn around 790px of screen
+ * leaves room for neither. So this is the device's width and framing rather than a photograph
+ * of an iPad, and the width is what does the work.
+ *
+ * HOW TALL A CAPTURE MAY BE, which is the number that binds. A slide is 900px. Take the
+ * padding, the marker, a two-line headline and a one-line foot and about 610px is left; the
+ * bezel takes ~60 of that. So a section for a full-width device wants to come in around 500-540
+ * tall, and one past 580 needs a one-line headline or no foot. `deck slides` is the arbiter.
+ */
+.device {
+  /* 72cqi is 1152px, holding a ~1097px screen inside a bezel you can actually see. Capped so a
+     capture is never displayed wider than it was taken, and centred in what is left. */
+  width: 100%; max-width: 72cqi; margin: 1.4cqi auto 0;
+  padding: 2.4%; border-radius: 3.6%;
+  background: linear-gradient(158deg, #4a4d55 0%, #23252b 40%, #121317 100%);
+  box-shadow:
+    inset 0 0 0 .1cqi rgba(255, 255, 255, .18),
+    0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 55%, transparent);
+}
+[data-style='soft'] .device {
+  box-shadow:
+    inset 0 0 0 .1cqi rgba(255, 255, 255, .18),
+    0 1.4cqi 3.4cqi color-mix(in srgb, var(--brand-ink) 24%, transparent);
+}
+/* Inside the bezel the frame keeps its own rules — width from the layout, height from itself —
+   and only its corner changes, because a screen inside a device has one. */
+.device .frame { border-radius: 1.2%; }
+/* In a two-column layout the device takes the column rather than the content row, so the cap
+   above would leave it floating short of the grid. */
+.duo .device, .duoflip .device { max-width: none; margin-top: 0; }
+
+/* A block, not a flex row: a lone `flex: none` frame in a flex container takes its width from
+   the image's own pixels and runs off the side of the slide. */
+.screen { margin-top: 1.4cqi; }
+/* Frame beside a column. 58.1cqi is 930px; the column beside it is 91.6 − 58.1 − 3.4 = 30.1. */
+.duo { display: grid; grid-template-columns: 58.1cqi 1fr; gap: 3.4cqi; margin-top: 1cqi; align-items: start; }
+/* The mirror. Two framed slides close together read as one slide shown twice unless the second
+   puts the picture on the other side. */
+.duoflip { display: grid; grid-template-columns: 1fr 58.1cqi; gap: 3.4cqi; margin-top: 1cqi; align-items: start; }
+
+.cap { margin-top: .55cqi; font-size: .84cqi; line-height: 1.42; color: var(--mute); }
+.cap b { display: block; font-size: .96cqi; color: var(--ink); font-weight: 650; margin-bottom: .16cqi; }
+
+/* ----------------------------------------------------------------------- the cover --- */
+/* A title slide is the loudest page in the deck: the one a reader sees before deciding to read
+   anything. The name is set larger than a headline because it is a title rather than a claim —
+   the one deliberate exception to the single headline size. */
+.cover { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.cover h1 { max-width: 24ch; font-size: 5.6cqi; letter-spacing: -0.038em; line-height: 1.02; font-weight: 400; }
+.cover .bracket { color: color-mix(in srgb, var(--brand-a) 72%, var(--ink)); }
+.cover .tagline {
+  margin-top: 2.2cqi; font-family: var(--label-face); font-size: .92cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case);
+  font-weight: var(--label-weight); color: var(--mute);
+}
+/* The foot sits directly on the slide, with no wrapper. A div holding the foot is not the foot,
+   so the overflow check measures its bottom against the foot's own top and reports every title
+   slide as overflowing — which it did, for as long as the wrapper existed. */
+
+/* --------------------------------------------------------------------- the contents -- */
+.contents { margin-top: 2.2cqi; display: flex; flex-direction: column; }
+.contents .row {
+  display: flex; align-items: center; justify-content: space-between; gap: 2cqi;
+  padding: 1.15cqi 0; border-top: .06cqi solid var(--faint);
+}
+.contents .row:last-child { border-bottom: .06cqi solid var(--faint); }
+.contents .row .t { font-size: 1.9cqi; letter-spacing: -0.022em; font-weight: 450; }
+
+/* ------------------------------------------------------------------ the named blocks -- */
+/*
+ * EVERY JOB GETS ITS OWN BLOCK, AND THE LINTER ENFORCES IT.
+ *
+ * `deck lint` fingerprints each slide by its top-level blocks and rejects a repeat. That reads
+ * as a nuisance and is not one: a ten-slide deck where six slides are the same three-column
+ * grid is a deck a reader stops looking at by slide four. So the blocks are named for what they
+ * hold rather than for how many columns they have, and a template picks a different one per
+ * slide.
+ */
+.grid, .ruled, .opts, .tiles, .roster { margin-top: auto; }
+.grid   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.6cqi 3.2cqi; }
+.opts   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4cqi; }
+.tiles  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.6cqi 3.2cqi; }
+.roster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.6cqi; }
+/* Columns divided by vertical rules, for parallel registers — the four risks, three tiers. */
+.ruled { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3cqi; }
+.ruled > div { padding-left: 2.2cqi; border-left: .07cqi solid var(--faint); }
+.ruled > div:first-child { padding-left: 0; border-left: 0; }
+
+.grid .num, .tiles .num { font-size: 3.1cqi; margin: 1.1cqi 0 .7cqi; }
+.grid .name, .opts .name { margin: 1.4cqi 0 .9cqi; font-size: 2.1cqi; letter-spacing: -0.024em; font-weight: 450; }
+.grid .cap2, .opts .cap2, .tiles .cap2 {
+  font-family: var(--label-face); font-size: .76cqi; letter-spacing: var(--label-track);
+  line-height: 1.7; text-transform: var(--label-case); color: var(--mute);
+}
+/* The cost line under an option: a dashed rule, because it is a different kind of statement
+   from the description above it. */
+.opts .cap2 { margin-top: 1.2cqi; padding-top: .8cqi; border-top: .07cqi dashed var(--faint); }
+.grid .body {
+  font-family: var(--label-face); font-size: .82cqi; line-height: 1.8;
+  letter-spacing: var(--label-track); text-transform: var(--label-case); color: var(--mute);
+}
+.ruled .verdict { margin: 0 0 .7cqi; font-size: 1.6cqi; letter-spacing: -0.022em; font-weight: 500; }
+.ruled .state {
+  font-family: var(--label-face); font-size: .76cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); font-weight: var(--label-weight);
+}
+.ruled .state.on { color: var(--pos); }
+.ruled .state.off { color: var(--faint); }
+.grid p, .ruled p, .opts p, .tiles p { margin: .9cqi 0 0; font-size: .92cqi; line-height: 1.62; color: var(--mute); }
+
+/* The roster: people, or anything whose unit is a name and a role rather than a figure. */
+.roster .who {
+  font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); font-weight: var(--label-weight);
+  color: color-mix(in srgb, var(--brand-a) 62%, var(--ink));
+}
+.roster .what { margin: .9cqi 0 .7cqi; font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
+.roster p { margin: 0; font-size: .94cqi; line-height: 1.6; color: var(--mute); }
+
+/* ------------------------------------------------------------------------ the rings -- */
+/* Nested circles: a containment drawn as one. A market inside a market, or a book inside a
+   merchant inside a card range. They are not to scale and the slide has to say so. */
+.nest { display: grid; grid-template-columns: 1fr 46cqi; gap: 4cqi; margin-top: 1.6cqi; align-items: center; }
+ /* 31cqi, not 34. The nest sits between a two-line headline and a foot that can run to four
+    lines, and at 34 the outer ring cleared the foot by less than a line — so the slide passed
+    in one style and overflowed in the other the moment the foot wrapped once more. Sized to
+    the worst case rather than to the one in front of me. */
+.rings { position: relative; height: 31cqi; }
+.ring {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  border-radius: 50%; display: flex; flex-direction: column; align-items: center; padding-top: 1.5cqi;
+}
+.ring.a { width: 31cqi;   height: 31cqi;   top: 0;      background: color-mix(in srgb, var(--brand-a) 16%, transparent); }
+.ring.b { width: 21.9cqi; height: 21.9cqi; top: 8.2cqi; background: color-mix(in srgb, var(--brand-a) 20%, transparent); }
+.ring.c { width: 13.2cqi; height: 13.2cqi; top: 16.4cqi; background: color-mix(in srgb, var(--brand-a) 28%, transparent); }
+.ring .rn { font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
+.ring .rl {
+  margin-top: .25cqi; font-family: var(--label-face); font-size: .7cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case); color: var(--mute);
+}
+
+/* The stack beside the rings: a figure, a rule, a figure. */
+.stack { display: flex; flex-direction: column; }
+.stack .row { padding: 1.15cqi 0; border-top: .07cqi solid var(--faint); }
+.stack .row:first-child { border-top: 0; padding-top: 0; }
+.stack .row .num { font-size: 2.6cqi; }
+.stack .row .rl {
+  margin-top: .5cqi; font-family: var(--label-face); font-size: .76cqi;
+  letter-spacing: var(--label-track); line-height: 1.7; text-transform: var(--label-case); color: var(--mute);
+}
+
+/* --------------------------------------------------------------------- the quadrant -- */
+/* Two axes and four marks. Placement is a judgement and the slide's foot has to say so. */
+.quad {
+  flex: 1; margin-top: 1.6cqi; border-radius: var(--radius); position: relative;
+  background: var(--pane); border: .07cqi solid var(--pane-edge);
+}
+.quad .ax { position: absolute; background: var(--faint); }
+.quad .ax.h { left: 4%; right: 4%; top: 50%; height: .06cqi; }
+.quad .ax.v { top: 8%; bottom: 8%; left: 50%; width: .06cqi; }
+.quad .axl {
+  position: absolute; font-family: var(--label-face); font-size: .72cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case); color: var(--mute);
+}
+.quad .axl.top { top: 1.5cqi; left: 50%; transform: translateX(-50%); }
+.quad .axl.bot { bottom: 1.5cqi; left: 50%; transform: translateX(-50%); }
+.quad .axl.lft { left: 1.5cqi; top: 50%; transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl; }
+.quad .axl.rgt { right: 1.5cqi; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; }
+.quad .pt { position: absolute; transform: translate(-50%, -50%); text-align: center; }
+.quad .pt .nm {
+  margin-top: .7cqi; font-family: var(--label-face); font-size: .78cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case); color: var(--ink);
+}
+
+/* -------------------------------------------------------------------------- the box -- */
+/* The appetite, or a scope: the number first, then what fits inside it, then the non-goals as a
+   column of their own — named, so the reader argues with the exclusion rather than holding you
+   to it. */
+.box { display: grid; grid-template-columns: 26cqi 1fr 1fr; gap: 4cqi; margin-top: 2.6cqi; align-items: start; }
+.box .big { font-size: 5.4cqi; }
+.box .bigl {
+  margin-top: 1cqi; font-family: var(--label-face); font-size: .78cqi;
+  letter-spacing: var(--label-track); line-height: 1.8; text-transform: var(--label-case); color: var(--mute);
+}
+ul.plus { margin: 1.1cqi 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 1cqi; }
+ul.plus li { font-size: .98cqi; line-height: 1.58; padding-left: 1.7cqi; position: relative; color: var(--mute); }
+ul.plus li::before {
+  content: "+"; position: absolute; left: 0; top: -.04cqi;
+  font-family: var(--label-face); font-size: .95cqi; color: var(--brand-a);
+}
+
+/* ------------------------------------------------------------------- the two columns -- */
+.works { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4.5cqi; margin-top: 3cqi; }
+
+/* --------------------------------------------------------------------- the arithmetic -- */
+/* Full precision, in bands. A rounded number here proves nothing the rounded number on the
+   screen did not already prove. */
+.sum { display: flex; flex-direction: column; }
+.sum .line { font-size: 1cqi; line-height: 1.5; color: var(--mute); padding: .55cqi 0; }
+.sum .line .num { font-size: 2.2cqi; display: block; margin-bottom: .3cqi; color: var(--ink); }
+.sum .line.total { border-top: .08cqi solid var(--faint); margin-top: .4cqi; padding-top: .9cqi; }
+.sum .rate { margin-top: 1.8cqi; }
+.sum .rate .num { font-size: 2.2cqi; color: var(--ink); }
+.sum .rate .against { margin-top: .8cqi; font-size: 1.02cqi; line-height: 1.5; color: var(--mute); }
+.sum .rate .against b { font-weight: 650; color: var(--ink); }
+/* The limit this figure carries, beside the screen rather than under it: where a frame takes
+   the slide's full height, a foot under it would push the slide over. */
+.sum .note {
+  margin-top: 1.6cqi; padding-top: 1cqi; border-top: .07cqi solid var(--faint);
+  font-size: .8cqi; line-height: 1.6; color: var(--mute);
+}
+.sum .note b { font-weight: 650; color: var(--ink); }
+
+/* ----------------------------------------------------------------------- the timeline -- */
+/* Phases along a rule. A method, or the steps after a yes. */
+.rail { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.6cqi; margin-top: 3cqi; }
+.rail .step { padding-top: 1.4cqi; border-top: .16cqi solid var(--brand-a); }
+.rail .when {
+  font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); font-weight: var(--label-weight); color: var(--brand-a);
+}
+.rail .what { margin: .8cqi 0 .6cqi; font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
+.rail p { margin: 0; font-size: .92cqi; line-height: 1.6; color: var(--mute); }
+
+/* ---------------------------------------------------------------------- the mechanics -- */
+/* Who approves it, what a *yes, if* would be, what a go fixes. The last slide's small print, as
+   three columns so none of the three can be skipped. */
+.mech { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.4cqi; margin-top: auto; }
+.mech .mt {
+  font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); font-weight: var(--label-weight);
+  color: color-mix(in srgb, var(--brand-a) 62%, var(--ink));
+}
+.mech p { margin: .8cqi 0 0; font-size: .98cqi; line-height: 1.6; color: var(--mute); }
+.mech b { font-weight: 650; color: var(--ink); }
+/* The recommendation, in the register a pull quote uses — the one sentence a reader carries out
+   of the room. */
+.verdict-big { font-size: 2.5cqi; line-height: 1.28; letter-spacing: -0.025em; font-weight: 450; max-width: 40ch; margin-top: 1.6cqi; }
+
+/* --------------------------------------------------------------------------- printing -- */
+/* 1600x900 CSS px is what `deck pdf` prints at (16.667 x 9.375in at 96dpi), so a slide is
+   exactly a page and nothing is scaled or split. */
+@page { size: 1600px 900px; margin: 0; }
+@media print {
+  body { padding: 0; }
+  .deck { width: 1600px; max-width: 1600px; }
+  .slide { width: 1600px; height: 900px; break-after: page; }
+  .slide:last-child { break-after: auto; }
+  .slide + .slide { margin-top: 0; }
+  /* A live frame does not survive a page. Same specificity as the live rules above, and later,
+     so it wins without `!important`. */
+  .frame[data-render="live"] iframe { display: none; }
+  .frame[data-render="live"] img { visibility: visible; }
+}

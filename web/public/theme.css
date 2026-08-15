@@ -1,0 +1,79 @@
+/*
+ * The schemes — the brand layer, and the only place a brand colour is written down.
+ *
+ * TWO AXES, AND THEY ARE NOT THE SAME AXIS
+ *   · skin   — light or dark. Which of two surfaces the reader is looking at. `.skin-dark`.
+ *   · scheme — which brand. Deeplight, Default, Signal, Ember. `[data-scheme="…"]`.
+ * They compose: any scheme in either skin. Keeping them apart is what stops "the dark one"
+ * and "the orange one" from becoming four hand-maintained palettes that drift.
+ *
+ * WHAT A SCHEME IS ALLOWED TO SET
+ * Three values and no more: two brand colours and a ground. Everything else on every
+ * surface — panes, hairlines, chart ink, the deck's mesh — is derived from these by the
+ * stylesheet that consumes them. A scheme that could set `--surface` would be a second
+ * design system rather than a palette, and the next one would disagree with it.
+ *
+ * WHAT A SCHEME MAY NEVER SET
+ * `--pos` and `--neg`. Green favourable and red unfavourable are meaning, not brand: the
+ * moment a scheme can repaint them, a figure that moved the right way looks different in
+ * Deeplight than it does in Ember, and the reader has to learn the palette to read the
+ * number. They are fixed in the consuming stylesheet, deliberately out of reach here.
+ *
+ * WHY BOTH BRAND COLOURS ARE LIGHT
+ * Every pair below is legible on the near-black ground and usable as chart ink beside it.
+ * Text laid ON a brand colour takes `--brand-ink`, never white — which is why the ink is
+ * part of the scheme rather than assumed.
+ *
+ * WHO READS THIS FILE
+ *   · the product — `import '@demo-kit/shell/themes.css'`, scheme on a wrapper attribute
+ *   · the deck    — via the demo's own `public/theme.css`, which is a copy of this file;
+ *                   `deck lint` fails if the copy has drifted from this one
+ */
+
+/* Default. The scheme a demo gets before anybody has chosen one, so it is the one that has
+   to look deliberate rather than neutral. */
+:root,
+[data-scheme='default'] {
+  --brand-a: #8b5cf6;
+  --brand-b: #ec4899;
+  --brand-ink: #14101f;
+  --brand-paper: #ffffff;
+}
+
+/* Deeplight. Amber primary, sky secondary, near-black ground — taken from the brand's own
+   material rather than sampled from a slide. */
+[data-scheme='deeplight'] {
+  --brand-a: #f2a900;
+  --brand-b: #58c7f3;
+  --brand-ink: #0a0a0a;
+  --brand-paper: #ffffff;
+}
+
+/* Signal. The cool one: a working blue against a warm coral, for a demo whose subject is an
+   alert or an exception rather than a product. */
+[data-scheme='signal'] {
+  --brand-a: #3b82f6;
+  --brand-b: #fb7185;
+  --brand-ink: #0b1020;
+  --brand-paper: #ffffff;
+}
+
+/* Ember. The warm one. Orange leads and lavender answers it, which keeps the pair away from
+   the green and red that direction owns. */
+[data-scheme='ember'] {
+  --brand-a: #fb923c;
+  --brand-b: #a78bfa;
+  --brand-ink: #140f0c;
+  --brand-paper: #ffffff;
+}
+
+/* Slate. The kit's own original palette, and the one two of its demos already wear: a working
+   blue that stays out of the way of green and red, on a cool grey canvas. It is here so those
+   demos can name what they already look like rather than lose it — a scheme they can leave set
+   and never think about, while every other scheme stays one click away. */
+[data-scheme='slate'] {
+  --brand-a: #15537f;
+  --brand-b: #58a6ff;
+  --brand-ink: #0e1720;
+  --brand-paper: #ffffff;
+}

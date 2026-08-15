@@ -19,8 +19,8 @@ export default {
     {
       name: 'july-position',
       url: '/app?view=inner&focus=section-headline',
-      w: 1100,
-      h: 540,
+      w: 1194,
+      h: 560,
       sel: '#product',
       viewportOnly: true,
       scrollTo: '#section-headline',
@@ -30,8 +30,8 @@ export default {
     {
       name: 'revenue-bridge',
       url: '/app/performance?view=inner&focus=section-bridge',
-      w: 1100,
-      h: 540,
+      w: 900,
+      h: 560,
       sel: '#product',
       viewportOnly: true,
       scrollTo: '#section-bridge',
@@ -41,8 +41,8 @@ export default {
     {
       name: 'source-drill',
       url: '/app/explore?view=inner&focus=section-drill&rows=measure&cols=period&drill=0%3A5',
-      w: 1100,
-      h: 540,
+      w: 900,
+      h: 560,
       sel: '#product',
       viewportOnly: true,
       scrollTo: '#section-drill',

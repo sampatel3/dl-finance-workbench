@@ -1,602 +1,302 @@
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deeplight Finance Workbench — from ledger evidence to a governed decision</title>
+<title>Deeplight Finance Workbench — deck</title>
+<link rel="stylesheet" href="deck.css">
+<link rel="stylesheet" href="theme.css">
 
 <!--
-  A self-contained client deck served by the product. Each live frame declares its route and
-  true CSS viewport; the image underneath is the still fallback and the PDF rendering. Every
-  shot is captured viewportOnly at the same dimensions in deck.config.mjs.
+  The `build` arc: the reader is our own team, and the ask is our own time. Ten numbered slides
+  plus an appendix.
+
+    title · claim · surface · capability · mechanism · proof · risks · appetite ·
+    alternatives · decision
+
+  `data-purpose="build"` is what `deck lint` checks that arc against; folios count the arc only
+  and read `n/10`. `data-style` is the design system and `data-scheme` the brand — the product
+  carries the same two, so the screenshots on slides 3, 4 and 6 are on the ground the slides
+  around them are.
+
+  Every slide uses a different block, because `deck lint` rejects a repeat.
+
+  Four things must survive an edit:
+    · the `.slide` class on every section
+    · `data-route` and `data-viewport` on every frame — what the live embed renders
+    · the `data-shot` on every frame — the real image shape is stamped onto it
+    · the three files: this one, `deck.css`, `theme.css`
+
+  The group is synthetic and every figure derives from one fixed seed. A placeholder looks like
+  [[ THIS ]] and nothing ships while one survives.
 -->
 
-<style>
-  :root {
-    --night: #0a0a0a;
-    --night-2: #141414;
-    --night-3: #1c1c1c;
-    --paper: #ecece8;
-    --canvas: #ffffff;
-    --ink: #0a0a0a;
-    --white: #ffffff;
-    --body-dark: #cecece;
-    --muted-dark: #9d9d9d;
-    --body-paper: #3a3a3a;
-    --muted-paper: #5f5f5f;
-    --line-dark: #3f3f3f;
-    --line-paper: #b4b4b0;
-    --amber: #f2a900;
-    --amber-paper: #8a6100;
-    --pos-dark: #5cc7a0;
-    --neg-dark: #ef8b93;
-    --pos-paper: #1d7a49;
-    --neg-paper: #a63a30;
-    --display: "Inter Tight", "Arial Narrow", Arial, sans-serif;
-    --body: Inter, Arial, sans-serif;
-    --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-  }
+<div class="deck" data-purpose="build" data-style="mesh" data-scheme="deeplight" data-live-root="#product">
 
-  *, *::before, *::after { box-sizing: border-box; }
-  html { background: #050505; }
-  body {
-    margin: 0; padding: 2vmin; background: #050505;
-    font-family: var(--body); -webkit-font-smoothing: antialiased;
-  }
-  .deck { width: 100%; max-width: 1600px; margin: 0 auto; container-type: inline-size; }
+  <!-- 1 — THE TITLE ------------------------------------------------------------ .cover -- -->
+  <section class="slide vivid" data-job="title">
+    <div class="cover">
+      <h1><span class="bracket">[</span>Finance Workbench<span class="bracket">]</span></h1>
+      <div class="tagline">One governed answer, opened at three depths</div>
+    </div>
 
-  .slide {
-    height: 56.25cqi; padding: 3cqi 4.2cqi 2.5cqi;
-    display: flex; flex-direction: column; overflow: hidden; position: relative;
-  }
-  .slide + .slide { margin-top: 2vmin; }
-  .dark { background: var(--night); color: var(--white); }
-  .paper { background: var(--paper); color: var(--ink); }
+    <div class="foot">A synthetic multi-entity finance group: Kestrel Industrial Group plc, five ledgers, twelve stops from actual to control. <b>Every figure derives from one fixed seed and no real company, ledger or transaction is in it</b>. Read rather than narrated: hand it over, let the room read, take the questions.</div>
+    <div class="folio">1/10</div>
+  </section>
 
-  .eyebrow {
-    margin-bottom: .78cqi; font-family: var(--mono); font-size: .72cqi;
-    font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--amber);
-  }
-  .paper .eyebrow { color: var(--amber-paper); }
-  h1 {
-    margin: 0; max-width: 31ch; font-family: var(--display); font-size: 2.72cqi;
-    font-weight: 600; line-height: 1.08; letter-spacing: -.025em;
-  }
-  .stand {
-    margin: .72cqi 0 1.35cqi; max-width: 102ch; font-size: 1.08cqi;
-    line-height: 1.42; color: var(--body-dark);
-  }
-  .paper .stand { color: var(--body-paper); }
-  .foot {
-    margin-top: auto; padding-top: .72cqi; padding-right: 8cqi;
-    border-top: .08cqi solid var(--amber); font-size: .68cqi; line-height: 1.4;
-    color: var(--muted-dark);
-  }
-  .paper .foot { border-top-color: var(--amber-paper); color: var(--muted-paper); }
-  .foot b { color: currentColor; font-weight: 700; }
-  .folio {
-    position: absolute; right: 4.2cqi; bottom: 1.28cqi;
-    font-family: var(--mono); font-size: .68cqi; letter-spacing: .1em;
-    color: var(--muted-dark);
-  }
-  .paper .folio { color: var(--muted-paper); }
+  <!-- 2 — THE CLAIM -------------------------------------------------------------- .grid -- -->
+  <section class="slide deep" data-job="claim">
+    <div class="eyebrow">The fault</div>
+    <h1>The same figure answers three people three different ways</h1>
+    <p class="stand">An executive is shown a number, an analyst rebuilds it, a controller evidences it &mdash; and the three do not have to agree, because nothing forces them to be the same computation.</p>
 
-  .tag {
-    margin-bottom: .42cqi; font-family: var(--mono); font-size: .65cqi;
-    font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--amber);
-  }
-  .paper .tag { color: var(--amber-paper); }
-  .itemtitle { font-family: var(--display); font-size: 1.26cqi; font-weight: 600; line-height: 1.24; }
-  .itembody { margin-top: .48cqi; font-size: .9cqi; line-height: 1.48; color: var(--body-dark); }
-  .paper .itembody { color: var(--body-paper); }
-  .mono { font-family: var(--mono); }
-  .yes { color: var(--pos-dark); }
-  .no { color: var(--neg-dark); }
-  .paper .yes { color: var(--pos-paper); }
-  .paper .no { color: var(--neg-paper); }
-
-  /* Frames follow the current deck contract: width comes from layout, height from the
-     viewport ratio. The live iframe occupies that exact viewport and scales as one unit. */
-  .frame {
-    flex: none; position: relative; overflow: hidden; min-width: 0;
-    border: .08cqi solid rgba(255,255,255,.2); border-radius: .4cqi;
-    background: var(--night-2);
-  }
-  .paper .frame { border-color: rgba(10,10,10,.18); background: var(--canvas); }
-  .frame img { display: block; width: 100%; height: auto; }
-  .frame iframe {
-    display: none; position: absolute; top: 0; left: 0; border: 0;
-    transform-origin: top left; background: var(--night); pointer-events: none;
-  }
-  .frame[data-render="live"] iframe { display: block; }
-  .frame[data-render="live"] img { visibility: hidden; }
-  :root[data-render="still"] .frame[data-render="live"] iframe { display: none; }
-  :root[data-render="still"] .frame[data-render="live"] img { visibility: visible; }
-  .cap {
-    margin-top: .42cqi; font-size: .78cqi; line-height: 1.4; color: var(--muted-dark);
-  }
-  .paper .cap { color: var(--muted-paper); }
-  .cap b { display: block; margin-bottom: .12cqi; color: var(--white); font-weight: 650; }
-  .paper .cap b { color: var(--ink); }
-
-  ul.notes { margin: 0; padding: 0; list-style: none; }
-  ul.notes li {
-    position: relative; padding: .7cqi 0 .7cqi 1.05cqi;
-    border-top: .08cqi solid var(--line-dark); font-size: .84cqi;
-    line-height: 1.45; color: var(--body-dark);
-  }
-  .paper ul.notes li { border-top-color: var(--line-paper); color: var(--body-paper); }
-  ul.notes li::before {
-    content: ""; position: absolute; left: 0; top: 1.02cqi;
-    width: .28cqi; height: .28cqi; background: var(--amber);
-  }
-  .paper ul.notes li::before { background: var(--amber-paper); }
-  ul.notes b { color: var(--white); font-weight: 650; }
-  .paper ul.notes b { color: var(--ink); }
-
-  /* 1 — fault */
-  .fault {
-    display: grid; grid-template-columns: 1.05fr 1.05fr .9fr; gap: 2.6cqi;
-    flex: 1; align-content: start;
-  }
-  .fault > div { padding-top: 1cqi; border-top: .11cqi solid var(--line-dark); }
-  .fault .itemtitle { font-size: 1.42cqi; }
-  .fault .itembody { font-size: .98cqi; }
-
-  /* 2–5, 7–10 — the product in consecutive beats. Each body has a distinct first class
-     for editorial lint, even where the underlying visual grammar is shared. */
-  .surface-view, .bridge-view, .drill-view, .version-view,
-  .quality-view, .commentary-view, .controls-view, .permission-view {
-    display: grid; grid-template-columns: minmax(0, 68cqi) 1fr; gap: 2.2cqi;
-    flex: 1; min-height: 0; align-items: start;
-  }
-  .screen-copy {
-    min-width: 0; padding-left: 1.3cqi; border-left: .08cqi solid var(--line-dark);
-  }
-  .paper .screen-copy { border-left-color: var(--line-paper); }
-  .screen-copy .lead {
-    margin: 0 0 .78cqi; font-family: var(--display); font-size: 1.28cqi;
-    font-weight: 600; line-height: 1.25;
-  }
-
-  /* 6 — scenario and cash, two states under one claim */
-  .cash-view { display: grid; grid-template-columns: 1fr 1fr; gap: 2.1cqi; flex: 1; min-height: 0; }
-  .cash-view > div { min-width: 0; }
-
-  /* 11 — the boundary */
-  .boundary {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
-    flex: 1; min-height: 0; border-top: .1cqi solid var(--line-dark);
-  }
-  .boundary > section { position: relative; padding: 1.2cqi 2.1cqi 0 0; }
-  .boundary > section + section {
-    padding-left: 2.1cqi; border-left: .08cqi solid var(--line-dark);
-  }
-  .boundary .boundary-no {
-    display: block; margin-bottom: .8cqi; font-family: var(--mono); font-size: .7cqi;
-    letter-spacing: .14em; color: var(--amber);
-  }
-  .boundary h2 {
-    margin: 0; font-family: var(--display); font-size: 1.48cqi;
-    font-weight: 600; line-height: 1.2;
-  }
-  .boundary p { margin: .65cqi 0 0; font-size: .9cqi; line-height: 1.5; color: var(--body-dark); }
-  .boundary .never { margin-top: 1.1cqi; padding-top: .8cqi; border-top: .08cqi solid var(--line-dark); }
-  .boundary .never b { display: block; margin-bottom: .25cqi; color: var(--neg-dark); }
-
-  /* 12 — a bounded decision, not a menu */
-  .pilot {
-    display: grid; grid-template-columns: .88fr 1.45fr; gap: 3cqi;
-    flex: 1; min-height: 0;
-  }
-  .pilot-choice { padding-top: 1cqi; border-top: .14cqi solid var(--amber); }
-  .pilot-choice .decision {
-    display: block; margin: .45cqi 0 .8cqi; font-family: var(--display);
-    font-size: 1.8cqi; font-weight: 600; line-height: 1.15;
-  }
-  .pilot-choice p { margin: 0; font-size: .94cqi; line-height: 1.5; color: var(--body-dark); }
-  .pilot-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 2.2cqi; }
-  .pilot-inputs > section { padding-top: 1cqi; border-top: .1cqi solid var(--line-dark); }
-  .pilot-inputs h2 {
-    margin: 0 0 .6cqi; font-family: var(--display); font-size: 1.2cqi;
-    font-weight: 600;
-  }
-
-  @page { size: 1600px 900px; margin: 0; }
-  @media print {
-    body { padding: 0; background: #fff; }
-    .deck { width: 1600px; max-width: 1600px; }
-    .slide { width: 1600px; height: 900px; break-after: page; }
-    .slide:last-child { break-after: auto; }
-    .slide + .slide { margin-top: 0; }
-    .frame[data-render="live"] iframe { display: none; }
-    .frame[data-render="live"] img { visibility: visible; }
-  }
-</style>
-
-<div class="deck" data-live-root="#product">
-
-  <section class="slide dark" data-job="claim">
-    <div class="eyebrow">What happened</div>
-    <h1>Finance loses control when the number, its explanation and its approval live apart</h1>
-    <p class="stand">A group close becomes three separate acts: reconcile the ledger, explain the movement, and publish the pack. When each act carries its own logic, the same July result can arrive with three versions of the truth.</p>
-
-    <div class="fault">
-      <div>
-        <div class="tag">The fault</div>
-        <div class="itemtitle">A reported total carries no account of how it became true</div>
-        <div class="itembody">Dashboards report, spreadsheets explain, and email approves. Period, version and source vintage fall away between them.</div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">The executive</div>
+        <div class="num">90s</div>
+        <div class="label">to the position</div>
+        <p>Wants the position and the decisions it raises, not the workings. Gets a pack somebody assembled by hand.</p>
       </div>
-      <div>
-        <div class="tag">The response</div>
-        <div class="itemtitle">One governed path from source row to Board sentence</div>
-        <div class="itembody">The workbench keeps the measure, comparator, driver, source row, approval and audit record on one deterministic spine.</div>
+      <div class="card">
+        <div class="label">The analyst</div>
+        <div class="num">3</div>
+        <div class="label">rebuilds of the same number</div>
+        <p>Wants movement, drivers, formula and rows. Rebuilds them in a spreadsheet that then disagrees with the pack.</p>
       </div>
-      <div>
-        <div class="tag">The decision</div>
-        <div class="itemtitle">Test the spine on one real close</div>
-        <div class="itembody">Start read-only, fix the source and approval boundary, and judge it against a baseline captured before work begins.</div>
+      <div class="card">
+        <div class="label">The controller</div>
+        <div class="num">1</div>
+        <div class="label">evidence chain, assembled late</div>
+        <p>Wants the source vintage and the close state behind every material figure, and is asked for it after the pack has gone out.</p>
       </div>
     </div>
 
-    <div class="foot">The company and figures in this deck are synthetic and fixed to July 2026. The product posts nothing to an ERP or ledger.</div>
-    <div class="folio">1 / 12</div>
+    <div class="foot">Kestrel closed July with <b>four of five ledgers closed and the period not final</b> &mdash; the figures below are not wrong, they are not final. A workbench that cannot say which is a workbench that has already misled somebody.</div>
+    <div class="folio">2/10</div>
   </section>
 
-  <section class="slide paper" data-job="surface">
-    <div class="eyebrow">The product</div>
-    <h1>July opens with the answer, not a wall of metrics</h1>
-    <p class="stand">Kestrel Industrial Group, July 2026: £12.4m revenue, 41.8% gross margin, £2.1m EBITDA and £4.8m cash, read by the Group CFO against approved forecast v6.</p>
+  <!-- 3 — THE SURFACE ---------------------------------------------------------- .screen -- -->
+  <section class="slide vivid" data-job="surface">
+    <div class="eyebrow">What a user sees</div>
+    <h1>The position, and what it puts on somebody&rsquo;s desk</h1>
 
-    <div class="surface-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="july-position" data-route="/app?view=inner&amp;focus=section-headline" data-viewport="1100x540">
-          <iframe title="July 2026 group position, live"></iframe>
-          <img src="shots/july-position.jpg" alt="Kestrel Industrial Group July 2026 Overview showing revenue £12.4m, gross margin 41.8%, EBITDA £2.1m and cash £4.8m against forecast v6">
+    <div class="screen">
+      <div class="device">
+        <div class="frame" data-shot="july-position" data-route="/app?view=inner&amp;focus=section-headline" data-viewport="1194x560" style="aspect-ratio:2.1321">
+          <iframe title="The July position for Kestrel Industrial Group, live"></iframe>
+          <img src="shots/july-position.jpg" alt="The July 2026 position for Kestrel Industrial Group plc against Forecast v6: revenue £12.4m up 5.2%, gross margin 41.8% down 194bps, EBITDA £2.1m down 0.5% and cash £4.8m down 18.1%, with revenue, gross margin and cash each flagged material. Above them, the accounting status: four of five ledgers closed, Kestrel Inc outstanding with the US financial controller, expected 8 July.">
         </div>
-        <div class="cap"><b>The result first</b>The headline row is one line tall; the decision boards, not a catalogue of KPIs, take the page below it.</div>
       </div>
-      <aside class="screen-copy">
-        <p class="lead">The view answers three questions before it offers a drill.</p>
-        <ul class="notes">
-          <li><b>Which period and version?</b> They remain visible and travel in the URL.</li>
-          <li><b>Is the number final?</b> Close completeness is stated above every figure.</li>
-          <li><b>What needs action?</b> Findings sit in direction × horizon boards with typed next steps.</li>
+    </div>
+    <div class="folio">3/10</div>
+  </section>
+
+  <!-- 4 — THE CAPABILITY ---------------------------------------------------------- .duo -- -->
+  <section class="slide deep" data-job="capability">
+    <div class="eyebrow">The thing nothing else does</div>
+    <h1>Any figure opens into the movement that made it</h1>
+
+    <div class="duo">
+      <div class="device">
+        <div class="frame" data-shot="revenue-bridge" data-route="/app/performance?view=inner&amp;focus=section-bridge" data-viewport="900x560" style="aspect-ratio:1.6071">
+          <iframe title="The revenue bridge, live"></iframe>
+          <img src="shots/revenue-bridge.jpg" alt="The revenue bridge for July: the movement from forecast to actual broken into its components, with volume the largest single contributor at £582k of the £618k difference.">
+        </div>
+      </div>
+
+      <div class="sum">
+        <div class="line"><span class="num">&pound;618k</span> revenue ahead of Forecast v6</div>
+        <div class="line total"><span class="num">&pound;582k</span> of it a single named driver</div>
+        <div class="note"><b>The bridge is the same computation as the headline, not a second one.</b> An executive reading 5.2% and an analyst reading the driver behind it are looking at one model opened at two depths &mdash; which is what stops the pack and the rebuild disagreeing.</div>
+      </div>
+    </div>
+    <div class="folio">4/10</div>
+  </section>
+
+  <!-- 5 — THE MECHANISM --------------------------------------------------------- .works -- -->
+  <section class="slide vivid" data-job="mechanism">
+    <div class="eyebrow">How it works</div>
+    <h1>Code decides what is true; the model only phrases it</h1>
+    <p class="stand">The figures are deterministic. What a model is allowed to do with them is bounded, and the boundary is the point of the design rather than a caveat on it.</p>
+
+    <div class="works">
+      <div class="say"><b>Every figure is computed, never generated.</b> A model phrases a bounded commentary and answers from governed tools; it never invents a number, changes an assumption, approves a pack or posts a journal. Those four are the whole list, and each is refused in code rather than discouraged in a prompt.</div>
+      <div class="say"><b>The evidence chain is the same object as the answer.</b> Movement, drivers, formula, rows and source vintage hang off the figure itself, so a controller asking where a number came from is reading the thing that produced it rather than a reconstruction of it.</div>
+    </div>
+
+    <div class="foot"><b>The wording check is a word list rather than an understanding.</b> It catches a forecast phrased as a fact and a superlative dressed as a finding; a sentence that implies a cause without using one of the listed words reaches the reader unchanged. That is a named gap, not a solved one.</div>
+    <div class="folio">5/10</div>
+  </section>
+
+  <!-- 6 — THE PROOF ----------------------------------------------------------- .duoflip -- -->
+  <section class="slide deep" data-job="proof">
+    <div class="eyebrow">One figure, opened</div>
+    <h1>A number, down to the rows it came from</h1>
+
+    <!-- The column leads and the frame answers it, which is the mirror of slide 4: two framed
+         slides close together built the same way read as one slide shown twice. -->
+    <div class="duoflip">
+      <div class="sum">
+        <div class="line"><span class="num">&pound;12.4m</span> revenue, as the position states it</div>
+        <div class="line"><span class="num">&pound;11.8m</span> Forecast v6, the comparator it is read against</div>
+        <div class="line total"><span class="num">&pound;618k</span> the difference, and every row behind it</div>
+        <div class="note">The drill reaches the rows, their measure, their period and the vintage of the source they were read from. <b>Nothing is rounded before it is compared</b>, and the comparator is named on the figure rather than assumed by the reader.</div>
+      </div>
+
+      <div class="device">
+        <div class="frame" data-shot="source-drill" data-route="/app/explore?view=inner&amp;focus=section-drill&amp;rows=measure&amp;cols=period&amp;drill=0%3A5" data-viewport="900x560" style="aspect-ratio:1.6071">
+          <iframe title="The source drill, live"></iframe>
+          <img src="shots/source-drill.jpg" alt="The explore view drilled into revenue by measure and period, showing the rows behind the figure with their source and vintage.">
+        </div>
+      </div>
+    </div>
+    <div class="folio">6/10</div>
+  </section>
+
+  <!-- 7 — THE RISKS ------------------------------------------------------------ .ruled -- -->
+  <section class="slide vivid wide" data-job="risks">
+    <div class="eyebrow">What is evidenced</div>
+    <h1>Built and running is evidence for one risk of the four</h1>
+
+    <div class="ruled">
+      <div>
+        <div class="verdict">Feasibility</div>
+        <div class="state on">Evidenced</div>
+        <p>It runs. Twelve surfaces, one model, and every figure on slides 3, 4 and 6 came out of the build rather than out of a slide.</p>
+      </div>
+      <div>
+        <div class="verdict">Value</div>
+        <div class="state off">No evidence</div>
+        <p>No group CFO or financial controller has been asked what assembling this pack costs them today, or what the disagreement between pack and rebuild costs them.</p>
+      </div>
+      <div>
+        <div class="verdict">Usability</div>
+        <div class="state off">No evidence</div>
+        <p>Nobody outside the build team has driven it. No controller has been given a figure and asked to evidence it while somebody watched.</p>
+      </div>
+      <div>
+        <div class="verdict">Viability</div>
+        <div class="state off">No evidence</div>
+        <p>The group is synthetic. Nothing here has been near a real ledger, an audit function or a data-protection review.</p>
+      </div>
+    </div>
+
+    <div class="foot">Three of the four are named rather than filled, and that is the finding rather than an omission. <b>A written spec is not evidence and neither is this deck</b> &mdash; the only evidence here is the running build, and it counts for feasibility alone.</div>
+    <div class="folio">7/10</div>
+  </section>
+
+  <!-- 8 — THE APPETITE ----------------------------------------------------------- .box -- -->
+  <section class="slide deep wide" data-job="appetite">
+    <div class="eyebrow">The box</div>
+    <h1>Five hours of one person&rsquo;s week</h1>
+
+    <div class="box">
+      <div>
+        <div class="num big">5h</div>
+        <div class="bigl">one person, one week &mdash;<br>2.5h of calls, 1h writing<br>the questions, 1.5h writing<br>up the answers</div>
+      </div>
+      <div>
+        <div class="label">What fits inside it</div>
+        <ul class="plus">
+          <li>Five finance leaders &mdash; a group CFO, two controllers, two FP&amp;A leads &mdash; each asked the same two questions, written down before the first call.</li>
+          <li>The workbench at its own URL, driven by them rather than shown to them.</li>
+          <li>One page of answers, naming who said what.</li>
         </ul>
-      </aside>
-    </div>
-
-    <div class="foot">The four headline values are computed outputs from the fixed seed; changing the model moves them and fails the freshness checks.</div>
-    <div class="folio">2 / 12</div>
-  </section>
-
-  <section class="slide dark" data-job="capability">
-    <div class="eyebrow">The product</div>
-    <h1>A £0.7m beat becomes a volume decision</h1>
-    <p class="stand">July revenue of £12.4m is ahead of approved forecast v6, and the bridge identifies volume as the largest component rather than stopping at the delta.</p>
-
-    <div class="bridge-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="revenue-bridge" data-route="/app/performance?view=inner&amp;focus=section-bridge" data-viewport="1100x540">
-          <iframe title="July revenue bridge against forecast v6, live"></iframe>
-          <img src="shots/revenue-bridge.jpg" alt="Revenue bridge for July 2026 against forecast v6, ending at £12.4m and showing volume as the largest favourable contribution">
-        </div>
-        <div class="cap"><b>One movement, assigned</b>The component carries an owner and links to the level where it can be investigated.</div>
       </div>
-      <aside class="screen-copy">
-        <p class="lead">The arithmetic has to close before the story is allowed to start.</p>
-        <ul class="notes">
-          <li><b>Price, volume and mix</b> follow a stated order of attribution.</li>
-          <li><b>Currency separates first</b> so no commercial bar hides a translation effect.</li>
-          <li><b>Ununitised work stays named</b> instead of receiving an invented volume.</li>
+      <div>
+        <div class="label">Not in it, on purpose</div>
+        <ul class="plus">
+          <li>No build. Five people seeing five different products is five answers to five different questions.</li>
+          <li>No real ledger, not one row. That is what makes the week need nobody&rsquo;s approval.</li>
+          <li>No pricing. That is a different conversation with a different person.</li>
         </ul>
-      </aside>
-    </div>
-
-    <div class="foot">Every bar sums to the terminal movement. Any remainder stays visible as a named residual rather than being absorbed into “other”.</div>
-    <div class="folio">3 / 12</div>
-  </section>
-
-  <section class="slide paper" data-job="proof">
-    <div class="eyebrow">The product</div>
-    <h1>A challenged cell opens until the source vintage answers</h1>
-    <p class="stand">The analyst’s revenue cell carries its formula, entity children, account inputs, row counts and immutable load identity; the same URL reproduces the same pivot and open drill.</p>
-
-    <div class="drill-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="source-drill" data-route="/app/explore?view=inner&amp;focus=section-drill&amp;rows=measure&amp;cols=period&amp;drill=0%3A5" data-viewport="1100x540">
-          <iframe title="Explore cell drilled to governed source evidence, live"></iframe>
-          <img src="shots/source-drill.jpg" alt="Explore revenue cell opened to a drill that lists entity contributions, account inputs, source row counts and vintage provenance for the selected period">
-        </div>
-        <div class="cap"><b>The grid is not the proof</b>The proof is the path beneath the selected cell and the fact that its parts recompute rather than inherit shares.</div>
-      </div>
-      <aside class="screen-copy">
-        <p class="lead">One computed figure carries the whole drill spine.</p>
-        <ul class="notes">
-          <li><b>Formula</b> comes from the approved measure catalogue.</li>
-          <li><b>Children</b> are measures at the finer grain, not percentages of a parent.</li>
-          <li><b>Source evidence</b> ends in row identity and vintage, ready for export with provenance.</li>
-        </ul>
-      </aside>
-    </div>
-
-    <div class="foot">The source rows are generated GL-shaped facts, not customer ledger entries; the Controls surface states that boundary explicitly.</div>
-    <div class="folio">4 / 12</div>
-  </section>
-
-  <section class="slide dark" data-job="capability">
-    <div class="eyebrow">The product</div>
-    <h1>A forecast version is a belief you compare, not a file you overwrite</h1>
-    <p class="stand">Approved v6 and draft v7 retain their own actuals cut-off and assumptions, so Finance can read which drivers changed before deciding whether the draft replaces the approved view.</p>
-
-    <div class="version-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="version-diff" data-route="/app/forecast?view=inner&amp;focus=section-diff&amp;version=v7&amp;from=v6" data-viewport="1100x540">
-          <iframe title="Forecast v6 to v7 driver diff, live"></iframe>
-          <img src="shots/version-diff.jpg" alt="Forecast page comparing approved v6 with draft v7, listing the assumptions that moved and the resulting measure movements">
-        </div>
-        <div class="cap"><b>The draft stays a draft</b>The active approved forecast remains the variance basis until a named approval changes it.</div>
-      </div>
-      <aside class="screen-copy">
-        <p class="lead">Version identity makes “what changed?” a reproducible question.</p>
-        <ul class="notes">
-          <li><b>Actuals through</b> fixes where observation ends and projection begins.</li>
-          <li><b>Driver values</b> are compared directly, not inferred from output movements.</li>
-          <li><b>Total effect</b> is recomputed through the same financial model.</li>
-        </ul>
-      </aside>
-    </div>
-
-    <div class="foot">The diff reports the total effect exactly; it does not allocate that effect across assumptions without the marginal reruns such a claim requires.</div>
-    <div class="folio">5 / 12</div>
-  </section>
-
-  <section class="slide paper" data-job="capability">
-    <div class="eyebrow">The product</div>
-    <h1>An assumption is only useful when it reaches the cash line</h1>
-    <p class="stand">Add ten collection days: revenue and margin stay unchanged, working capital moves, and the 13-week direct cash forecast shows where liquidity tightens.</p>
-
-    <div class="cash-view">
-      <div>
-        <div class="frame" style="aspect-ratio:1.7826" data-shot="scenario-impact" data-route="/app/scenarios?view=inner&amp;focus=section-effect&amp;dsoDays=10" data-viewport="820x460">
-          <iframe title="Ten-day collections scenario impact, live"></iframe>
-          <img src="shots/scenario-impact.jpg" alt="Scenario result with collection days increased by ten, showing no revenue or gross-margin movement and a change to working capital and cash">
-        </div>
-        <div class="cap"><b>Plan against plan</b>Both sides use forecast assumptions, so the movement is caused by the lever rather than by an actual-versus-plan gap.</div>
-      </div>
-      <div>
-        <div class="frame" style="aspect-ratio:1.7826" data-shot="cash-horizon" data-route="/app/cash?view=inner&amp;focus=section-weekly" data-viewport="820x460">
-          <iframe title="Thirteen-week cash horizon and Board floor, live"></iframe>
-          <img src="shots/cash-horizon.jpg" alt="Thirteen-week cash forecast opening at £4.8m, first breaching the £2.5m Board floor at £1.7m in week 9, reaching £1.3m in week 10, then recovering">
-        </div>
-        <div class="cap"><b>The week matters</b>The path first breaches the £2.5m floor at £1.7m in week 9, reaches £1.3m in week 10, then recovers before the horizon ends.</div>
       </div>
     </div>
 
-    <div class="foot">£4.8m is opening cash for a 13-week direct forecast, not thirteen weeks of cash cover. Scenario state is shareable in the URL and is not saved in this demo.</div>
-    <div class="folio">6 / 12</div>
+    <div class="foot">The appetite is the constraint, not an estimate of the work: five hours is what this is worth before anybody outside the team has said the pack-versus-rebuild gap is a cost they carry. <b>If the week needs a sixth hour it has already failed its own test.</b></div>
+    <div class="folio">8/10</div>
   </section>
 
-  <section class="slide dark" data-job="proof">
-    <div class="eyebrow">Can you trust it</div>
-    <h1>A forecast earns trust by exposing its repeated misses</h1>
-    <p class="stand">Subcontract cost was under-called across v4, v5 and v6. Each miss shrank, but the direction never reversed, revealing an assumption the team had three chances to correct.</p>
+  <!-- 9 — THE ALTERNATIVES ------------------------------------------------------ .opts -- -->
+  <section class="slide vivid wide" data-job="alternatives">
+    <div class="eyebrow">What else fits the box</div>
+    <h1>Three things this appetite buys, including stopping</h1>
 
-    <div class="quality-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="forecast-quality" data-route="/app/quality?view=inner&amp;focus=section-bias&amp;measure=subcontract_cost" data-viewport="1100x540">
-          <iframe title="Forecast bias across versions, live"></iframe>
-          <img src="shots/forecast-quality.jpg" alt="Forecast Quality page highlighting subcontract cost as under-called across forecast versions v4, v5 and v6 while other measures show no repeated run">
-        </div>
-        <div class="cap"><b>A run, not a label</b>The per-version errors remain on screen so a reader sees the evidence behind the bias verdict.</div>
+    <div class="opts">
+      <div class="card">
+        <div class="pill">01</div>
+        <div class="name">One real close</div>
+        <p>Run the workbench alongside a real month-end at one group. Better evidence on every one of the four risks, and the only route that tests viability.</p>
+        <div class="cap2">Cost &mdash; a willing finance function, their ledger data, and a wait on a close calendar nobody here controls</div>
       </div>
-      <aside class="screen-copy">
-        <p class="lead">Three instruments answer three different objections.</p>
-        <ul class="notes">
-          <li><b>Error by horizon</b> shows where distance weakens the forecast.</li>
-          <li><b>Bias by version</b> finds the assumption repeatedly set on the wrong side.</li>
-          <li><b>Value added</b> asks whether the process beats the prior-year baseline.</li>
-        </ul>
-      </aside>
-    </div>
-
-    <div class="foot">Draft v7 is unscored because no post-cut-off actual exists. Budget is excluded because it is a target, not a prediction.</div>
-    <div class="folio">7 / 12</div>
-  </section>
-
-  <section class="slide paper" data-job="capability">
-    <div class="eyebrow">Can you trust it</div>
-    <h1>Approval freezes the words and the vintage together</h1>
-    <p class="stand">June gross-margin commentary remains pinned to <span class="mono">v-2026-06-core</span> after a July restatement arrives, preserving exactly what the Chief Financial Officer approved.</p>
-
-    <div class="commentary-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="published-commentary" data-route="/app/commentary?view=inner&amp;focus=section-commentary&amp;state=published" data-viewport="1100x540">
-          <iframe title="Vintage-pinned published commentary, live"></iframe>
-          <img src="shots/published-commentary.jpg" alt="Published June gross-margin commentary showing revision, approver, published date and pinned data vintage v-2026-06-core">
-        </div>
-        <div class="cap"><b>Board sentence above, controller chain below</b>Opening the support reveals movement, drivers, accounts and source rows without changing period, comparator or version.</div>
+      <div class="card pick">
+        <div class="tagpick">Recommended</div>
+        <div class="pill">02</div>
+        <div class="name">One week, five calls</div>
+        <p>Ask five finance leaders what the pack costs to assemble and what it costs when the rebuild disagrees. Tests value directly and usability in passing.</p>
+        <div class="cap2">Cost &mdash; five hours, and the demo stays as it is for another week</div>
       </div>
-      <aside class="screen-copy">
-        <p class="lead">Approval is evidence, not a status dropdown.</p>
-        <ul class="notes">
-          <li><b>Draft → review → approved → published</b> is enforced as a state machine.</li>
-          <li><b>Reject</b> records a named actor and reason.</li>
-          <li><b>Provenance</b> retains figure references, author type, prompt version and vintage.</li>
-        </ul>
-      </aside>
-    </div>
-
-    <div class="foot">The queue and approval history are seeded records. Visitor transition controls are preview-only and do not persist after reload.</div>
-    <div class="folio">8 / 12</div>
-  </section>
-
-  <section class="slide dark" data-job="proof">
-    <div class="eyebrow">Can you trust it</div>
-    <h1>A controller sees the break before the Board sees the number</h1>
-    <p class="stand">July is 4 of 5 entities closed; Kestrel Inc is submitted, intercompany trading fails by £48k with both sides named, and two unmapped accounts carry £212k of exposure.</p>
-
-    <div class="controls-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="controls-checks" data-route="/app/controls?view=inner&amp;focus=section-checks" data-viewport="1100x540">
-          <iframe title="July named reconciliation checks, live"></iframe>
-          <img src="shots/controls-checks.jpg" alt="Controls reconciliation gate for July showing two passed checks and a £48k failed intercompany check with seller and buyer ledger sides named">
-        </div>
-        <div class="cap"><b>The failed check carries its arithmetic</b>Seller ledgers and buyer ledgers remain visible beside the difference and threshold.</div>
+      <div class="card">
+        <div class="pill">03</div>
+        <div class="name">Stop here</div>
+        <p>The build stands as a worked answer to a question nobody outside the team has been asked. Feasibility is settled and the model keeps.</p>
+        <div class="cap2">Cost &mdash; nothing spent, and the three open risks stay open indefinitely</div>
       </div>
-      <aside class="screen-copy">
-        <p class="lead">Three control facts block quiet publication.</p>
-        <ul class="notes">
-          <li><b class="no">4 / 5 closed</b> keeps Kestrel Inc’s submitted figures marked as able to move.</li>
-          <li><b class="no">£48k intercompany</b> names the manufacturing seller and Gulf buyer sides.</li>
-          <li><b class="no">£212k unmapped</b> equals the explicit gap between mapped P&amp;L and trial balance.</li>
-        </ul>
-      </aside>
     </div>
 
-    <div class="foot">The demo has general-ledger facts and source metadata, not independent AP or AR subledger totals; it does not report a subledger check it cannot perform.</div>
-    <div class="folio">9 / 12</div>
+    <div class="foot">Stopping is on this slide because it is a real option and the cheapest one. <b>The real-close route is better evidence and it stays on the table</b> &mdash; it is first rather than second because what blocks it is somebody else's calendar, not its cost.</div>
+    <div class="folio">9/10</div>
   </section>
 
-  <section class="slide paper" data-job="proof">
-    <div class="eyebrow">Can you trust it</div>
-    <h1>A restricted user gets a refusal, not a smaller group answer</h1>
-    <p class="stand">The Gulf business-unit controller is scoped to Gulf, has no publish right, and cannot resolve group figures on a page or through Ask.</p>
-
-    <div class="permission-view">
-      <div>
-        <div class="frame" style="aspect-ratio:2.0370" data-shot="permission-refusal" data-route="/app/controls?view=inner&amp;focus=section-permissions&amp;as=gulf-controller&amp;entity=group" data-viewport="1100x540">
-          <iframe title="Gulf controller permission grant and named group refusal, live"></iframe>
-          <img src="shots/permission-refusal.jpg" alt="Permissions section signed in as Gulf business-unit controller, resolved to the Gulf entity only, with publish not granted and a named refusal for group figures">
-        </div>
-        <div class="cap"><b>The denied object is named</b>A forbidden group URL clamps back to Gulf and records the refusal instead of silently returning a partial group.</div>
-      </div>
-      <aside class="screen-copy">
-        <p class="lead">One resolver binds every route that can reveal a figure.</p>
-        <ul class="notes">
-          <li><b>Selectors</b> offer only entity subtrees inside the principal’s grant.</li>
-          <li><b>Pages</b> receive the filtered measure context, not a later display mask.</li>
-          <li><b>Ask tools</b> use the same principal and return the refusal in words.</li>
-        </ul>
-      </aside>
-    </div>
-
-    <div class="foot">The passcode gate is a sharing boundary, not user authentication. A real deployment requires customer identity, tenant segregation and source-level least privilege.</div>
-    <div class="folio">10 / 12</div>
-  </section>
-
-  <section class="slide dark" data-job="mechanism">
-    <div class="eyebrow">Can you trust it</div>
-    <h1>The model gets figures after code has decided what is true</h1>
-    <p class="stand">Every figure, comparison, bridge, forecast, scenario, detector and permission scope is deterministic. Language enters only after a closed evidence set exists; a named human remains at the publication boundary.</p>
-
-    <div class="boundary">
-      <section>
-        <span class="boundary-no">01 · Code</span>
-        <h2>Computes and constrains</h2>
-        <p>Signed minor-unit facts, period basis, currency translation, consolidation, measures, drivers, materiality, reconciliation and row-level scope.</p>
-        <p class="never"><b>Refuses partial truth</b>A missing input returns no figure; an unsupported trend returns no bridge; a forbidden entity returns a named denial.</p>
-      </section>
-      <section>
-        <span class="boundary-no">02 · Model or template</span>
-        <h2>Phrases a closed set</h2>
-        <p>Receives governed labels, figures, units, ownership and provenance. Generated numerals are checked against that supplied set before the prose is committed.</p>
-        <p class="never"><b>Never decides</b>No invented number, materiality threshold, mapping, forecast assumption, approval or journal posting.</p>
-      </section>
-      <section>
-        <span class="boundary-no">03 · Human</span>
-        <h2>Owns judgement and release</h2>
-        <p>Finance approves definitions and mappings, challenges the evidence chain, records reasons, chooses the active forecast and publishes a vintage-pinned snapshot.</p>
-        <p class="never"><b>Leaves evidence</b>Approval history and AI usage are append-only records with actor, timestamp, input vintage and disposition.</p>
-      </section>
-    </div>
-
-    <div class="foot">When no model key is configured, committed template narration ships instead. Provenance records whether words came from a model, a human or code.</div>
-    <div class="folio">11 / 12</div>
-  </section>
-
-  <section class="slide dark" data-job="decision">
+  <!-- 10 — THE DECISION --------------------------------------------------------- .mech -- -->
+  <section class="slide deep" data-job="decision">
     <div class="eyebrow">The decision</div>
-    <h1>Choose one ledger, one close and one baseline before the pilot starts</h1>
-    <p class="stand">The demo proves the product spine. A bounded pilot replaces synthetic inputs with one controlled source-to-publication chain and measures the result against today’s finance cycle.</p>
+    <h1>Take the week, and decide again on Friday</h1>
+    <p class="verdict-big">Five conversations with finance leaders, each asked the same two questions: what does assembling the monthly pack cost you, and what does it cost when somebody rebuilds a figure and gets a different answer.</p>
 
-    <div class="pilot">
-      <section class="pilot-choice">
-        <div class="tag">Recommendation</div>
-        <span class="decision">One read-only close, end to end</span>
-        <p>Take one legal entity from source load through mapping, approved measures, actual-versus-forecast explanation, close checks, commentary approval and one permission-refusal test.</p>
-        <ul class="notes">
-          <li><b>Success</b> the signed period reproduces from version and vintage.</li>
-          <li><b>Success</b> every exception reconciles to an explicit register.</li>
-          <li><b>Success</b> cycle time and forecast value are measured against the captured baseline.</li>
-        </ul>
-      </section>
-
-      <div class="pilot-inputs">
-        <section>
-          <div class="tag">Inputs that set the work</div>
-          <h2>Source and model</h2>
-          <ul class="notes">
-            <li><b>First ERP and operational systems</b> select the connector mechanism.</li>
-            <li><b>Chart of accounts and mapping owner</b> set the largest early workstream.</li>
-            <li><b>Approved KPIs and materiality policy</b> replace the demo defaults.</li>
-            <li><b>Reliable operational drivers</b> determine which attribution survives real data.</li>
-          </ul>
-        </section>
-        <section>
-          <div class="tag">Inputs that set the boundary</div>
-          <h2>Governance and value</h2>
-          <ul class="notes">
-            <li><b>Reviewer, publisher and delegation</b> define the approval path.</li>
-            <li><b>Retention period</b> defines evidence storage.</li>
-            <li><b>ROI baseline</b> is captured before the first load.</li>
-            <li><b>Sector and security language</b> resolve the open financial-institution and procurement questions.</li>
-          </ul>
-        </section>
+    <div class="mech">
+      <div>
+        <div class="mt">Who approves it</div>
+        <p>Whoever holds this team&rsquo;s time. <b>No budget, no data access, no third party</b> &mdash; five conversations need none of the three, so this starts on the day it is read.</p>
+      </div>
+      <div>
+        <div class="mt">A yes, if</div>
+        <p>Yes, if the five are people we already have a relationship with. <b>Cold outreach turns a five-hour week into a three-week one</b> and the appetite does not cover it.</p>
+      </div>
+      <div>
+        <div class="mt">What a go fixes, and what it does not</div>
+        <p>It closes value and starts on usability. <b>Viability stays open either way</b> &mdash; nothing here goes near a real ledger, so nothing here can settle it.</p>
       </div>
     </div>
 
-    <div class="foot">Mapping and completeness consume the first three weeks on a real pilot. No wider schedule is credible until source access and the chart of accounts are known.</div>
-    <div class="folio">12 / 12</div>
+    <div class="foot">If none of the five says the gap is a cost they carry, <b>this stops on Friday</b> &mdash; written into the gate rather than left to whoever gets tired of it first. The unwelcome consequence of a go is worth stating plainly: a week spent asking is a week the build does not move.</div>
+    <div class="folio">10/10</div>
+  </section>
+
+  <!-- APPENDIX — off the numbered arc --------------------------------------------- .tiles -- -->
+  <section class="slide vivid wide" data-job="appendix">
+    <div class="eyebrow">Appendix</div>
+    <h1>What the group is made of</h1>
+    <p class="stand">What every screen resolves to, and what a real deployment supplies instead of a seed.</p>
+
+    <div class="tiles">
+      <div>
+        <div class="label">Entities</div>
+        <div class="num">5</div>
+        <div class="cap2">ledgers across the group, four closed at the July position</div>
+      </div>
+      <div>
+        <div class="label">Period</div>
+        <div class="num">Jul 26</div>
+        <div class="cap2">written down rather than counted back from today, so a screenshot stays true</div>
+      </div>
+      <div>
+        <div class="label">Comparator</div>
+        <div class="num">v6</div>
+        <div class="cap2">the approved forecast every material figure is read against</div>
+      </div>
+    </div>
+
+    <div class="foot"><b>Every figure derives from one fixed seed.</b> A real deployment supplies the same shapes from the group's own ledgers and its own approved forecast; no real company, ledger or transaction is in this demo, and the materiality policy that decides what is flagged is versioned and approved in the product rather than assumed here.</div>
+    <div class="folio">Appendix</div>
   </section>
 
 </div>
 
-<script>
-  (() => {
-    const sentinel = document.querySelector('.deck')?.dataset.liveRoot ?? '';
-
-    for (const frame of document.querySelectorAll('.frame[data-route]')) {
-      const iframe = frame.querySelector('iframe');
-      const route = frame.dataset.route ?? '';
-      const [vw, vh] = (frame.dataset.viewport ?? '').split('x').map(Number);
-      if (!iframe || !vw || !vh || !location.protocol.startsWith('http')) continue;
-
-      const fit = () => {
-        iframe.style.width = `${vw}px`;
-        iframe.style.height = `${vh}px`;
-        iframe.style.transform = `scale(${frame.clientWidth / vw})`;
-      };
-
-      iframe.addEventListener('load', () => {
-        let doc;
-        try {
-          doc = iframe.contentDocument;
-          if (!doc || (sentinel !== '' && !doc.querySelector(sentinel))) return;
-        } catch {
-          return;
-        }
-
-        /* A live frame is a current picture, not a second product surface. Keep its document
-           out of the tab order and prevent its scroll position diverging from the still that
-           replaces it in print. */
-        doc.documentElement.inert = true;
-        doc.documentElement.style.overflow = 'hidden';
-
-        fit();
-        frame.dataset.render = 'live';
-      });
-
-      iframe.tabIndex = -1;
-      new ResizeObserver(fit).observe(frame);
-      iframe.src = route;
-    }
-  })();
-</script>
+<script src="deck.js"></script>
