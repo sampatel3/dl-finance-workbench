@@ -146,7 +146,12 @@ export function assumptionsFrom(params: Params): {
   readonly steps: Readonly<Record<string, number>>;
 } {
   const base = activeApprovedForecast().assumptions;
-  const out: Record<string, number> = { ...base };
+  /* A mutable copy of the real type, rather than a `Record<string, number>` cast back at the end.
+     The cast compiled and was wrong in a way the compiler could have caught: it accepted a bag of
+     arbitrary string keys as an assumption set, so a lever key typo would have produced a scenario
+     silently missing that assumption. Stripping `readonly` off the real type keeps every key
+     checked while still allowing the loop to assign. */
+  const out: { -readonly [K in keyof AssumptionSet]: AssumptionSet[K] } = { ...base };
   const moved: LeverKey[] = [];
   const steps: Record<string, number> = {};
 
@@ -164,7 +169,7 @@ export function assumptionsFrom(params: Params): {
     moved.push(entry.key);
   }
 
-  return { assumptions: out as unknown as AssumptionSet, moved, steps };
+  return { assumptions: out, moved, steps };
 }
 
 /** A stable key for one assumption set, so identical scenarios reuse one world. */
