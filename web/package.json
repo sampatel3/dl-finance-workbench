@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm narrate && next build",
+    "build": "pnpm deck:sync && pnpm narrate && next build",
     "start": "next start",
     "narrate": "node --import ./scripts/ts-resolve.mjs scripts/narrate.ts",
     "test": "vitest run --passWithNoTests",
@@ -14,7 +14,8 @@
     "deck:aspects": "deck aspects",
     "deck:lint": "deck lint",
     "deck:slides": "deck slides",
-    "deck:pdf": "deck pdf"
+    "deck:pdf": "deck pdf",
+    "deck:sync": "node ../vendor/demo-kit/packages/deck/bin.mjs sync --out public"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
