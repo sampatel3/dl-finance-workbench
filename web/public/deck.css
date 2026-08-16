@@ -438,6 +438,7 @@ h1 {
   font-size: 4.7cqi; line-height: 1.0; letter-spacing: -0.035em; font-weight: 450;
 }
 /* Aurora sets it top-left and tight, and lets the page below it stay empty. */
+[data-style='aurora'] { --h1-weight: 400; }
 [data-style='aurora'] h1 { max-width: 24ch; font-weight: 400; letter-spacing: -0.04em; }
 /* Drift sets it a shade smaller and narrower, because it sits beside its content rather than
    above it, and takes three or four short lines rather than two long ones. */
@@ -1290,7 +1291,7 @@ ul.plus li::before {
  */
 
 /* THE STATEMENT — a claim big enough to be the slide (B3, B6, C2, D4). Centres itself. */
-.statement { margin: auto 0; max-width: 26ch; font-size: 6cqi; line-height: 1.04; letter-spacing: -0.035em; font-weight: 450; }
+.statement { margin: auto 0; max-width: 26ch; font-size: 5.4cqi; line-height: 1.04; letter-spacing: -0.035em; font-weight: var(--h1-weight, 500); }
 .statement em { font-style: normal; color: var(--accent-ink); }
 .statement .snote { display: block; margin-top: 2.2cqi; font-size: 1.15cqi; line-height: 1.6; letter-spacing: 0; font-weight: 400; color: var(--mute); max-width: 52ch; }
 [data-style='drift'] .statement { font-weight: 550; font-size: 5.4cqi; max-width: 20ch; }
