@@ -2,12 +2,12 @@ import { resolveView } from '@demo-kit/shell';
 import { CONCENTRATION_THRESHOLD, buildCapital } from '@kestrel/analysis';
 import { formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../components/Chrome';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
-import { movement } from '../../lib/format';
-import type { Params } from '../../lib/world';
-import { contextOf, viewOf } from '../../lib/world';
+import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
+import { movement } from '../../../lib/format';
+import type { Params } from '../../../lib/world';
+import { contextOf, viewOf } from '../../../lib/world';
 
 /**
  * Capital projects and procurement.

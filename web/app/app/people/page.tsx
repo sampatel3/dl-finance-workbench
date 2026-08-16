@@ -2,15 +2,15 @@ import { resolveView } from '@demo-kit/shell';
 import { closePositionsFor } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../components/Chrome';
-import { AccountingStatusBanner } from '../../components/Figures';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
-import { accountingStatus } from '../../lib/close';
-import { directionClass, movement } from '../../lib/format';
-import { buildPeople } from '../../lib/people';
-import type { Params } from '../../lib/world';
-import { viewOf, world } from '../../lib/world';
+import { Masthead } from '../../../components/Chrome';
+import { AccountingStatusBanner } from '../../../components/Figures';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
+import { accountingStatus } from '../../../lib/close';
+import { directionClass, movement } from '../../../lib/format';
+import { buildPeople } from '../../../lib/people';
+import type { Params } from '../../../lib/world';
+import { viewOf, world } from '../../../lib/world';
 
 /**
  * Headcount and people cost.

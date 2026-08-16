@@ -9,15 +9,15 @@ import {
   principalDriver,
 } from '@kestrel/analysis';
 
-import { Masthead } from '../../components/Chrome';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { MultiTrend } from '../../components/MultiTrend';
-import { Selectors } from '../../components/Selectors';
-import { ThreeWaySplit } from '../../components/ThreeWaySplit';
-import { Waterfall } from '../../components/Waterfall';
-import { directionClass, movement } from '../../lib/format';
-import { DIVERGENCE_POINTS, TREND_MEASURES, buildTrend, selectedTrend } from '../../lib/trend';
-import type { Params } from '../../lib/world';
+import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { MultiTrend } from '../../../components/MultiTrend';
+import { Selectors } from '../../../components/Selectors';
+import { ThreeWaySplit } from '../../../components/ThreeWaySplit';
+import { Waterfall } from '../../../components/Waterfall';
+import { directionClass, movement } from '../../../lib/format';
+import { DIVERGENCE_POINTS, TREND_MEASURES, buildTrend, selectedTrend } from '../../../lib/trend';
+import type { Params } from '../../../lib/world';
 import {
   ALL_MONTHS,
   contextForEntity,
@@ -26,7 +26,7 @@ import {
   scopeLabel,
   selectableEntities,
   viewOf,
-} from '../../lib/world';
+} from '../../../lib/world';
 
 /**
  * Performance — the surface a variance is explained on.

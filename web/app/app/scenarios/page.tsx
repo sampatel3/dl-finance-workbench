@@ -2,11 +2,11 @@ import { resolveView } from '@demo-kit/shell';
 import { formatValue } from '@kestrel/measures';
 import { MINIMUM_CASH, noDecisionBecause } from '@kestrel/analysis';
 
-import { CashColumns } from '../../components/CashColumns';
-import { Masthead } from '../../components/Chrome';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
-import { directionClass, movement } from '../../lib/format';
+import { CashColumns } from '../../../components/CashColumns';
+import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
+import { directionClass, movement } from '../../../lib/format';
 import {
   LEVERS,
   LIBRARY,
@@ -17,9 +17,9 @@ import {
   runScenario,
   scenarioHref,
   stepLabel,
-} from '../../lib/scenario';
-import type { Params } from '../../lib/world';
-import { viewOf } from '../../lib/world';
+} from '../../../lib/scenario';
+import type { Params } from '../../../lib/world';
+import { viewOf } from '../../../lib/world';
 
 /**
  * Scenarios — assumptions moved, the generator re-run, the difference shown, and the decision named.

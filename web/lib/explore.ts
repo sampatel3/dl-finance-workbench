@@ -14,8 +14,12 @@ import type { MeasureContext, MeasureValue, MeasureWithComparison } from '@kestr
 import { compareMeasure, computeMeasure, formatValue, measureIds } from '@kestrel/measures';
 
 import type { Params, View } from './world';
-import { ALL_MONTHS, contextOf, viewOf } from './world';
+import { ALL_MONTHS, contextOf, productPath, viewOf } from './world';
 import { resolveDimensionScope } from './permissions';
+
+/** Where the Explore surface is served. Named once: four builders below return it, and
+    they were four separate literals until the product moved under the shell. */
+const EXPLORE = productPath('/explore');
 
 export const EXPLORE_MEASURES = [
   'revenue',
@@ -218,7 +222,7 @@ export function explorePresetHref(params: Params, id: ExplorePresetId): string {
   next.set('cols', 'period');
   next.set('measure', preset.measures.join(','));
   const query = next.toString();
-  return query === '' ? '/explore' : `/explore?${query}`;
+  return query === '' ? EXPLORE : `${EXPLORE}?${query}`;
 }
 
 function fillAxis(
@@ -251,7 +255,7 @@ export function exploreHref(
     if (key === 'scenario' && value === 'actual') next.delete('scenario');
     else next.set(key, value);
     const query = next.toString();
-    return query === '' ? '/explore' : `/explore?${query}`;
+    return query === '' ? EXPLORE : `${EXPLORE}?${query}`;
   }
 
   if (key === 'grain') {
@@ -260,7 +264,7 @@ export function exploreHref(
     next.set('cols', axes.columns.join(','));
     next.set('grain', value);
     const query = next.toString();
-    return query === '' ? '/explore' : `/explore?${query}`;
+    return query === '' ? EXPLORE : `${EXPLORE}?${query}`;
   }
 
   const current = normaliseExploreAxes(params);
@@ -274,7 +278,7 @@ export function exploreHref(
   next.set('rows', rows.join(','));
   next.set('cols', columns.join(','));
   const query = next.toString();
-  return `/explore?${query}`;
+  return `${EXPLORE}?${query}`;
 }
 
 /** Link to a CSV computed from the same address, without an open-cell coordinate. */
@@ -291,7 +295,7 @@ export function exploreDrillHref(params: Params, row: number, column: number): s
   const next = paramsIntoSearch(params);
   next.set('drill', `${row}:${column}`);
   next.set('focus', 'section-drill');
-  return `/explore?${next.toString()}`;
+  return `${EXPLORE}?${next.toString()}`;
 }
 
 /** Close the selected cell while preserving the pivot and returning focus to the grid. */
@@ -308,7 +312,7 @@ export function exploreCloseDrillHref(params: Params): string {
       : `explore-cell-${origin[1]}-${origin[2]}`,
   );
   const query = next.toString();
-  return query === '' ? '/explore' : `/explore?${query}`;
+  return query === '' ? EXPLORE : `${EXPLORE}?${query}`;
 }
 
 export interface CellProvenance {

@@ -3,14 +3,14 @@ import { buildOutlook } from '@kestrel/analysis';
 import { closePositionsFor, formatMonthLong } from '@kestrel/model';
 import { POLICY, formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../components/Chrome';
-import { AccountingStatusBanner } from '../../components/Figures';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
-import { accountingStatus } from '../../lib/close';
-import { directionClass, movement } from '../../lib/format';
-import type { Params } from '../../lib/world';
-import { contextOf, viewOf, world } from '../../lib/world';
+import { Masthead } from '../../../components/Chrome';
+import { AccountingStatusBanner } from '../../../components/Figures';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
+import { accountingStatus } from '../../../lib/close';
+import { directionClass, movement } from '../../../lib/format';
+import type { Params } from '../../../lib/world';
+import { contextOf, viewOf, world } from '../../../lib/world';
 
 /**
  * Year to Go — where FY26 lands, on three readings that disagree.

@@ -11,12 +11,12 @@ import {
   versionList,
 } from '@kestrel/analysis';
 
-import { Masthead } from '../../components/Chrome';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
-import { directionClass, movement } from '../../lib/format';
-import type { Params } from '../../lib/world';
-import { contextOf, forecastVersionIdOr, hrefFor, viewOf } from '../../lib/world';
+import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
+import { directionClass, movement } from '../../../lib/format';
+import type { Params } from '../../../lib/world';
+import { contextOf, forecastVersionIdOr, hrefFor, viewOf } from '../../../lib/world';
 
 /**
  * Forecast — the version in force, its drivers, and what changed since another version.

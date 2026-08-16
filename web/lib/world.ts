@@ -29,6 +29,9 @@
  */
 
 import { memoise } from '@demo-kit/data';
+/* From the package's routes entry rather than its index: `scripts/narrate.ts` imports this
+   module under plain Node, which cannot load the components the index pulls in. */
+import { PRODUCT } from '@demo-kit/shell/routes';
 import type { CurrencyLens, FiscalMonth, PeriodScope, VersionSpec } from '@kestrel/model';
 import {
   ACTUAL_VERSION,
@@ -520,7 +523,22 @@ export function hrefFor(
   if (view.inner) params.set('view', 'inner');
   if (view.surfaceNav) params.set('shell', 'free');
   const query = params.toString();
-  return query === '' ? path : `${path}?${query}`;
+  const url = productPath(path);
+  return query === '' ? url : `${url}?${query}`;
+}
+
+/**
+ * A surface's logical path, as the URL it is actually served at.
+ *
+ * Every caller names a surface the way the product thinks of it — `/`, `/performance`,
+ * `/cash` — and that vocabulary is the one `SURFACES`, `surfaceFor` and each page's own
+ * `path` prop share. Where those surfaces are MOUNTED is a different question, and the kit
+ * answers it: `PRODUCT` is the product's root, and the demo shell owns `/`. Keeping the two
+ * apart is what lets the whole app go on talking about `/cash` while the browser sees
+ * `/app/cash`, and it is why moving the product under the shell touched one function.
+ */
+export function productPath(path: string): string {
+  return path === '/' ? PRODUCT : `${PRODUCT}${path}`;
 }
 
 /**

@@ -3,9 +3,9 @@ import { SEGMENTS, VERSIONS, closeCompleteness, entity } from '@kestrel/model';
 import { compareMeasure, formatValue, measure } from '@kestrel/measures';
 import { DIMENSIONS, DIMENSION_LABELS, drillCell } from '@kestrel/analysis';
 
-import { Masthead } from '../../components/Chrome';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
+import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
 import {
   ALL_EXPLORE_MEASURES,
   EXPLORE_PRESETS,
@@ -16,12 +16,12 @@ import {
   exploreHref,
   explorePresetHref,
   exploreState,
-} from '../../lib/explore';
-import { directionClass, movement } from '../../lib/format';
-import { SUGGESTIONS } from '../../lib/tools';
-import { Ask } from '../../components/Ask';
-import type { Params } from '../../lib/world';
-import { hrefFor, paramsForView, world } from '../../lib/world';
+} from '../../../lib/explore';
+import { directionClass, movement } from '../../../lib/format';
+import { SUGGESTIONS } from '../../../lib/tools';
+import { Ask } from '../../../components/Ask';
+import type { Params } from '../../../lib/world';
+import { hrefFor, paramsForView, world } from '../../../lib/world';
 
 /**
  * Explore — the analyst's pivot.

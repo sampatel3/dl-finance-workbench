@@ -2,13 +2,13 @@ import { resolveView } from '@demo-kit/shell';
 import { formatMonthLong } from '@kestrel/model';
 import { formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../components/Chrome';
-import { FocusOnLoad } from '../../components/FocusOnLoad';
-import { Selectors } from '../../components/Selectors';
-import { directionClass, movement } from '../../lib/format';
-import { HORIZON_LABELS, kpisFor, type PriorPeriodDirection } from '../../lib/kpis';
-import type { Params } from '../../lib/world';
-import { contextOf, viewOf } from '../../lib/world';
+import { Masthead } from '../../../components/Chrome';
+import { FocusOnLoad } from '../../../components/FocusOnLoad';
+import { Selectors } from '../../../components/Selectors';
+import { directionClass, movement } from '../../../lib/format';
+import { HORIZON_LABELS, kpisFor, type PriorPeriodDirection } from '../../../lib/kpis';
+import type { Params } from '../../../lib/world';
+import { contextOf, viewOf } from '../../../lib/world';
 
 export const dynamic = 'force-dynamic';
 

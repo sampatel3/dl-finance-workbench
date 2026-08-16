@@ -13,7 +13,7 @@ describe('measure evidence links', () => {
     });
     const url = new URL(measureEvidenceHref('ebitda', view), 'https://demo.invalid');
 
-    expect(url.pathname).toBe('/explore');
+    expect(url.pathname).toBe('/app/explore');
     expect(url.searchParams.get('period')).toBe('quarter');
     expect(url.searchParams.get('month')).toBe('2026-06');
     expect(url.searchParams.get('comparator')).toBe('budget');

@@ -9,11 +9,19 @@
 
 import type { Tour } from '@demo-kit/shell';
 import { DEMO_NAME } from './demo';
-import { LATEST_MONTH, monthLabel } from './world';
+import { LATEST_MONTH, monthLabel, productPath } from './world';
 
+/**
+ * A step's target, written as the surface the product calls it.
+ *
+ * The path goes through `productPath` for the same reason every link in the app does: a step
+ * names `/cash`, and where the product is mounted is the kit's business rather than the
+ * tour's. Writing the mount point here instead would put it in a second place, and the two
+ * would disagree the first time either moved.
+ */
 function surface(path: string, focus: string, params: Readonly<Record<string, string>> = {}): string {
   const query = new URLSearchParams({ view: 'inner', focus, ...params });
-  return `${path}?${query.toString()}`;
+  return `${productPath(path)}?${query.toString()}`;
 }
 
 export const TOUR: Tour = {
