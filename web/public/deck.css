@@ -393,12 +393,20 @@ body {
   margin-top: 1.5cqi; margin-bottom: 0;
 }
 
-/* A statement is centred by `margin: auto 0`, and the auto BOTTOM margin sits between it and
-   the pill that now follows it — so the section name fell to the floor of the slide, a third of
-   a page from the sentence it belongs to. Move that auto below the pill and the pair centres as
-   one, which is what "centred" meant while the eyebrow was above. */
-[data-style='aurora'] .slide > .statement { margin-bottom: 0; }
-[data-style='aurora'] .slide:has(> .statement) > .eyebrow { margin-bottom: auto; }
+/*
+ * A STATEMENT SLIDE KEEPS ITS LABEL ABOVE, IN BOTH STYLES.
+ *
+ * The pill-below rule exists because [Product Name] lands its headline alone at the top of
+ * the page. A statement slide is the other reference's page — Product Pitch Deck's mission
+ * slide sets a small label ABOVE the sentence — and it has no h1 for the pill to follow.
+ * Pushed below, the pill lands after the snote, which is several lines of small type: the
+ * section name ends up a third of a page from the sentence it names, orphaned against the
+ * floor of the slide. Above, it reads as what it is.
+ */
+[data-style='aurora'] .slide:has(> .statement) > .eyebrow {
+  order: -3; margin-top: 0; margin-bottom: 1.6cqi;
+  background: none; padding: 0; color: var(--accent-ink); font-weight: var(--label-weight);
+}
 
 /* A divider's section name IS its headline, and the contents page in [Product Name] carries
    no title at all — in both cases a pill would be the name said twice. */
@@ -1451,6 +1459,35 @@ ul.plus li::before {
 }
 .timeline .what { font-size: 1.7cqi; letter-spacing: -0.02em; font-weight: 500; margin-top: .5cqi; }
 .timeline .tp p { margin: .6cqi 0 0; font-size: .92cqi; line-height: 1.6; color: var(--mute); }
+/*
+ * THE QUARTET — the engagement model drawn rather than described.
+ *
+ * Four functions across the top, one bar beneath them showing the span they are accountable
+ * for, and the tooling note alongside. The point the picture makes and a paragraph cannot: the
+ * four boxes sit ON the bar, so the eye reads "these people, that whole span" without being
+ * told. Grid rather than absolute positioning, so it reflows with the slide.
+ */
+.quartet { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6cqi; width: 100%; }
+.quartet .qf {
+  border: .07cqi solid var(--faint); border-radius: var(--radius);
+  padding: 1.4cqi 1.5cqi 1.6cqi; display: flex; flex-direction: column; gap: .5cqi;
+}
+.quartet .qn { font-size: 1.9cqi; letter-spacing: -0.022em; font-weight: 500; }
+.quartet .qw {
+  font-family: var(--label-face); font-size: .74cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); color: var(--mute);
+}
+.quartet .qspan {
+  grid-column: 1 / -1; margin-top: .4cqi; padding: .9cqi 1.5cqi;
+  border-radius: var(--radius); background: color-mix(in srgb, var(--accent-ink) 12%, transparent);
+  font-size: 1.05cqi; letter-spacing: -0.01em; display: flex; justify-content: space-between; gap: 2cqi;
+}
+.quartet .qspan b { font-weight: 550; }
+.quartet .qtool {
+  grid-column: 1 / -1; margin-top: .3cqi; font-size: .95cqi; line-height: 1.6; color: var(--mute);
+}
+.quartet .qtool b { color: var(--ink); font-weight: 550; }
+
 /*
  * THE JOURNEY — a dated sequence where the DATES are the argument.
  *

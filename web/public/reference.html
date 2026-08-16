@@ -4,38 +4,35 @@
 <link rel="stylesheet" href="theme.css">
 
 <!--
-  The `sell` arc: the DETAILED Deeplight company deck — who we are, what we sell, how an
-  engagement runs, how the work is delivered, and what we have already put into production.
-  The outreach deck (deck.html) is the three-beat compression of it.
+  The `sell` arc: the Deeplight company deck — who we are, what we sell, where it is already
+  running, and how we work. The outreach deck (deck.html) is the three-beat compression of it.
 
-  Sixteen numbered slides; a contents page and four dividers off the arc. Folios read n/16.
+  Twelve numbered slides; a contents page and two dividers off the arc. Folios read n/12.
 
-    title · claim · surface · capability · mechanism · proof · risks · credentials ·
-    scope · terms · next        + purpose, practice, roadmap, traction, team as extras
+    title · claim · surface · proof · capability · mechanism · risks · credentials · next
+    + purpose, traction, roadmap as extras
 
-  HEADLINES CARRY THE CLAIM. Not "The engagement model" but what the engagement model DOES.
-  A reader who reads only the headlines should come away with the argument; a topic label
-  makes them read the slide to find out what they are looking at, which is the fault this
-  deck has been corrected for twice.
+  EVIDENCE LEADS. `proof` sits directly after `surface`: what is already running is the more
+  persuasive half, and it used to arrive four slides after the product description.
 
-  THE SOLUTION IS THE SERVICE. Deeplight sells three routes into production — Accelerate,
-  Transformation, Resourcing. Muse AI and the Finance Workbench are PRODUCT EXAMPLES of what
-  those routes produce, on one slide, not the offer itself.
+  TWO ACTS, NOT FIVE. The Solution act carries the offerings AND the evidence AND the
+  products — they are one argument. How We Work carries the engagement model and the runway.
+  Business Model is gone: it restated the offerings slide in different words.
 
-  TWO MODELS, NEVER FUSED. The Quartet (slide 7) is the ENGAGEMENT model for fixed-scope
-  work. AI-native engineering (slide 8) is the DELIVERY model — how the firm operates.
+  ONE ENGAGEMENT MODEL. The Quartet, with AI-native tooling inside it — not two model slides.
+  Drawn as a diagram (`.quartet`) rather than described in a paragraph.
 
-  TWO DOCUMENTED LINT FAILURES, BOTH CORRECT. `surface` (slide 5) and `proof` (slide 10) owe
-  a frame and carry none. The offerings are a commercial structure with no screen to show,
-  and the ADCB estate runs inside a client's environment and is not ours to photograph —
-  the same reason the capability deck in demo-kit/docs/outreach carries five. Slide 5's foot
-  says so out loud rather than letting a reader assume a screen was withheld. An invented
-  screenshot would pass the linter and break the rule the linter exists to serve.
+  HEADLINES CARRY THE CLAIM, in one or two rendered lines. Not "The engagement model" but
+  what it does. A reader who reads only the headlines gets the argument.
 
-  Facts trace to docs/plan/07-deeplight-company-deck.md §1 in demo-kit. The ADCB attribution
-  is a stated fact, confirmed by the client owner on 2026-08-16. The Muse saving is the
-  client's own estimate and says so. The workbench frame is the same shot deck.html carries,
-  on the same synthetic Kestrel group; provenance is said once, on the title slide.
+  Facts trace to docs/plan/07-deeplight-company-deck.md §1 in demo-kit. ADCB is a stated
+  fact, confirmed by the client owner on 2026-08-16. The Muse saving is the client's own
+  estimate and says so. The workbench frame is the same shot deck.html carries, on the same
+  synthetic Kestrel group; provenance is said once, on the title slide.
+
+  TWO DOCUMENTED LINT FAILURES, BOTH CORRECT: `surface` and `proof` owe a frame and carry
+  none. The offerings are a commercial structure with no screen, and the ADCB estate runs
+  inside a client's environment and is not ours to photograph. Slide 5's foot says so.
 -->
 
 <div class="deck" data-purpose="sell" data-style="aurora" data-scheme="deeplight" data-live-root="#product">
@@ -46,8 +43,8 @@
       <h1><span class="bracket">[</span>Deeplight<span class="bracket">]</span></h1>
       <div class="tagline">Where startup speed meets enterprise scale</div>
     </div>
-    <div class="foot">The detailed reference deck: who we are, the three ways to buy, how an engagement runs, how the work is delivered, and what is already in production. Portfolio figures are measured on live UAE engagements. The Finance Workbench screen is a demo on a synthetic group, Kestrel Industrial Group plc, from one fixed seed. Muse&rsquo;s saving is a client&rsquo;s own estimate. <b>Read rather than narrated: hand it over, let the room read, take the questions.</b></div>
-    <div class="folio">1/16</div>
+    <div class="foot">The company reference deck: who we are, what we sell, what is already in production, and how we work. Portfolio figures are measured on live UAE engagements. The Finance Workbench screen is a demo on a synthetic group, Kestrel Industrial Group plc, from one fixed seed. Muse&rsquo;s saving is a client&rsquo;s own estimate. <b>Read rather than narrated: hand it over, let the room read, take the questions.</b></div>
+    <div class="folio">1/12</div>
   </section>
 
   <!-- 2 — CONTENTS -->
@@ -57,11 +54,9 @@
       <div class="item"><span class="no">01</span><span class="nm">Our Mission</span></div>
       <div class="item"><span class="no">02</span><span class="nm">The Problem</span></div>
       <div class="item"><span class="no">03</span><span class="nm">The Solution</span></div>
-      <div class="item"><span class="no">04</span><span class="nm">How It Works</span></div>
-      <div class="item"><span class="no">05</span><span class="nm">Traction + Proof</span></div>
-      <div class="item"><span class="no">06</span><span class="nm">Our Team</span></div>
-      <div class="item"><span class="no">07</span><span class="nm">Business Model</span></div>
-      <div class="item"><span class="no">08</span><span class="nm">The Ask</span></div>
+      <div class="item"><span class="no">04</span><span class="nm">How We Work</span></div>
+      <div class="item"><span class="no">05</span><span class="nm">Company Overview</span></div>
+      <div class="item"><span class="no">06</span><span class="nm">The Ask</span></div>
     </div>
     <div class="folio">Contents</div>
   </section>
@@ -70,164 +65,64 @@
   <section class="slide vivid" data-job="purpose">
     <div class="eyebrow">Our Mission</div>
     <p class="statement">We get AI into <em>production</em> inside institutions a regulator is watching.
-      <span class="snote">Founder-led, from DIFC in Dubai, working across the UAE, UK and US &mdash; banking, insurance and critical infrastructure. More than 1,300 models built for UAE banks, global insurers and Lloyd&rsquo;s market participants over ten years, delivered under CBUAE, ADGM and FSRA regimes.</span></p>
-    <div class="folio">2/16</div>
+      <span class="snote">Founder-led, from DIFC in Dubai. More than 1,300 models built for UAE banks, global insurers and Lloyd&rsquo;s market participants over ten years, under CBUAE, ADGM and FSRA.</span></p>
+    <div class="folio">2/12</div>
   </section>
 
   <!-- 4 — THE PROBLEM -->
   <section class="slide deep" data-job="claim">
     <div class="eyebrow">The Problem</div>
     <h1>The model is the easy half. Production is where it stalls.</h1>
-    <p class="stand">An enterprise can generate almost anything now. What it usually cannot do is answer the five questions its own control environment asks of anything that touches operations &mdash; is it integrated, evaluated, controlled, observable, operable? Most AI work has no answer, so most AI work stays a demo.</p>
+    <p class="stand">An enterprise can generate almost anything now. What it usually cannot do is answer the five questions its own control environment asks of anything touching operations &mdash; is it integrated, evaluated, controlled, observable, operable?</p>
     <div class="ladder">
       <div class="rung"><div class="q">The pilot that impresses a steering committee and cannot survive an auditor asking how it decided.</div></div>
       <div class="rung"><div class="q">The proof of concept that never touched a production system, so a year of it proves nothing about operating one.</div></div>
       <div class="rung"><div class="q">The vendor who scoped the work, handed it over a wall, and was gone by the time it had to run on a Tuesday.</div></div>
     </div>
-    <div class="folio">3/16</div>
+    <div class="folio">3/12</div>
   </section>
 
   <!-- ═══ ACT 03 · THE SOLUTION ═══ -->
   <section class="slide vivid divider" data-job="divider">
     <div class="eyebrow">03</div>
     <h2 class="dtitle">The Solution</h2>
-    <p class="dnote">Three ways to buy the same discipline, and two products that came out of using it.</p>
+    <p class="dnote">What we sell, where it is already running, and the two products that came out of running it.</p>
   </section>
 
-  <!-- 5 — THE SOLUTION: the services -->
+  <!-- 5 — THE OFFERINGS -->
   <section class="slide deep" data-job="surface">
     <div class="eyebrow">The Solution</div>
     <h1>Three routes in, and all of them end in something running</h1>
-    <p class="stand">Which route depends on how much is already decided &mdash; the caption under each says when it is the right one.</p>
+    <p class="stand">Which route depends on how much is already decided &mdash; and what each costs is on the card, because the price is part of the description rather than a slide of its own.</p>
     <div class="opts">
       <div class="card">
         <div class="pill">01</div>
         <div class="name">Accelerate</div>
-        <p>One high-value workflow, taken from evidence to live operation in twelve weeks. Fixed scope and fixed price, with a hard stop at week three if the data or the value is not there. Vertical editions for insurance and for Open Finance.</p>
-        <div class="cap2">When you already know the problem</div>
+        <p>One high-value workflow, from evidence to live operation in twelve weeks. Fixed scope, fixed price, and a hard stop at week three if the data or the value is not there. Vertical editions for insurance and Open Finance.</p>
+        <div class="cap2">From $185K &middot; 40/30/30 &middot; when you know the problem</div>
       </div>
       <div class="card">
         <div class="pill">02</div>
         <div class="name">Transformation</div>
-        <p>An estate-wide programme. An eight-week Quartet Discovery produces the strategy, the use-case roadmap and the governance framework; then an innovation portfolio validated for production; then the adoption and centre of excellence that keep it running.</p>
-        <div class="cap2">When you need the roadmap first</div>
+        <p>An estate-wide programme. An eight-week Quartet Discovery produces the strategy, the use-case roadmap and the governance framework; then an innovation portfolio validated for production; then adoption and a centre of excellence.</p>
+        <div class="cap2">Fixed bid, gated per phase &middot; when you need the roadmap first</div>
       </div>
       <div class="card">
         <div class="pill">03</div>
         <div class="name">Resourcing</div>
         <p>Senior product, data, AI and engineering leadership embedded inside a programme you already run, accountable to that programme rather than to one deliverable. Scales by squad rather than by bench.</p>
-        <div class="cap2">When the programme already exists</div>
+        <div class="cap2">Time and materials &middot; when the programme already exists</div>
       </div>
     </div>
-    <div class="foot"><b>All three are the same discipline bought at different sizes.</b> Evidence before build, operation before handover, and the people who scope the work accountable for what goes live. This page and the ADCB page carry no product screen on purpose: one is a commercial structure and the other runs inside a client&rsquo;s estate.</div>
-    <div class="folio">4/16</div>
+    <div class="foot"><b>All three are the same discipline bought at different sizes.</b> This page and the ADCB page carry no product screen on purpose: one is a commercial structure, the other runs inside a client&rsquo;s estate.</div>
+    <div class="folio">4/12</div>
   </section>
 
-  <!-- 6 — PRODUCT EXAMPLES -->
-  <section class="slide vivid" data-job="capability">
-    <div class="eyebrow">Our Product</div>
-    <h1>Both our products were paid for by a client first</h1>
-    <p class="stand">Neither was built speculatively. Each came out of a client programme, was hardened in production, and now travels as a starting point for the next institution with the same problem.</p>
-    <div class="duo">
-      <div class="device">
-        <div class="frame" data-shot="july-position" data-route="/?view=inner&amp;focus=section-headline" data-viewport="1194x834" style="aspect-ratio:1.4317">
-          <iframe title="The Finance Workbench, live"></iframe>
-          <img src="shots/july-position.jpg" alt="The Finance Workbench showing the July 2026 position for Kestrel Industrial Group plc against Forecast v6: revenue £12.4m up 5.2%, gross margin 41.8% down 194bps, EBITDA £2.1m down 3.0% and cash £4.8m down 18.4%, each flagged material, each carrying an Analyse and an Evidence link. Below them, revenue and gross margin broken down by entity, every row naming the owner accountable for it.">
-        </div>
-      </div>
-      <div class="sum">
-        <div class="line"><span class="num">01</span> <b>Finance Workbench.</b> Every figure in a board pack opens into the working that produced it &mdash; the movement, the formula, the source rows, and which load of the ledger they came from. Shown here on a synthetic group.</div>
-        <div class="line"><span class="num">02</span> <b>Muse AI.</b> A bank-hosted platform that answers questions across a client&rsquo;s own documents, data and systems in natural language. It runs inside their environment on in-region AWS, on open models fine-tuned for UAE banking, and nothing leaves.</div>
-        <div class="note">One client&rsquo;s own estimate of Muse across four functions: thirteen people redirected from manual processing, and a first-year saving of $935,000. <b>That is their number rather than our measurement</b>, and Muse has no demo in this deck yet.</div>
-      </div>
-    </div>
-    <div class="folio">5/16</div>
-  </section>
-
-  <!-- ═══ ACT 04 · HOW IT WORKS ═══ -->
-  <section class="slide vivid divider" data-job="divider">
-    <div class="eyebrow">04</div>
-    <h2 class="dtitle">How It Works</h2>
-    <p class="dnote">How the work is engaged, and how it is delivered &mdash; two models, and they are not the same model.</p>
-  </section>
-
-  <!-- 7 — THE ENGAGEMENT MODEL -->
-  <section class="slide deep" data-job="mechanism">
-    <div class="eyebrow">How It Works</div>
-    <h1>Four functions own the account, and a gate stands in front of the build money</h1>
-    <p class="stand">Fixed-scope work runs through the Quartet. The point of it is that nobody hands your programme to a delivery team who did not scope it, and nobody spends build budget before the evidence is in.</p>
-    <div class="works">
-      <div class="say"><b>The Quartet.</b> Data, Delivery, Engineering and AI, each led by an executive director who stays on your account from the first conversation through go-live. Squads cascade under the four and new hires own their own clients, so the structure grows without the accountability moving.</div>
-      <div class="say"><b>Discovery answers which problem, before you commit to how.</b> Where the roadmap does not exist yet, an eight-week Quartet Discovery produces the AI strategy, the prioritised use-case roadmap and the governance framework &mdash; and you can stop there.</div>
-      <div class="say"><b>The gate is at week three, and it is real.</b> On a twelve-week Accelerate, if the data, the value or the delivery path is not viable, the work stops and you pay for discovery alone &mdash; keeping the data-quality assessment, the baseline and the scope whoever builds it.</div>
-      <div class="say"><b>Your risk function is a first-class output.</b> Model documentation, evaluation evidence, control mapping, monitoring and alerting, and the operating runbook &mdash; produced by the build as it happens rather than written up after it.</div>
-    </div>
-    <div class="folio">6/16</div>
-  </section>
-
-  <!-- 8 — THE DELIVERY MODEL -->
-  <section class="slide vivid" data-job="practice">
-    <div class="eyebrow">How It Works</div>
-    <h1>Agents draft. People own what ships.</h1>
-    <p class="stand">AI-native engineering is how we operate, and nothing ships without the evidence it shipped with. Drafting is cheap now, so a pod is arranged around checking rather than producing: five seats, every person spanning at least two, one twelve-week engagement to a cycle.</p>
-    <div class="tiles">
-      <div>
-        <div class="label">01</div>
-        <div class="num">Prototyper</div>
-        <div class="cap2">Makes the future show up early &mdash; the first working answer, in days not quarters.</div>
-      </div>
-      <div>
-        <div class="label">02</div>
-        <div class="num">Builder</div>
-        <div class="cap2">Turns demos into deployments &mdash; the distance from a working answer to a governed one.</div>
-      </div>
-      <div>
-        <div class="label">03</div>
-        <div class="num">Sweeper</div>
-        <div class="cap2">Smaller, faster, calmer &mdash; removes what the product no longer needs to carry.</div>
-      </div>
-      <div>
-        <div class="label">04</div>
-        <div class="num">Grower</div>
-        <div class="cap2">Finds what the market pays for, and feeds it back before the next cycle starts.</div>
-      </div>
-      <div>
-        <div class="label">05</div>
-        <div class="num">Maintainer</div>
-        <div class="cap2">Guards the trust. Boring is a compliment on this seat.</div>
-      </div>
-    </div>
-    <div class="foot"><b>The craft is the 4&nbsp;Ds &mdash; delegation, description, discernment, diligence.</b> The pod measures its work rather than trusting how quick it felt, and we are automating our own pipeline the same way.</div>
-    <div class="folio">7/16</div>
-  </section>
-
-  <!-- 9 — THE RUNWAY -->
-  <section class="slide deep" data-job="roadmap">
-    <div class="eyebrow">Roadmap</div>
-    <h1>Twelve weeks to live, and you can leave at week three</h1>
-    <p class="stand">Evidence before build, operation before handover. Every phase ends in something you keep whether or not the next one happens.</p>
-    <div class="timeline">
-      <div class="tp"><span class="dot"></span><span class="when">01 / Weeks 1&ndash;3</span><div class="what">Discovery and data audit</div><p>The workflow, its value, its baseline, its data, the systems, the controls and who owns it. Ends in a go or a no-go &mdash; and a no-go bills discovery alone.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">02 / Weeks 4&ndash;8</span><div class="what">Build and evaluate</div><p>The product, validated on your data against the measures agreed at the gate. You get back-test evidence and an accuracy comparison, not a demonstration.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">03 / Weeks 9&ndash;11</span><div class="what">Integrate and deploy</div><p>Production systems, permissions, controls, monitoring and the people who use it. A deployment and a runbook rather than a pilot.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">04 / Week 12</span><div class="what">Validate and hand over</div><p>Live performance against the week-one baseline, knowledge transferred, ownership named, and the roadmap for what follows.</p></div>
-    </div>
-    <div class="foot"><b>Transformation runs a longer shape:</b> the eight-week Quartet Discovery, then AI Discovery for a prioritised roadmap with quantified business cases, then an innovation portfolio validated for production, then adoption and governance.</div>
-    <div class="folio">8/16</div>
-  </section>
-
-  <!-- ═══ ACT 05 · TRACTION + PROOF ═══ -->
-  <section class="slide vivid divider" data-job="divider">
-    <div class="eyebrow">05</div>
-    <h2 class="dtitle">Traction + Proof</h2>
-    <p class="dnote">Two institutions, both in production, both still running.</p>
-  </section>
-
-  <!-- 10 — ADCB -->
-  <section class="slide deep" data-job="proof">
+  <!-- 6 — ADCB -->
+  <section class="slide vivid" data-job="proof">
     <div class="eyebrow">Traction + Proof</div>
     <h1>No cloud platform in September. Live on the national platform in January.</h1>
-    <p class="stand">A tier-1 UAE bank under the CBUAE Open Finance mandate, with the regulator measuring performance per participant. We built the platform and the data-sharing estate on top of it, and it was the first in the country to go live.</p>
+    <p class="stand">ADCB, under the CBUAE Open Finance mandate, with the regulator measuring performance per participant. We built the platform and the data-sharing estate on it, and it was first in the country to go live.</p>
     <div class="journey">
       <div class="leg">
         <div class="on">Sep 2024</div>
@@ -246,47 +141,98 @@
         <p class="was">First CBUAE certification, and the first participant to clear all three go-live certifications.</p>
       </div>
     </div>
-    <div class="foot"><b>Bounded precisely:</b> we built and instrumented the bank&rsquo;s serving estate and helped shape the reporting-data requirements. We did not build Nebras, Ozone or Al Tareq. The same programme delivered the analytical lakehouse serving Treasury, RBG and CIBG and four products into production &mdash; analytical processing down from 72 hours to 15 minutes, data-quality accuracy up from 67% to 95%, and 2,000+ users on self-service.</div>
-    <div class="folio">9/16</div>
+    <div class="foot"><b>Bounded precisely:</b> we built and instrumented the bank&rsquo;s serving estate and helped shape the reporting-data requirements. We did not build Nebras, Ozone or Al Tareq. The same programme delivered the analytical lakehouse serving Treasury, RBG and CIBG and four products into production &mdash; analytical processing 72 hours to 15 minutes, data-quality accuracy 67% to 95%, 2,000+ users on self-service.</div>
+    <div class="folio">5/12</div>
   </section>
 
-  <!-- 11 — EWEC -->
-  <section class="slide vivid" data-job="traction">
+  <!-- 7 — EWEC AND INSURANCE -->
+  <section class="slide deep" data-job="traction">
     <div class="eyebrow">Traction + Proof</div>
     <h1>EWEC forecasts the national grid on a platform we built</h1>
-    <p class="stand">The UAE&rsquo;s national energy buyer, where a forecast that is wrong costs real money the same evening. One Databricks data and AI platform, three products in live operation, and the monitoring that keeps them honest as the weather and the grid change underneath them.</p>
-    <div class="split">
-      <div class="stxt">
-        <span class="label">What runs</span>
-        <div class="sq">Three production models, on governed pipelines.</div>
-        <p>Demand forecasting, solar forecasting and reserve management &mdash; retrained against drift rather than left to decay, with champion and challenger models measured against one another in production.</p>
-        <p>The limits are stated rather than hidden: weather is synthesised beyond day three.</p>
-      </div>
-      <div class="stxt">
-        <span class="label">What we held</span>
-        <div class="sq">Strategy through operational adoption.</div>
-        <p>Data engineering, AI engineering, product, and the adoption work that decides whether an operations team uses a forecast or keeps its own spreadsheet.</p>
-        <p>Beyond these two: live AI across more than $250M of gross written premium in London and DIFC.</p>
-      </div>
+    <p class="stand">The UAE&rsquo;s national energy buyer, where a wrong forecast costs real money the same evening. One Databricks platform, three products live, and the monitoring that keeps them honest as the weather and the grid move underneath them.</p>
+    <div class="stats">
+      <div><span class="sl">Platforms delivered</span><span class="sv">3</span><span class="sl">AWS and Azure at ADCB, Databricks at EWEC</span></div>
+      <div><span class="sl">Products in production</span><span class="sv">7</span><span class="sl">Across the two institutions, all still running</span></div>
+      <div><span class="sl">Insurance</span><span class="sv">$250M+</span><span class="sl">Gross written premium with live AI, London and DIFC</span></div>
     </div>
-    <div class="folio">10/16</div>
+    <div class="foot"><b>What runs at EWEC:</b> demand forecasting, solar forecasting and reserve management &mdash; retrained against drift rather than left to decay, with champion and challenger models measured against one another in production. The limits are stated rather than hidden: weather is synthesised beyond day three. We held strategy, data engineering, AI engineering, product, and the adoption work that decides whether an operations team uses a forecast or keeps its spreadsheet.</div>
+    <div class="folio">6/12</div>
   </section>
 
-  <!-- 12 — THE RISKS -->
+  <!-- 8 — THE PRODUCTS -->
+  <section class="slide vivid" data-job="capability">
+    <div class="eyebrow">Our Product</div>
+    <h1>Both our products were paid for by a client first</h1>
+    <p class="stand">Neither was built speculatively. Each came out of a client programme, was hardened in production, and now travels as a starting point for the next institution with the same problem.</p>
+    <div class="duo">
+      <div class="device">
+        <div class="frame" data-shot="july-position" data-route="/?view=inner&amp;focus=section-headline" data-viewport="1194x834" style="aspect-ratio:1.4317">
+          <iframe title="The Finance Workbench, live"></iframe>
+          <img src="shots/july-position.jpg" alt="The Finance Workbench showing the July 2026 position for Kestrel Industrial Group plc against Forecast v6: revenue £12.4m up 5.2%, gross margin 41.8% down 194bps, EBITDA £2.1m down 3.0% and cash £4.8m down 18.4%, each flagged material, each carrying an Analyse and an Evidence link. Below them, revenue and gross margin broken down by entity, every row naming the owner accountable for it.">
+        </div>
+      </div>
+      <div class="sum">
+        <div class="line"><span class="num">01</span> <b>Finance Workbench.</b> Every figure in a board pack opens into the working that produced it &mdash; the movement, the formula, the source rows, and which load of the ledger they came from.</div>
+        <div class="line"><span class="num">02</span> <b>Muse AI.</b> A bank-hosted platform answering questions across a client&rsquo;s own documents, data and systems in natural language, inside their environment on in-region AWS. Nothing leaves.</div>
+        <div class="note">One client&rsquo;s own estimate of Muse across four functions: thirteen people redirected from manual processing, and a first-year saving of $935,000. <b>Their number rather than our measurement</b>, and Muse has no demo in this deck yet.</div>
+      </div>
+    </div>
+    <div class="folio">7/12</div>
+  </section>
+
+  <!-- ═══ ACT 04 · HOW WE WORK ═══ -->
+  <section class="slide vivid divider" data-job="divider">
+    <div class="eyebrow">04</div>
+    <h2 class="dtitle">How We Work</h2>
+    <p class="dnote">The engagement model, and the twelve weeks it runs over.</p>
+  </section>
+
+  <!-- 9 — THE ENGAGEMENT MODEL -->
+  <section class="slide deep" data-job="mechanism">
+    <div class="eyebrow">How We Work</div>
+    <h1>Four functions own the account. A gate stands before the build money.</h1>
+    <p class="stand">The Quartet is the engagement model: four executive directors accountable across the whole span rather than a pitch team that hands over. Agents do the drafting inside every function; people own what ships.</p>
+    <div class="quartet">
+      <div class="qf"><div class="qn">Data</div><div class="qw">Sam Patel</div></div>
+      <div class="qf"><div class="qn">Delivery</div><div class="qw">Saniul Islam</div></div>
+      <div class="qf"><div class="qn">Engineering</div><div class="qw">Abhas Dube</div></div>
+      <div class="qf"><div class="qn">AI</div><div class="qw">Haneen Shanableh</div></div>
+      <div class="qspan"><b>One account, end to end</b><span>Pre-sales &rarr; discovery &rarr; the gate &rarr; build &rarr; go-live</span></div>
+      <div class="qtool"><b>AI-native tooling inside every function.</b> Agents draft; people own what ships; the pod measures its work rather than trusting how quick it felt. Squads cascade under the four and new hires own their own clients, so the structure grows without the accountability moving &mdash; and we run the same tooling on our own pipeline.</div>
+    </div>
+    <div class="folio">8/12</div>
+  </section>
+
+  <!-- 10 — THE RUNWAY -->
+  <section class="slide vivid" data-job="roadmap">
+    <div class="eyebrow">Roadmap</div>
+    <h1>Twelve weeks to live, and you can leave at week three</h1>
+    <p class="stand">Evidence before build, operation before handover. Every phase ends in something you keep whether or not the next one happens.</p>
+    <div class="timeline">
+      <div class="tp"><span class="dot"></span><span class="when">01 / Weeks 1&ndash;3</span><div class="what">Discovery and data audit</div><p>The workflow, its value, its baseline, its data, the systems, the controls and who owns it. Ends in a go or a no-go &mdash; and a no-go bills discovery alone.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">02 / Weeks 4&ndash;8</span><div class="what">Build and evaluate</div><p>The product, validated on your data against the measures agreed at the gate. Back-test evidence and an accuracy comparison, not a demonstration.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">03 / Weeks 9&ndash;11</span><div class="what">Integrate and deploy</div><p>Production systems, permissions, controls, monitoring and the people who use it. A deployment and a runbook rather than a pilot.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">04 / Week 12</span><div class="what">Validate and hand over</div><p>Live performance against the week-one baseline, knowledge transferred, ownership named, and the roadmap for what follows.</p></div>
+    </div>
+    <div class="foot"><b>Your risk function is a first-class output:</b> model documentation, evaluation evidence, control mapping, monitoring and alerting, and the operating runbook &mdash; produced by the build as it happens rather than written up after it. Transformation runs a longer shape, opening with the eight-week Quartet Discovery.</div>
+    <div class="folio">9/12</div>
+  </section>
+
+  <!-- 11 — THE RISKS -->
   <section class="slide deep" data-job="risks">
     <div class="eyebrow">The Risks</div>
     <h1>Our record proves the method, not that it will work on your data</h1>
-    <p class="stand">Everything on the last two slides happened somewhere else, on somebody else&rsquo;s systems, with their owners. The gate exists so that finding out whether it holds for you costs three weeks rather than twelve.</p>
+    <p class="stand">Everything two slides back happened somewhere else, on somebody else&rsquo;s systems, with their owners. The gate exists so that finding out whether it holds for you costs three weeks rather than twelve.</p>
     <div class="ruled">
       <div>
         <div class="verdict">The method</div>
         <div class="state on">Evidenced</div>
-        <p>Seven products in live operation across two UAE institutions, under CBUAE, ADGM and FSRA regimes, with controls and monitoring in production.</p>
+        <p>Seven products in live operation across two UAE institutions, under CBUAE, ADGM and FSRA, with controls and monitoring in production.</p>
       </div>
       <div>
         <div class="verdict">Your workflow</div>
         <div class="state off">Proves on yours</div>
-        <p>Whether the data, the value and the delivery path hold for your workflow is exactly what weeks one to three test &mdash; on your systems, not on a reference case.</p>
+        <p>Whether the data, the value and the delivery path hold for your workflow is what weeks one to three test &mdash; on your systems, not a reference case.</p>
       </div>
       <div>
         <div class="verdict">The gate</div>
@@ -296,131 +242,56 @@
       <div>
         <div class="verdict">If it stops</div>
         <div class="state on">Discovery only</div>
-        <p>A no-go bills the discovery and nothing else. The data-quality assessment, baseline and product thesis are yours either way.</p>
+        <p>A no-go bills discovery and nothing else. The data-quality assessment, baseline and product thesis are yours either way.</p>
       </div>
     </div>
-    <div class="folio">11/16</div>
+    <div class="folio">10/12</div>
   </section>
 
-  <!-- 13 — WHY DEEPLIGHT -->
+  <!-- 12 — WHO WE ARE -->
   <section class="slide vivid" data-job="credentials">
     <div class="eyebrow">Company Overview</div>
     <h1>The people who scope your work are the ones who build it</h1>
-    <p class="stand">A founder-led data and AI company in DIFC, Dubai, working across the UAE, UK and US. Small enough that the founders are on the engagement; long enough in regulated markets to know what a control environment asks before it asks.</p>
-    <div class="roster">
-      <div>
-        <div class="who">Tristan Blakley &middot; CEO</div>
-        <div class="what">Executive sponsor</div>
-        <p>Founded Dreamtek &mdash; technology for Google and Facebook &mdash; through to its 2021 sale; co-founded SecondSight. Owns client ambition, the delivery standard and the relationship.</p>
-      </div>
-      <div>
-        <div class="who">Terrence Kunstek &middot; CTO</div>
-        <div class="what">Technical authority</div>
-        <p>Two decades in engineering leadership: Director of Engineering at ChaCha, co-founder of Eleven Fifty and SecondSight. Owns architecture, engineering quality, governance and production reliability.</p>
-      </div>
-      <div>
-        <div class="who">The record</div>
-        <div class="what">Regulated-market fluent</div>
-        <p>Founders carrying twenty years each, more than 1,300 models built inside client programmes over ten years, delivered under CBUAE, ADGM and FSRA across banking, insurance and critical infrastructure.</p>
-      </div>
-    </div>
-    <div class="folio">12/16</div>
-  </section>
-
-  <!-- ═══ ACT 06 · OUR TEAM ═══ -->
-  <section class="slide vivid divider" data-job="divider">
-    <div class="eyebrow">06</div>
-    <h2 class="dtitle">Our Team</h2>
-    <p class="dnote">The four who stay on the work, and the structure that lets them stay on all of it at once.</p>
-  </section>
-
-  <!-- 14 — THE TEAM -->
-  <section class="slide deep" data-job="team">
-    <div class="eyebrow">Our Team</div>
-    <h1>The four who scope it are the four still there at go-live</h1>
-    <p class="stand">Not a pitch team that hands over. The same four are accountable from the product thesis through deployment and live validation.</p>
+    <p class="stand">Founder-led from DIFC, Dubai, working across the UAE, UK and US. Small enough that the founders are on the engagement; long enough in regulated markets to know what a control environment asks before it asks.</p>
     <div class="team four">
       <div class="member">
         <span class="ini">TB</span>
         <div class="name">Tristan Blakley</div>
-        <div class="role">CEO and co-founder &middot; Executive sponsor</div>
-        <p>Owns client ambition, the delivery standard and the strategic relationship.</p>
+        <div class="role">CEO and co-founder</div>
+        <p>Client ambition, the delivery standard, the relationship. Founded Dreamtek &mdash; technology for Google and Facebook &mdash; to its 2021 sale.</p>
       </div>
       <div class="member">
         <span class="ini">TK</span>
         <div class="name">Terrence Kunstek</div>
-        <div class="role">CTO and co-founder &middot; Technical authority</div>
-        <p>Owns architecture, engineering quality, governance and production reliability.</p>
+        <div class="role">CTO and co-founder</div>
+        <p>Architecture, engineering quality, governance, production reliability. Two decades in engineering leadership: ChaCha, Eleven Fifty, SecondSight.</p>
       </div>
       <div class="member">
         <span class="ini">SP</span>
         <div class="name">Sam Patel</div>
-        <div class="role">Chief product officer &middot; Product and delivery</div>
-        <p>Owns the product thesis, scope, delivery and value realisation. Over twenty years across financial services and technology.</p>
+        <div class="role">Chief product officer</div>
+        <p>The product thesis, scope, delivery and value realisation. Over twenty years across financial services and technology.</p>
       </div>
       <div class="member">
         <span class="ini">SI</span>
         <div class="name">Saniul Islam</div>
-        <div class="role">Chief commercial officer &middot; Client and commercial</div>
-        <p>Owns client fit, executive alignment, commercial structure and mobilisation. Formerly programme delivery at LSEG.</p>
+        <div class="role">Chief commercial officer</div>
+        <p>Client fit, executive alignment, commercial structure, mobilisation. Formerly programme delivery at LSEG.</p>
       </div>
     </div>
-    <div class="foot"><b>Behind them, the Quartet &mdash; the engagement structure for fixed-scope work:</b> Data &mdash; Sam Patel &middot; Delivery &amp; PMO &mdash; Saniul Islam &middot; Engineering &mdash; Abhas Dube &middot; AI &mdash; Haneen Shanableh, each function led end-to-end with five squads under it, managed across every client at once.</div>
-    <div class="folio">13/16</div>
+    <div class="foot"><b>These four are the Quartet.</b> They are accountable from the product thesis through deployment and live validation &mdash; the same four in the room at the start and at go-live.</div>
+    <div class="folio">11/12</div>
   </section>
 
-  <!-- 15 — THE SCOPE -->
-  <section class="slide vivid" data-job="scope">
-    <div class="eyebrow">The Scope</div>
-    <h1>We take the workflows where the money is measurable and the controls are not</h1>
-    <p class="stand">One workflow per Accelerate engagement. These are where the recovery can be proved in figures and where a wrong answer has a named consequence &mdash; which is the same reason nobody has automated them yet.</p>
-    <div class="pillars">
-      <div class="pillar">
-        <div class="name">Financial crime</div>
-        <p>Sanctions screening false-positive reduction &middot; AML alert triage and narrative drafting &middot; KYC periodic review and refresh</p>
-      </div>
-      <div class="pillar">
-        <div class="name">Credit &amp; lending</div>
-        <p>Credit memo and annual review drafting &middot; trade finance document checking &middot; covenant monitoring and early-warning signals</p>
-      </div>
-      <div class="pillar">
-        <div class="name">Treasury &amp; reporting</div>
-        <p>Liquidity and cash-flow forecasting &middot; regulatory reporting reconciliation and QA &middot; regulatory change impact mapping</p>
-      </div>
-      <div class="pillar">
-        <div class="name">Insurance</div>
-        <p>Underwriting submission triage &middot; claims triage and leakage detection &middot; medical claims adjudication support</p>
-      </div>
-    </div>
-    <div class="foot">Also delivered across energy and critical infrastructure: load and solar forecasting, reserve management, outage planning.</div>
-    <div class="folio">14/16</div>
-  </section>
-
-  <!-- 16 — BUSINESS MODEL -->
-  <section class="slide deep" data-job="terms">
-    <div class="eyebrow">Business Model</div>
-    <h1>Fixed price where scope is knowable, and a stop that caps the cost of finding out</h1>
-    <p class="stand">Two of the three routes are fixed and gated, so the risk of starting is bounded before the build budget moves. The third is priced against the programme it joins.</p>
-    <div class="plans">
-      <div class="plan"><div class="pname">Deeplight / fixed scope</div><div class="price">Accelerate</div><p>One production AI product, live in twelve weeks, on one high-value workflow.</p>
-        <ul><li>From US$185K mid-market &middot; $240K standard &middot; $330K complex</li><li>40% on signature, 30% on validation, 30% on handover</li><li>Go/no-go at week three; a no-go bills discovery alone</li></ul></div>
-      <div class="plan"><div class="pname">Deeplight / fixed bid</div><div class="price">Transformation</div><p>An estate-wide programme, priced and gated phase by phase.</p>
-        <ul><li>Entered through an eight-week Quartet Discovery</li><li>Strategy, use-case roadmap and governance framework first</li><li>You can stop at the end of discovery</li></ul></div>
-      <div class="plan"><div class="pname">Deeplight / time &amp; materials</div><div class="price">Resourcing</div><p>Senior leadership embedded inside a programme you already run.</p>
-        <ul><li>Accountable to the programme, not to one deliverable</li><li>Scope set with the programme it joins</li><li>Scales by squad rather than by bench</li></ul></div>
-    </div>
-    <div class="folio">15/16</div>
-  </section>
-
-  <!-- 17 — THE ASK -->
-  <section class="slide vivid" data-job="next">
+  <!-- 13 — THE ASK -->
+  <section class="slide deep" data-job="next">
     <div class="eyebrow">The Ask</div>
     <h1>Bring one problem and thirty minutes. Leave with a written verdict.</h1>
-    <p class="stand">Three questions, one call. If Accelerate is not the right route we say so &mdash; and if the answer is that you are not ready for any of it, that is a useful thing to have been told in half an hour.</p>
+    <p class="stand">Three questions, one call. If Accelerate is not the right route we say so &mdash; and if the answer is that you are not ready for any of it, that is useful to have been told in half an hour.</p>
     <div class="mech">
       <div>
         <div class="mt">What we ask you</div>
-        <p><b>Value:</b> what outcome matters, who owns it, and how it is measured today. <b>Readiness:</b> whether the workflow, data, systems, controls and ownership can carry a production product. <b>Route:</b> Accelerate, Transformation, or our people inside yours.</p>
+        <p><b>Value:</b> what outcome matters, who owns it, how it is measured today. <b>Readiness:</b> whether the workflow, data, systems, controls and ownership can carry a production product. <b>Route:</b> Accelerate, Transformation, or our people inside yours.</p>
       </div>
       <div>
         <div class="mt">What you leave with</div>
@@ -431,7 +302,7 @@
         <p>If it is a fit, discovery starts and the gate is three weeks later.<br><b>accelerate@deeplight.ae</b><br>deeplight.ae &middot; DIFC, Dubai</p>
       </div>
     </div>
-    <div class="folio">16/16</div>
+    <div class="folio">12/12</div>
   </section>
 
 </div>
