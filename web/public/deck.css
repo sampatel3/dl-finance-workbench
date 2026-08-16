@@ -1451,6 +1451,28 @@ ul.plus li::before {
 }
 .timeline .what { font-size: 1.7cqi; letter-spacing: -0.02em; font-weight: 500; margin-top: .5cqi; }
 .timeline .tp p { margin: .6cqi 0 0; font-size: .92cqi; line-height: 1.6; color: var(--mute); }
+/*
+ * THE JOURNEY — a dated sequence where the DATES are the argument.
+ *
+ * Distinct from `.timeline`, which shows phases of work a reader is being sold. A journey
+ * shows a record: what was true on a date, and what was true on the next one. The date leads
+ * at display size because the gap between two of them is the claim — a platform that did not
+ * exist in September and was serving a regulator's traffic in January says the thing no
+ * adjective can.
+ */
+.journey { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2.6cqi; }
+.journey .leg { display: flex; flex-direction: column; padding-top: 2.4cqi; position: relative; }
+.journey .leg::before {
+  content: ""; position: absolute; top: .5cqi; left: 0; right: -2.6cqi; height: .07cqi; background: var(--faint);
+}
+.journey .leg:last-child::before { right: 0; }
+.journey .leg::after {
+  content: ""; position: absolute; top: .16cqi; left: 0; width: .78cqi; height: .78cqi;
+  border-radius: 50%; background: var(--accent-ink);
+}
+.journey .on { font-size: 2.1cqi; letter-spacing: -0.028em; font-weight: 500; }
+.journey .was { margin: .7cqi 0 0; font-size: .92cqi; line-height: 1.62; color: var(--mute); }
+
 /* aurora: stops along a horizontal rule */
 [data-style='aurora'] .timeline { grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3cqi; }
 [data-style='aurora'] .timeline .tp { padding-top: 2.6cqi; }
