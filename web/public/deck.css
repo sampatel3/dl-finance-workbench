@@ -112,9 +112,16 @@
      content budget unchanged. The 1cqi given up is the slack that used to render as the fat
      right bezel; it was never carrying any picture.
 
+     Then 47 to 42.5, for a reason worth writing down. A headline that explains what the reader
+     is looking at runs to TWO lines at this size, and two lines plus a 247px device plus a
+     standfirst exceeded the slide — so the old device size was quietly enforcing cryptic
+     headlines on every product slide. The device gives way rather than the headline, and it
+     gives way everywhere at once, because an iPad that is one size on this slide and another
+     size on the next is the fault reported four times already.
+
      (The old comment below claimed 52.5cqi. It had been 48 for some time — a reminder to
      measure the render rather than believe the prose next to the number.) */
-  --device-w: 47cqi;
+  --device-w: 40cqi;
   /* The bezel, in the SAME UNIT as the width — see the device block for why a percentage here
      is a bug rather than a shorthand. 1.176cqi is 2.45% of 48cqi, so the device keeps the
      bezel it already had beside a column, and full-bleed slides stop being the odd ones out. */
@@ -853,17 +860,6 @@ ul.plus li::before {
 }
 .sum .note b { font-weight: 650; color: var(--ink); }
 
-/* ----------------------------------------------------------------------- the timeline -- */
-/* Phases along a rule. A method, or the steps after a yes. */
-.rail { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.6cqi; margin-top: 3cqi; }
-.rail .step { padding-top: 1.4cqi; border-top: .16cqi solid var(--brand-a); }
-.rail .when {
-  font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
-  text-transform: var(--label-case); font-weight: var(--label-weight); color: var(--accent-ink);
-}
-.rail .what { margin: .8cqi 0 .6cqi; font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
-.rail p { margin: 0; font-size: .92cqi; line-height: 1.6; color: var(--mute); }
-
 /* ---------------------------------------------------------------------- the mechanics -- */
 /* Who approves it, what a *yes, if* would be, what a go fixes. The last slide's small print, as
    three columns so none of the three can be skipped. */
@@ -1027,6 +1023,105 @@ ul.plus li::before {
 }
 .divider .dnote { margin: 1.6cqi 0 0; max-width: 46ch; font-size: 1.15cqi; line-height: 1.6; color: var(--mute); }
 [data-style='drift'] .divider .dtitle { font-weight: 500; font-size: 6.6cqi; }
+
+/* ==================================================================== THE TRACKER ===== */
+/*
+ * THE THIRD STRUCTURAL ELEMENT, AND THE ONE THIS FILE DID NOT HAVE.
+ *
+ * Pitch's guide names three devices that make a deck's structure visible: the agenda slide,
+ * the section divider, and the TRACKER — "in longer sections trackers guide your audience".
+ * The first two are directly above. This is the third: the steps of the section listed down
+ * the left of the slide, the one the reader is on marked and the rest quiet.
+ *
+ * It is worth having because a section here spans as many slides as its argument needs — the
+ * eyebrow says which section, and until now nothing said WHICH SLIDE OF IT. A reader who
+ * opened the deck in the middle of an act had to go back to the divider to find out.
+ *
+ * IT SPLITS THE SLIDE THE WAY `.duo` DOES, and on purpose not by any other means. A rail that
+ * placed itself against the slide would be a second layout grammar to keep in step with the
+ * side padding, the folio and the print page, and the block beside it would need a matching
+ * indent of its own. One fixed column and `1fr` for the rest is the split this file already
+ * has, and the block sitting in the second column then needs no rule at all. 26cqi and a
+ * 4.4cqi gutter is 30.4 of the 91.6cqi content row — the left third the guide gives it —
+ * leaving 61.2cqi for what the slide is actually about.
+ *
+ * It is deliberately NOT in drift's side-composition list below: a rail already owns a left
+ * column, and a second one handed to it by `:has()` would strand the steps mid-page. It takes
+ * the lead composition in both styles, which is where it is already named.
+ *
+ * (`.rail` named a horizontal phase strip until `.timeline` — drawn from the references, and
+ * the one the templates carry — took that job and left the name unused.)
+ */
+.rail { display: grid; grid-template-columns: 26cqi 1fr; gap: 4.4cqi; align-items: start; }
+
+/*
+ * THE SPINE — cap, hairline, cap — AS THREE LAYERS OF ONE BACKGROUND.
+ *
+ * A line with a square terminal at each end is three marks, and an element has two pseudo-
+ * elements, so the obvious build hangs the caps on the first and last STEP. That comes apart
+ * on exactly the section a tracker is for: with the caps owned by steps, a one-step section
+ * draws two caps and no line between them, and a step moved takes a cap with it. Three
+ * background layers on one box cannot separate that way, and each paints in `--faint`, which
+ * is this file's token for a rule.
+ *
+ * The spine runs in a gutter LEFT of the numerals rather than behind them, for the same reason
+ * drift's timeline puts it there: the marker is unfilled on every step but the current one, so
+ * a line behind the column shows through the markers and reads as a line struck through the
+ * steps rather than as the rail joining them.
+ */
+.rail .steps {
+  position: relative; list-style: none; margin: 0;
+  /* 2.2cqi of gutter for the spine, and 1.1cqi at each end so its caps sit inside the block
+     rather than in the air above and below it. */
+  padding: 1.1cqi 0 1.1cqi 2.2cqi;
+  display: grid; gap: 2.1cqi;
+}
+.rail .steps::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 1.1cqi;
+  transform: translateX(-50%); width: .42cqi;
+  background:
+    linear-gradient(var(--faint), var(--faint)) top / 100% .42cqi no-repeat,
+    linear-gradient(var(--faint), var(--faint)) bottom / 100% .42cqi no-repeat,
+    linear-gradient(var(--faint), var(--faint)) center / .07cqi 100% no-repeat;
+}
+
+/* A step is a numeral and a name. `align-items: start`, not `center`: a name long enough to
+   wrap would hang its numeral against the middle of the paragraph, and the column of numerals
+   — the thing a reader scans — would stop being a column. The label's own padding is what
+   centres its FIRST line against the square instead. */
+.rail .step { display: grid; grid-template-columns: 2.6cqi 1fr; gap: 1cqi; align-items: start; }
+.rail .step .no {
+  aspect-ratio: 1; border-radius: .4cqi;
+  display: flex; align-items: center; justify-content: center;
+  border: .07cqi solid var(--faint); color: var(--mute);
+  font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
+  font-weight: var(--label-weight); font-variant-numeric: tabular-nums;
+}
+.rail .step .nm { padding-top: .55cqi; font-size: 1.05cqi; line-height: 1.45; color: var(--mute); }
+
+/*
+ * WHERE THE READER IS — AND WHY IT IS NOT THE GUIDE'S SOLID DARK FILL.
+ *
+ * The guide fills the current step's square dark and sets its label bold. A solid fill needs
+ * an ink that can be read ON it, and this file states an ink for a ground and an ink for a
+ * pane and for nothing else — which is the same fact `--accent-ink` exists for. Filled with
+ * `--ink`, the square on a loud aurora slide would be white carrying white numerals; filled
+ * with the brand, Deeplight's yellow would carry black ones on a black page. Neither ground
+ * can be asked to state a third ink for one block.
+ *
+ * So the mark is the accent said three ways at once — the square's edge, a wash of the same
+ * colour inside it, and the numeral — against neighbours drawn in `--faint`. Each of those is
+ * the ground's own readable version of the brand, so the current step is the loudest thing in
+ * the rail on all four grounds and no ground needs a rule here.
+ *
+ * `aria-current="step"` carries it rather than a class, because "this is the step you are on"
+ * is the one thing about a tracker a reader who cannot see it needs too.
+ */
+.rail .step[aria-current='step'] .no {
+  border-color: var(--accent-ink); color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent-ink) 16%, transparent);
+}
+.rail .step[aria-current='step'] .nm { color: var(--ink); font-weight: 650; }
 
 /* ============================================== THE SIDE COMPOSITION (drift) ========== */
 /*
