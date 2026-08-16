@@ -1,16 +1,16 @@
 import { resolveView } from '@demo-kit/shell';
 import { buildOutlook } from '@kestrel/analysis';
 import { closePositionsFor, formatMonthLong } from '@kestrel/model';
-import { formatValue } from '@kestrel/measures';
+import { POLICY, formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../../components/Chrome';
-import { AccountingStatusBanner } from '../../../components/Figures';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { accountingStatus } from '../../../lib/close';
-import { directionClass, movement } from '../../../lib/format';
-import type { Params } from '../../../lib/world';
-import { contextOf, viewOf, world } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { AccountingStatusBanner } from '../../components/Figures';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { accountingStatus } from '../../lib/close';
+import { directionClass, movement } from '../../lib/format';
+import type { Params } from '../../lib/world';
+import { contextOf, viewOf, world } from '../../lib/world';
 
 /**
  * Year to Go — where FY26 lands, on three readings that disagree.
@@ -72,8 +72,8 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/year-to-go" view={view} />
-      <Selectors path="/app/year-to-go" view={view} />
+      <Masthead path="/year-to-go" view={view} />
+      <Selectors path="/year-to-go" view={view} />
       <AccountingStatusBanner status={status} />
 
       <section
@@ -111,7 +111,7 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
 
         {projection.available ? (
           <div className="pane pane-scroll">
-            <table className="grid">
+            <table className="grid grid-wide">
               <caption>
                 Actual performance, remaining forecast and expected fiscal-year landing
               </caption>
@@ -150,7 +150,7 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
                   >
                     <th scope="row">
                       {line.label}
-                      <span className="row-note">Owner: {line.owner}</span>
+                      <span className="row-owner">{line.owner}</span>
                     </th>
                     <td className="num">
                       {formatValue(line.actualYtd, line.unit)}
@@ -173,7 +173,7 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
                     <td className="num">{formatValue(line.approvedForecastFullYear, line.unit)}</td>
                     <td className="num">{formatValue(line.priorYearFullYear, line.unit)}</td>
                     <td
-                      className={`num ${line.favourableToBudget === null ? '' : line.favourableToBudget ? 'pos' : 'neg'}`}
+                      className={`num col-divide ${line.favourableToBudget === null ? '' : line.favourableToBudget ? 'pos' : 'neg'}`}
                     >
                       {movement(line.varianceToBudget, line.varianceUnit)}
                       {line.relativeVarianceToBudget === null ? null : (
@@ -183,15 +183,31 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
                       )}
                     </td>
                     <td>
-                      <span className={trajectoryClass(line.trajectory)}>
+                      <span
+                        className={trajectoryClass(line.trajectory)}
+                        title={line.materiality}
+                      >
                         {TRAJECTORY_LABEL[line.trajectory]}
                       </span>
-                      <span className="row-note">{line.materiality}</span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {/* The materiality test, once. It used to sit under every flag, five near-identical
+                sentences that doubled the height of every row and told a reader the same thing
+                each time. The per-row wording is still there on the flag's tooltip, where it
+                answers the question a reader actually has — "why this verdict on this line". */}
+            <p className="chart-note">
+              A landing is flagged against {projection.budget.label} only where the gap clears
+              both a money floor and a share of the comparative —{' '}
+              {formatValue(POLICY.thresholds.pl.absoluteMinor, 'currency')} and{' '}
+              {formatValue(POLICY.thresholds.pl.relative, 'percent')} on profit-and-loss measures,{' '}
+              {formatValue(POLICY.thresholds.cf.absoluteMinor, 'currency')} and{' '}
+              {formatValue(POLICY.thresholds.cf.relative, 'percent')} on cash. Either test alone
+              fails: relative-only makes every small account scream, absolute-only hides a large
+              miss on a small line. The per-line wording is on each flag.
+            </p>
           </div>
         ) : null}
       </section>
@@ -211,7 +227,7 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
             </span>
           </div>
           <div className="pane pane-scroll">
-            <table className="grid">
+            <table className="grid grid-wide">
               <caption>
                 Run-rate, approved and management-adjusted landings, with the flag taken on the
                 management-adjusted column
@@ -231,7 +247,7 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
                   <th scope="col" className="num">
                     Budget
                   </th>
-                  <th scope="col" className="num">
+                  <th scope="col" className="num col-divide">
                     Gap to budget
                   </th>
                   <th scope="col">Flag</th>
@@ -259,7 +275,7 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
                       <strong>{formatValue(line.management, line.unit)}</strong>
                     </td>
                     <td className="num muted-cell">{formatValue(line.budget, line.unit)}</td>
-                    <td className={`num ${directionClass(line.favourable)}`}>
+                    <td className={`num col-divide ${directionClass(line.favourable)}`}>
                       {movement(line.gapToBudget, line.gapUnit)}
                     </td>
                     <td>

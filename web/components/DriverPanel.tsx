@@ -45,7 +45,7 @@ export function DriverPanel({
   /* An explore link pre-set to the cut this panel is showing, so "show me the rest" is one click rather
      than a reconstruction. The dimension is in the URL because the panel chose it by heuristic — a
      reader who disagrees should be able to see the other cuts without arguing with the page. */
-  const exploreBase = hrefFor('/app/explore', view);
+  const exploreBase = hrefFor('/explore', view);
   const exploreHref =
     `${exploreBase}${exploreBase.includes('?') ? '&' : '?'}` +
     `rows=${contributors.dimension}&cols=measure&measure=${contributors.measureId}`;

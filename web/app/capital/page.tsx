@@ -2,12 +2,12 @@ import { resolveView } from '@demo-kit/shell';
 import { CONCENTRATION_THRESHOLD, buildCapital } from '@kestrel/analysis';
 import { formatValue } from '@kestrel/measures';
 
-import { Masthead } from '../../../components/Chrome';
-import { FocusOnLoad } from '../../../components/FocusOnLoad';
-import { Selectors } from '../../../components/Selectors';
-import { movement } from '../../../lib/format';
-import type { Params } from '../../../lib/world';
-import { contextOf, viewOf } from '../../../lib/world';
+import { Masthead } from '../../components/Chrome';
+import { FocusOnLoad } from '../../components/FocusOnLoad';
+import { Selectors } from '../../components/Selectors';
+import { movement } from '../../lib/format';
+import type { Params } from '../../lib/world';
+import { contextOf, viewOf } from '../../lib/world';
 
 /**
  * Capital projects and procurement.
@@ -57,8 +57,8 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
   return (
     <main className={`product${inner ? ' inner' : ''}`} id="product">
       <FocusOnLoad elementId={focus} />
-      <Masthead path="/app/capital" view={view} />
-      <Selectors path="/app/capital" view={view} />
+      <Masthead path="/capital" view={view} />
+      <Selectors path="/capital" view={view} />
 
       <section className="section focusable" id="section-capital-story" aria-label="Capital summary">
         <div className="section-head">
@@ -84,7 +84,7 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
           </span>
         </div>
         <div className="pane pane-scroll">
-          <table className="grid">
+          <table className="grid grid-wide">
             <thead>
               <tr>
                 <th scope="col">Project</th>
@@ -102,7 +102,7 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
                 <th scope="col" className="num">
                   To complete
                 </th>
-                <th scope="col" className="num">
+                <th scope="col" className="num col-divide">
                   Expected total
                 </th>
                 <th scope="col" className="num">
@@ -133,7 +133,7 @@ export default async function Capital({ searchParams }: { searchParams: Promise<
                   <td className="num muted-cell">
                     {formatValue(row.project.forecastToCompleteMinor, 'currency')}
                   </td>
-                  <td className="num">
+                  <td className="num col-divide">
                     <strong>{formatValue(row.expectedTotalMinor, 'currency')}</strong>
                   </td>
                   <td className={`num ${row.remainingMinor < 0 ? 'neg' : 'pos'}`}>

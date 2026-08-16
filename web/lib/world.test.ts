@@ -153,8 +153,8 @@ describe('Explore dataset state', () => {
       { scenario: 'forecast', version: 'v5' },
       { allowDataScenario: true },
     );
-    const explore = new URL(hrefFor('/app/explore', view, { period: 'quarter' }), 'https://demo.invalid');
-    const performance = new URL(hrefFor('/app/performance', view), 'https://demo.invalid');
+    const explore = new URL(hrefFor('/explore', view, { period: 'quarter' }), 'https://demo.invalid');
+    const performance = new URL(hrefFor('/performance', view), 'https://demo.invalid');
 
     expect(explore.searchParams.get('scenario')).toBe('forecast');
     expect(explore.searchParams.get('version')).toBe('v5');

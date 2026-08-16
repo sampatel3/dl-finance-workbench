@@ -35,14 +35,14 @@ describe('what the rail says before you click', () => {
       (sum, board) => sum + board.triage.kept.length,
       0,
     );
-    expect(railSignals(view)['/app']?.count).toBe(expected);
+    expect(railSignals(view)['/']?.count).toBe(expected);
     expect(expected).toBeGreaterThan(0);
   });
 
   it('and flags the cash floor only where the forecast actually breaches it', () => {
     const view = group();
     const breach = directForecast(contextOf(view)).breach;
-    const signal = railSignals(view)['/app/cash'];
+    const signal = railSignals(view)['/cash'];
     if (breach === undefined) {
       expect(signal).toBeUndefined();
       return;
@@ -56,7 +56,7 @@ describe('what the rail says before you click', () => {
     const behind = buildOutlook(contextOf(view)).lines.filter(
       (line) => line.trajectory === 'behind',
     ).length;
-    expect(railSignals(view)['/app/year-to-go']?.count ?? 0).toBe(behind);
+    expect(railSignals(view)['/year-to-go']?.count ?? 0).toBe(behind);
   });
 
   it('and counts the projects with no headroom left', () => {
@@ -64,7 +64,7 @@ describe('what the rail says before you click', () => {
     const exposed = buildCapital(contextOf(view)).projects.filter(
       (row) => row.verdict === 'over_budget' || row.verdict === 'at_risk',
     ).length;
-    expect(railSignals(view)['/app/capital']?.count ?? 0).toBe(exposed);
+    expect(railSignals(view)['/capital']?.count ?? 0).toBe(exposed);
   });
 
   it('and counts only the commentary this principal can act on', () => {
@@ -73,7 +73,7 @@ describe('what the rail says before you click', () => {
     const waiting = commentaryForView(seedCommentaryQueue(world()), view).filter(
       (item) => commentaryAffordances(item, view.principal).length > 0,
     ).length;
-    expect(railSignals(view)['/app/commentary']?.count ?? 0).toBe(waiting);
+    expect(railSignals(view)['/commentary']?.count ?? 0).toBe(waiting);
   });
 
   it('and counts the ledgers still open', () => {
@@ -81,7 +81,7 @@ describe('what the rail says before you click', () => {
     const open = closePositionsFor(world().closePositions, view.scope.endMonth)
       .filter((position) => view.permission.entityIds.includes(position.entityId))
       .filter((position) => position.state !== 'closed').length;
-    expect(railSignals(view)['/app/controls']?.count ?? 0).toBe(open);
+    expect(railSignals(view)['/controls']?.count ?? 0).toBe(open);
   });
 });
 
@@ -89,18 +89,18 @@ describe('the signals are scoped like every other read', () => {
   it('does not tell a business-unit controller about a group capital programme', () => {
     /* The leak a page-level test cannot catch, because the page was never opened. The over-budget
        project is Manufacturing's and the one with no headroom is the group's; Gulf may read neither. */
-    expect(railSignals(unit())['/app/capital']).toBeUndefined();
-    expect(railSignals(group())['/app/capital']?.count ?? 0).toBeGreaterThan(0);
+    expect(railSignals(unit())['/capital']).toBeUndefined();
+    expect(railSignals(group())['/capital']?.count ?? 0).toBeGreaterThan(0);
   });
 
   it('and does not tell them about a ledger outside their subtree', () => {
-    expect(railSignals(unit())['/app/controls']).toBeUndefined();
-    expect(railSignals(group())['/app/controls']?.count ?? 0).toBeGreaterThan(0);
+    expect(railSignals(unit())['/controls']).toBeUndefined();
+    expect(railSignals(group())['/controls']?.count ?? 0).toBeGreaterThan(0);
   });
 
   it('and gives a narrower reader no more decisions than a wider one', () => {
-    const wide = railSignals(group())['/app']?.count ?? 0;
-    const narrow = railSignals(unit())['/app']?.count ?? 0;
+    const wide = railSignals(group())['/']?.count ?? 0;
+    const narrow = railSignals(unit())['/']?.count ?? 0;
     expect(narrow).toBeLessThanOrEqual(wide);
   });
 });
@@ -118,7 +118,7 @@ describe('silence is a statement', () => {
     /* Performance decomposes a variance the Overview already flagged, a scenario is a question, and a
        forecast version is a record. A dot on those would be decoration. */
     const signals = railSignals(group());
-    for (const path of ['/app/performance', '/app/kpis', '/app/forecast', '/app/scenarios']) {
+    for (const path of ['/performance', '/kpis', '/forecast', '/scenarios']) {
       expect(signals[path], `${path} was badged without a test behind it`).toBeUndefined();
     }
   });

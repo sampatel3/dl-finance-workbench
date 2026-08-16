@@ -50,7 +50,7 @@ export const TOUR: Tour = {
         'An executive surface earns its keep by removing figures. Findings lead, figures support them, and ' +
         'the same page holds at a phone viewport because that is where a decision is often first reviewed.',
       lookAt: 'The close banner, the reporting context, and the Adverse, Favourable, Risks and Opportunities boards.',
-      href: surface('/app', 'section-headline'),
+      href: surface('/', 'section-headline'),
     },
     {
       short: 'What changed',
@@ -62,7 +62,7 @@ export const TOUR: Tour = {
         'A variance is subtraction. A bridge makes it assignable: each contribution can have an owner, and a ' +
         'named residual makes unexplained movement visible instead of hiding it in “other”.',
       lookAt: 'The contribution bars, comparator basis and the explicit summing statement.',
-      href: surface('/app/performance', 'section-bridge', { measure: 'revenue' }),
+      href: surface('/performance', 'section-bridge', { measure: 'revenue' }),
     },
     {
       short: 'Profitability',
@@ -74,7 +74,7 @@ export const TOUR: Tour = {
         'A top-line beat can still land behind plan after delivery cost and overhead. Finance needs the landing ' +
         'from revenue to EBITDA, not a separate set of charts that may disagree.',
       lookAt: 'The EBITDA composition and the Opex lines that explain the profitability gap.',
-      href: surface('/app/performance', 'section-ebitda', { measure: 'ebitda' }),
+      href: surface('/performance', 'section-ebitda', { measure: 'ebitda' }),
     },
     {
       short: 'The forecast',
@@ -86,7 +86,7 @@ export const TOUR: Tour = {
         'A versioned forecast without a version diff can say what the new numbers are and cannot say why they ' +
         'changed. The driver graph is the edge between an assumption and the measure it moves.',
       lookAt: 'The approved version in force, the v6-to-v7 changes and their measured effects.',
-      href: surface('/app/forecast', 'section-diff', { version: 'v7', from: 'v6' }),
+      href: surface('/forecast', 'section-diff', { version: 'v7', from: 'v6' }),
     },
     {
       short: 'Year to go',
@@ -98,7 +98,7 @@ export const TOUR: Tour = {
         'A monthly variance says where Finance has been. The expected full-year landing says whether the current ' +
         'trajectory needs a decision while there is still time to change it.',
       lookAt: 'Actual YTD, remaining forecast, expected FY, budget variance and Ahead/Behind trajectory.',
-      href: surface('/app/year-to-go', 'section-landing'),
+      href: surface('/year-to-go', 'section-landing'),
     },
     {
       short: 'Liquidity',
@@ -110,7 +110,7 @@ export const TOUR: Tour = {
         'A forecast that closes comfortably can still need funding in week nine. The working-capital view names ' +
         'which entity is holding cash instead of leaving the low point unexplained.',
       lookAt: 'The first breach, lowest liquidity point, recovery timing and entity working-capital table.',
-      href: surface('/app/cash', 'section-weekly'),
+      href: surface('/cash', 'section-weekly'),
     },
     {
       short: 'KPIs',
@@ -122,7 +122,7 @@ export const TOUR: Tour = {
         'An operational measure should not become an executive KPI merely because it is available. Draft definitions ' +
         'remain visible but cannot masquerade as approved finance policy.',
       lookAt: 'The target basis, trend direction, owner and explicit draft definition state.',
-      href: surface('/app/kpis', 'section-kpi-summary'),
+      href: surface('/kpis', 'section-kpi-summary'),
     },
     {
       short: 'The scenario',
@@ -134,7 +134,7 @@ export const TOUR: Tour = {
         'Scaling output figures produces statements that no longer tie. Re-running the model is what lets a ' +
         'collections assumption move cash without pretending revenue changed.',
       lookAt: 'The side-by-side effect and headroom comparison with the approved forecast.',
-      href: surface('/app/scenarios', 'section-effect', { dsoDays: '10' }),
+      href: surface('/scenarios', 'section-effect', { dsoDays: '10' }),
     },
     {
       short: 'Commentary',
@@ -146,7 +146,7 @@ export const TOUR: Tour = {
         'Executives need the answer; controllers need to reproduce it. Keeping both depths on one governed item ' +
         'avoids a polished narrative becoming detached from the figures it describes.',
       lookAt: 'The Board-ready headline, supporting chain and immutable published snapshot.',
-      href: surface('/app/commentary', 'section-commentary'),
+      href: surface('/commentary', 'section-commentary'),
     },
     {
       short: 'Forecast quality',
@@ -158,7 +158,7 @@ export const TOUR: Tour = {
         'A forecasting product that never scores its forecasts is asking for trust it has not earned. Persistent ' +
         'bias identifies the assumption and owner that repeatedly need attention.',
       lookAt: 'The biased measures, the run across versions and the forecast horizon.',
-      href: surface('/app/quality', 'section-bias'),
+      href: surface('/quality', 'section-bias'),
     },
     {
       short: 'Controls',
@@ -170,7 +170,7 @@ export const TOUR: Tour = {
         'A green status light cannot explain a wrong number, and a chat must not be a way around row-level access. ' +
         'Useful controls fail and refuse access by name.',
       lookAt: 'The check counts, failed reconciliation, unmapped accounts, pinned vintage and permission card.',
-      href: surface('/app/controls', 'section-checks'),
+      href: surface('/controls', 'section-checks'),
     },
     {
       short: 'Explore & Ask',
@@ -182,7 +182,7 @@ export const TOUR: Tour = {
         'Ad-hoc analysis is useful only when it agrees with Overview and can show where a number came from. Every ' +
         'cell is recomputed at its own scope rather than apportioned from a total.',
       lookAt: 'The exact cited-measure summary, then its supporting time-series grid and drill to source-shaped rows.',
-      href: surface('/app/explore', 'section-cited-measure', {
+      href: surface('/explore', 'section-cited-measure', {
         rows: 'measure',
         cols: 'period',
         measure: 'ebitda',

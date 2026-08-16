@@ -18,7 +18,7 @@ export default {
   shots: [
     {
       name: 'july-position',
-      url: '/app?view=inner&focus=section-headline',
+      url: '/?view=inner&focus=section-headline',
       w: 1194,
       h: 834,
       sel: '#product',
@@ -29,7 +29,7 @@ export default {
     },
     {
       name: 'revenue-bridge',
-      url: '/app/performance?view=inner&focus=section-bridge',
+      url: '/performance?view=inner&focus=section-bridge',
       w: 1194,
       h: 834,
       sel: '#product',
@@ -40,7 +40,7 @@ export default {
     },
     {
       name: 'source-drill',
-      url: '/app/explore?view=inner&focus=section-drill&rows=measure&cols=period&drill=0%3A5',
+      url: '/explore?view=inner&focus=section-drill&rows=measure&cols=period&drill=0%3A5',
       w: 1194,
       h: 834,
       sel: '#product',
@@ -51,7 +51,7 @@ export default {
     },
     {
       name: 'version-diff',
-      url: '/app/forecast?view=inner&focus=section-diff&version=v7&from=v6',
+      url: '/forecast?view=inner&focus=section-diff&version=v7&from=v6',
       w: 1100,
       h: 540,
       sel: '#product',
@@ -62,7 +62,7 @@ export default {
     },
     {
       name: 'scenario-impact',
-      url: '/app/scenarios?view=inner&focus=section-effect&dsoDays=10',
+      url: '/scenarios?view=inner&focus=section-effect&dsoDays=10',
       w: 820,
       h: 460,
       sel: '#product',
@@ -73,7 +73,7 @@ export default {
     },
     {
       name: 'cash-horizon',
-      url: '/app/cash?view=inner&focus=section-weekly',
+      url: '/cash?view=inner&focus=section-weekly',
       w: 820,
       h: 460,
       sel: '#product',
@@ -84,7 +84,7 @@ export default {
     },
     {
       name: 'forecast-quality',
-      url: '/app/quality?view=inner&focus=section-bias&measure=subcontract_cost',
+      url: '/quality?view=inner&focus=section-bias&measure=subcontract_cost',
       w: 1100,
       h: 540,
       sel: '#product',
@@ -95,7 +95,7 @@ export default {
     },
     {
       name: 'published-commentary',
-      url: '/app/commentary?view=inner&focus=section-commentary&state=published',
+      url: '/commentary?view=inner&focus=section-commentary&state=published',
       w: 1100,
       h: 540,
       sel: '#product',
@@ -106,7 +106,7 @@ export default {
     },
     {
       name: 'controls-checks',
-      url: '/app/controls?view=inner&focus=section-checks',
+      url: '/controls?view=inner&focus=section-checks',
       w: 1100,
       h: 540,
       sel: '#product',
@@ -117,7 +117,7 @@ export default {
     },
     {
       name: 'permission-refusal',
-      url: '/app/controls?view=inner&focus=section-permissions&as=gulf-controller&entity=group',
+      url: '/controls?view=inner&focus=section-permissions&as=gulf-controller&entity=group',
       w: 1100,
       h: 540,
       sel: '#product',

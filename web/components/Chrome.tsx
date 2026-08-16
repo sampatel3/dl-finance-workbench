@@ -36,6 +36,7 @@ import { railSignals } from '../lib/signals';
 import type { View } from '../lib/world';
 import { hrefFor } from '../lib/world';
 import { ActiveNavScroll } from './ActiveNavScroll';
+import { ContextPanel } from './Selectors';
 
 function NavLink({
   surface,
@@ -80,7 +81,7 @@ export function Rail({ path, view }: { readonly path: string; readonly view: Vie
   const signals = railSignals(view);
   return (
     <nav className="rail" aria-label="Finance workbench sections">
-      <a className="rail-brand" href={hrefFor('/app', view)}>
+      <a className="rail-brand" href={hrefFor('/', view)}>
         <span className="masthead-mark" aria-hidden>
           {DEMO_MARK}
         </span>
@@ -107,6 +108,10 @@ export function Rail({ path, view }: { readonly path: string; readonly view: Vie
           </div>
         );
       })}
+
+      {/* Under the sections, because both are navigation in the sense that matters: they change what
+          is on the page. Reading down the rail is "which question, then on what basis". */}
+      <ContextPanel path={path} view={view} />
     </nav>
   );
 }
@@ -151,6 +156,8 @@ export function Masthead({ path, view }: { readonly path: string; readonly view:
             })}
           </nav>
         ) : null}
+        {/* No rail in the frame, so the context is a band here as it always was. */}
+        <ContextPanel path={path} view={view} />
         {pageTitle}
         <ActiveNavScroll />
       </>
