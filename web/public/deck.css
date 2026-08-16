@@ -106,12 +106,21 @@
      It was 52.5 when the headline was 3cqi. Raising the headline to 4.7 took 2.4cqi of height
      off every device slide, and the template deck overflowed on exactly the two slides that
      carry a device — which `deck slides` said out loud rather than letting them crop. */
-  --device-w: 48cqi;
+  /* 47cqi, down from 48. The shell is now sized from the screen outwards — screen plus one
+     bezel each side — so at 48 it stood 5.2px taller than the old shape and tipped three slides
+     into overflow. 47 returns the outer height to what it was, which keeps every slide's
+     content budget unchanged. The 1cqi given up is the slack that used to render as the fat
+     right bezel; it was never carrying any picture.
+
+     (The old comment below claimed 52.5cqi. It had been 48 for some time — a reminder to
+     measure the render rather than believe the prose next to the number.) */
+  --device-w: 47cqi;
   /* The bezel, in the SAME UNIT as the width — see the device block for why a percentage here
      is a bug rather than a shorthand. 1.176cqi is 2.45% of 48cqi, so the device keeps the
      bezel it already had beside a column, and full-bleed slides stop being the odd ones out. */
   --device-bezel: 1.176cqi;
   --device-radius: 1.63cqi;
+  --device-ar: 1194 / 834;   /* fallback only; a frame's own data-viewport wins */
 
   --pos: #2fbf8f;
   --neg: #ef8b93;
@@ -342,6 +351,53 @@ body {
 }
 
 /*
+ * WHERE THE SECTION NAME SITS — and the loudest single disagreement between the two systems.
+ *
+ * `drift` sets it as a small bold label ABOVE the headline, which is already the source order,
+ * so it needs no rule. `aurora` does not: on every page of [Product Name] the headline lands
+ * first and ALONE at the top of the slide, and the section name follows it as a black pill.
+ * Ours had a mono label above the headline in both styles, which is drift's move made twice.
+ *
+ * Two things follow from the pill that are worth stating, because both were bugs.
+ *
+ * The reorder lifts the headline rather than dropping the eyebrow. `order: 1` on the eyebrow
+ * would send it past every remaining child to the foot of the slide; negative orders on the
+ * headline and standfirst move exactly those two, and everything after keeps source order —
+ * so the page reads headline, standfirst, pill, block, which is the reference's own order.
+ *
+ * And the pill restates its own colours. The eyebrow inherits `--accent-ink`, which on an
+ * aurora `vivid` ground resolves to `--on-field` — the same white as the headline — so the
+ * section name rendered byte-identical to the h1 above it and the headline never read as
+ * sitting alone. The pill takes the deck's pill tokens instead, so it is legible on every
+ * ground and drops its fill under Deeplight with every other pill.
+ */
+/* `.statement` is the headline on a slide that carries no h1 — the mission page is one — so it
+   leads for the same reason and by the same rule. Without it there the pill stayed above, and
+   one slide in the deck put its section name on the opposite side of the headline. */
+[data-style='aurora'] .slide > :is(h1, .statement) { order: -2; }
+[data-style='aurora'] .slide > .stand { order: -1; }
+[data-style='aurora'] .slide > .eyebrow {
+  align-self: flex-start;
+  background: var(--pill-bg); color: var(--pill-fg); font-weight: var(--pill-weight);
+  padding: .62cqi 1.15cqi; border-radius: 999px;
+  /* 1.5cqi is what the eyebrow used to spend BELOW itself, so moving it under the headline
+     costs the slide nothing vertically. 2.4 read better in isolation and tipped five slides
+     across two decks into overflow, which reads worse than anything it bought. */
+  margin-top: 1.5cqi; margin-bottom: 0;
+}
+
+/* A statement is centred by `margin: auto 0`, and the auto BOTTOM margin sits between it and
+   the pill that now follows it — so the section name fell to the floor of the slide, a third of
+   a page from the sentence it belongs to. Move that auto below the pill and the pair centres as
+   one, which is what "centred" meant while the eyebrow was above. */
+[data-style='aurora'] .slide > .statement { margin-bottom: 0; }
+[data-style='aurora'] .slide:has(> .statement) > .eyebrow { margin-bottom: auto; }
+
+/* A divider's section name IS its headline, and the contents page in [Product Name] carries
+   no title at all — in both cases a pill would be the name said twice. */
+[data-style='aurora'] .slide:is(.divider, [data-job='contents']) > .eyebrow { display: none; }
+
+/*
  * ONE HEADLINE SIZE, DECK-WIDE, IN BOTH STYLES. There is no per-slide variant.
  *
  * An earlier version shrank the headline on slides that gave most of their height to a
@@ -391,7 +447,8 @@ h1 {
                 about a centimetre of air above the picture and up to 8.7cqi of dead space
                 below it, which is the exact opposite of the design. `.works`, `.sum` and
                 `.nest` were missing for the same reason. */
-             .screen, .duo, .duoflip, .works, .sum, .nest) { margin-top: auto; }
+             .works, .sum, .nest, .close) { margin-top: 2.6cqi; }
+.slide > :is(.screen, .duo, .duoflip) { margin-top: auto; }
 
 /*
  * AND THE FOOT MUST NOT COMPETE FOR THE SAME SPACE.
@@ -540,7 +597,22 @@ h1 {
      The ratio is held by `aspect-ratio`, so it CANNOT stretch: a capture that comes back the
      wrong shape is cropped by the frame's `object-fit: cover` and reported by `deck lint`,
      rather than quietly widening the device to fit itself. */
-  width: var(--device-w); aspect-ratio: 1194 / 834; margin: 1.4cqi auto 0;
+  /*
+     THE RATIO BELONGS TO THE SCREEN, NOT TO THE SHELL. This line used to read
+     `aspect-ratio: 1194 / 834` and it produced the fault reported four times: a right bezel of
+     16.14px against 8.66px on the other three sides.
+
+     `.device` is border-box, so an aspect-ratio here shapes the box INCLUDING the bezel. The
+     content box left inside it is then 336.6x229.9 — a ratio of 1.464, not 1.4317 — while the
+     frame carries the true 1194:834 from its own `data-viewport`. The frame therefore rendered
+     329.1 wide inside a 336.6 box and the leftover 7.5px collected on one side, because a block
+     aligns left. Two boxes each held to the same ratio, differing by the bezel: the bezel was
+     the difference, and it showed up as one fat edge.
+
+     With no ratio here the shell has no shape of its own. Its width is the token, its height is
+     whatever the screen needs plus a bezel on each side, and the four bezels are equal by
+     construction rather than by arithmetic that has to be got right. */
+  width: var(--device-w); margin: 1.4cqi auto 0;
   /*
    * THE BEZEL IS A LENGTH, NOT A PERCENTAGE — AND THIS IS THE ONE THAT MATTERED.
    *
@@ -590,8 +662,21 @@ h1 {
 /* The screen fills the bezel and takes the device's shape rather than the image's: a capture
    whose section is shorter than the glass letterboxes against the black, which is what a real
    screen does, instead of stretching the device to fit the picture. */
-.device .frame { height: 100%; border-radius: .5cqi; overflow: hidden; background: #0b0b0d; }
-.device .frame img { height: 100%; width: 100%; object-fit: cover; object-position: top center; }
+/* The screen fills the shell's width and takes its height from its own ratio. That ratio comes
+   from the frame's `data-viewport` as an inline style, so a capture shot at iPhone or desktop
+   dimensions needs no CSS at all — the shell reshapes around whatever it is given. `--device-ar`
+   is only the fallback for a frame that declares nothing. */
+.device .frame {
+  width: 100%; height: auto; aspect-ratio: var(--device-ar);
+  border-radius: .5cqi; overflow: hidden; background: #0b0b0d;
+}
+.device .frame img { display: block; height: 100%; width: 100%; object-fit: cover; object-position: top center; }
+
+/* The three shells a deck may ask for. Only the WIDTH changes: the shape follows the capture,
+   so switching a slide from tablet to phone is one attribute and a re-shoot at the new
+   viewport. */
+.device[data-device='phone'] { --device-w: 16cqi; }
+.device[data-device='desktop'] { --device-w: 66cqi; }
 /* In a two-column layout the device keeps exactly the size it has anywhere else. */
 .duo .device, .duoflip .device { margin-top: 0; }
 
@@ -890,6 +975,14 @@ ul.plus li::before {
 .contents .item .no { order: 2; }
 [data-style='drift'] .contents .item .no { order: 0; }
 
+/* The list does not start at the left margin. In [Product Name] it begins about a third of the
+   way across and runs to the right edge, so the rules read as a measured column rather than as
+   a full-bleed table — the only page in that deck where the text column is not flush left. */
+/* `width: auto`, not the inherited `width: 100%`: a full-width box with a third of the slide as
+   left margin is a third wider than the slide, and what hung off the right edge was the column
+   of numerals — the contents page rendered with no numbers on it at all. Auto lets the flex
+   container stretch the box into the space the margin leaves, which is the whole point. */
+[data-style='aurora'] .contents { margin-left: 33%; width: auto; }
 [data-style='aurora'] .contents .item {
   padding: 1.15cqi 0; border-top: .07cqi solid var(--faint);
   font-weight: 450;
@@ -1102,7 +1195,7 @@ ul.plus li::before {
 /* THE LADDER — stacked one-liners split by hairlines (C7, D3). A question may carry its
    answer under it; a statement stands alone. */
 .ladder { display: flex; flex-direction: column; }
-.ladder .rung { padding: 1.6cqi 0; }
+.ladder .rung { padding: 1.25cqi 0; }
 .ladder .rung:first-child { padding-top: 0; }
 .ladder .rung + .rung { border-top: .07cqi solid var(--faint); }
 .ladder .q { font-size: 2.5cqi; letter-spacing: -0.026em; font-weight: 480; }
