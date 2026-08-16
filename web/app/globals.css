@@ -222,8 +222,12 @@ a:hover { opacity: 0.72; }
   margin: 0 auto 0 max(var(--rail-w), calc(50% - 590px));
   padding: 20px 20px 56px;
 }
-/* The tour's frame renders no rail, so the column goes back to being centred in the whole width. */
+/* Guided view renders no rail, so the column goes back to being centred in the whole width. */
 .product.inner { margin-inline: auto; padding-top: 14px; }
+/* Free view puts the rail back, so the column makes room for it exactly as the full page does.
+   Matched on the rail actually being there rather than on a second class the pages would each
+   have to remember to set. */
+.product.inner:has(> .rail) { margin: 0 auto 0 max(var(--rail-w), calc(50% - 590px)); }
 
 .masthead {
   display: flex; align-items: baseline; gap: 10px;
@@ -546,7 +550,7 @@ a:hover { opacity: 0.72; }
 /* Below the crossover the rail cannot hold a column, so it lies down into the strip the tour uses
    and the content column goes back to full width. */
 @media (max-width: 1080px) {
-  .product { margin-inline: auto; }
+  .product, .product.inner:has(> .rail) { margin-inline: auto; }
   .rail {
     position: static; width: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
     gap: 6px 18px; padding: 0 0 12px; margin-bottom: 18px;
@@ -564,14 +568,6 @@ a:hover { opacity: 0.72; }
   .rail .sel-row { display: flex; margin-bottom: 0; }
   .rail .sel-label { display: inline; margin-bottom: 0; }
 }
-
-/* The tour's strip carries the same groups, separated by their eyebrows rather than by rules. */
-.inner-nav-group { display: flex; align-items: center; gap: 3px; flex: none; }
-.inner-nav-eyebrow {
-  margin: 0 4px 0 10px; font-family: var(--ff-mono); font-size: 9px; font-weight: 500;
-  letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); white-space: nowrap;
-}
-.inner-nav-group:first-of-type .inner-nav-eyebrow { margin-left: 0; }
 
 /* The context, in the rail. Stacked rather than strung along a line: a 268px column reads label above
    value, and the five facts become a short list a reader scans once and stops thinking about. */
@@ -614,16 +610,9 @@ a:hover { opacity: 0.72; }
 /* The active surface is bordered rather than filled: amber is for what a reader can do next,
    and "you are here" is not an action. */
 .nav-link.is-active { color: var(--text); border-color: var(--border-strong); }
-.inner-surface-nav {
-  display: flex; gap: 4px; width: 100%; max-width: 100%; overflow-x: auto;
-  margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
-  scrollbar-width: thin;
-}
-.inner-surface-nav .nav-link { flex: none; }
-
 /* A horizontal navigation row needs to reveal that it continues. The inset fade is only a cue;
    links remain ordinary focusable links and the active destination remains aria-current. */
-.inner-surface-nav, .masthead-nav { scrollbar-width: thin; }
+.masthead-nav { scrollbar-width: thin; }
 
 .domain-switch {
   display: flex; flex-wrap: wrap; gap: 4px; margin: -10px 0 28px;
@@ -1309,8 +1298,6 @@ a:hover { opacity: 0.72; }
     padding-bottom: 6px; scroll-snap-type: x proximity;
   }
   .masthead-nav .nav-link { flex: none; scroll-snap-align: start; }
-  .inner-surface-nav { scroll-snap-type: x proximity; }
-  .inner-surface-nav .nav-link { scroll-snap-align: start; }
   .context-bar { align-items: flex-start; }
   .context-current { font-size: 12.5px; }
   .context-editor-body { align-items: flex-start; flex-direction: column; overflow: hidden; }

@@ -137,27 +137,18 @@ export function Masthead({ path, view }: { readonly path: string; readonly view:
       <>
         {skipLink}
         {view.surfaceNav ? (
-          /* The tour's frame is too narrow for a rail, so the strip stays — but grouped, so the
-             inner treatment teaches the same structure the full product uses. */
-          <nav className="inner-surface-nav" aria-label="Finance workbench sections">
-            {NAV_GROUPS.map((group) => {
-              const surfaces = surfacesIn(group.id);
-              if (surfaces.length === 0) return null;
-              return (
-                <span className="inner-nav-group" key={group.id}>
-                  {group.label === '' ? null : (
-                    <span className="inner-nav-eyebrow">{group.label}</span>
-                  )}
-                  {surfaces.map((entry) => (
-                    <NavLink key={entry.path} surface={entry} path={path} view={view} />
-                  ))}
-                </span>
-              );
-            })}
-          </nav>
-        ) : null}
-        {/* No rail in the frame, so the context is a band here as it always was. */}
-        <ContextPanel path={path} view={view} />
+          /* Free view hands the product to the reader, so it gets the product's own rail —
+             the same component the full page uses, not a second navigation built to look
+             like it. The frame being narrow is a real constraint and it is already answered:
+             below the crossover the rail lies down into a horizontal strip on its own, which
+             is what a phone or a tablet frame gets and what the bespoke strip here used to
+             do by hand. A desktop frame is 1280 wide and has room for the column. */
+          <Rail path={path} view={view} />
+        ) : (
+          /* Guided view drives the window from the step notes, so it carries no navigation.
+             The context still has to be legible, and with no rail to live in it is a band. */
+          <ContextPanel path={path} view={view} />
+        )}
         {pageTitle}
         <ActiveNavScroll />
       </>
