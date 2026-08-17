@@ -1567,3 +1567,9 @@ ul.plus li::before {
 .close .cgroup { min-width: 16cqi; }
 .close .cgroup .label { display: block; margin-bottom: .6cqi; }
 .close .cv { font-size: 1.2cqi; line-height: 1.65; }
+
+/* A contents page with SECTIONS and the slides under them. A deck whose acts have parts needs
+   to show the parts, or the reader counts six sections and meets fourteen slides. */
+.contents .item.sub { border-top: 0; padding-top: .2cqi; }
+.contents .item.sub .nm { padding-left: 3.4cqi; font-size: 1.5cqi; color: var(--mute); font-weight: 400; }
+.contents .item.sub .no { visibility: hidden; }
