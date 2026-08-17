@@ -1,16 +1,50 @@
 /*
  * The schemes — the brand layer, and the only place a brand colour is written down.
  *
- * TWO AXES, AND THEY ARE NOT THE SAME AXIS
- *   · scheme — which brand.         `[data-scheme="…"]`  violet | deeplight | keel | slate | signal | ember
- *   · style  — which design system. `[data-style="…"]`   aurora | drift
- * They compose: any brand in either grammar. Keeping them apart is what stops "the dark one"
- * and "the orange one" from becoming hand-maintained palettes that drift.
+ * THREE AXES, AND THEY ARE NOT THE SAME AXIS
+ *   · scheme    — which brand.            `[data-scheme="…"]`     violet | deeplight | keel | slate | signal | ember
+ *   · style     — which design system.    `[data-style="…"]`      aurora | drift
+ *   · lightness — which pole is the page. `[data-lightness="…"]`  light | dark
+ * They compose: any brand, in either grammar, on either ground. Keeping them apart is what
+ * stops "the dark one" and "the orange one" from becoming hand-maintained palettes that drift.
  *
- * There was a third — a light/dark `skin` — and it is gone. A brand already knows whether it
- * is dark: Deeplight is black and says so. Carrying a separate lightness switch meant every
- * surface had to be stated twice and a scheme could be worn in a lightness that contradicted
- * it, which is two ways to be wrong in exchange for nothing.
+ * THE THIRD AXIS WAS DELETED ONCE, AND THE REASON WAS RIGHT WHEN IT WAS WRITTEN.
+ * This header used to say: there was a light/dark `skin` and it is gone, because a brand
+ * already knows whether it is dark — Deeplight is black and says so — and carrying a separate
+ * lightness switch meant every surface had to be stated twice and a scheme could be worn in a
+ * lightness that contradicted it, which is two ways to be wrong in exchange for nothing.
+ *
+ * Both halves of that were true OF THE FILE IT WAS WRITTEN IN. A scheme stated its grounds
+ * outright then, so a second lightness genuinely meant a second set of them, and there was
+ * nothing for the second set to be derived from.
+ *
+ * WHAT CHANGED IS THAT THE GROUNDS BECAME DERIVED — the section below this one is the whole of
+ * it, and it landed for an unrelated reason. Every ground is now a `color-mix` of the scheme's
+ * own paper and ink, stated once. So both halves of the objection are answerable rather than
+ * merely inconvenient:
+ *
+ *   "every surface stated twice" — not required, and not required per SCHEME at all. The two
+ *   colours a scheme states are a PAIR OF POLES: `--brand-ground` is whichever one the page is
+ *   made of, `--brand-figure` is the other — the one everything on the page is cut from. Every
+ *   ground below reaches for a pole and never for the paper or the ink directly. THREE numbers
+ *   differ between the two lightnesses — the card's step, the well's, the hairline's — and they
+ *   are stated once each, at the foot of this file, for all six schemes at once. No scheme
+ *   writes a colour twice; five of the six write nothing at all.
+ *
+ *   "worn in a lightness that contradicts it" — a PRODUCT now declares its own, `DEMO_LIGHTNESS`,
+ *   resolved exactly like `DEMO_SCHEME` and `DEMO_STYLE`. A security console opens dark and a
+ *   workbench opens light, on every scheme. The contradictory combination is something a reader
+ *   clicks INTO and never what a demo opens in.
+ *
+ * AND THE AXIS CAME BACK BECAUSE ITS ABSENCE WAS DOING DAMAGE THE OBJECTION DID NOT FORESEE.
+ * With no lightness axis, a product that had to be dark hard-coded it: one demo's `:root` set
+ * `--bg: var(--brand-ink)` and then used `[data-style='drift']` to get back to paper. So in that
+ * demo the STYLE toggle secretly meant light/dark, and Keel — whose whole identity is a warm
+ * paper — could only ever render as a warm near-black. Refusing to name the axis did not remove
+ * it. It moved it onto the axis next door, where it was wrong, and it took the grammar toggle
+ * down with it. The deck reached the same ruling from the other end (see the Deeplight ground
+ * override in `deck.css`): a scheme is the brand, a style is the layout grammar. Lightness sits
+ * with the brand and the product. It has never belonged to the grammar.
  *
  * WHAT A SCHEME IS ALLOWED TO SET
  * Two brand colours, and then the GROUNDS: the page, the card, the well, the hairline, the
@@ -33,33 +67,44 @@
  * maintain where it does not — Keel overrides eight values, and nobody else overrides any.
  *
  * THE GROUNDS, AND WHY EACH IS DERIVED THE WAY IT IS
- * `--brand-surface` is the card and it derives to `--brand-paper` EXACTLY, with no mix. On white
- * paper there is nowhere lighter to go, and the only mix available — ink into the card — makes
- * the card darker than the page, which reads as a well rather than as a card. So the derived
- * answer is that a card is the same fill as the page and is made a card by its EDGE. That is
- * Keel's own rule, that a fill change is never the sole boundary of anything, applied in the one
- * place the rule is unavoidable; and it lets a consumer write `var(--brand-surface)` on every
- * card without asking which scheme is on.
+ * Three of the four differ by lightness and are stated in the two blocks at the foot of the
+ * file; the fourth does not and is stated with the brand colours. Every one of them mixes the
+ * POLES — `--brand-ground` and `--brand-figure` — so the same four lines serve both lightnesses.
  *
- * `--brand-sunken` is a well, at 6% ink into paper. Recessing always works — however light the
- * paper, there is room below it — and 6% is where Keel's own #efebe3 measures against its paper,
- * channel by channel, rather than a number that looked about right.
+ * `--brand-surface` is the card, and it is the one asymmetry. On paper there is nowhere lighter
+ * to go, so it derives to the ground EXACTLY, with no mix: a card is the same fill as the page
+ * and is made a card by its EDGE. That is Keel's own rule — a fill change is never the sole
+ * boundary of anything — applied in the one place the rule is unavoidable. On ink the room
+ * above is there and has to be used, so the card LIFTS 8%: 1.19–1.24 off the page across the
+ * six. A mirrored 6% recess would put the card BELOW the darkest thing on the page.
  *
- * `--brand-line` is the decorative hairline, at 12% — the same 12% `cards.css` already mixes for
- * `--card-line`, and within a point of where Keel's #e3dfd8 sits. Opaque rather than a
- * translucent ink because this colour is also a FILL: Keel paints the area around the phone
- * column with it. A token that is sometimes a border and sometimes a background has to be one
- * colour and not an alpha that composites differently on each of the three grounds, and at 12%
- * the error from drawing a paper-derived line on a card is below a perceptible step.
+ * `--brand-sunken` is a well: 6% of the figure into the ground on paper, 4% on ink. Recessing
+ * always works on paper — however light it is, there is room below — and 6% is where Keel's own
+ * #efebe3 measures against its paper, channel by channel, rather than a number that looked about
+ * right. On ink the well lifts instead, HALF as far as the card, and the half is the point: a
+ * well that lifted the full 6% under a flat card would sit above the card it is inset into.
  *
- * `--brand-edge` is the control boundary, at 50%, and the honest answer to whether a derived
- * default can carry that role on white paper is yes. Half a scheme's ink into its paper lands at
- * 3.43–3.64:1 against that paper across all six, clearing the 3:1 a non-text boundary needs. And
- * Keel's hand-picked #8a8378 IS half its ink into its paper, to within a shade either way, where
- * it measures 3.59:1 — so the mix REPRODUCES a value a designer chose rather than approximating
- * one. What a token cannot do is put a boundary where the markup draws none. It can only make
- * "every control boundary is a real boundary" a thing a stylesheet says once, instead of a rule
- * each control is trusted to remember.
+ * `--brand-line` is the decorative hairline: 12% on paper, 16% on ink. Opaque rather than a
+ * translucent ink because this colour is also a FILL — Keel paints the area around the phone
+ * column with it — and a token that is sometimes a border and sometimes a background has to be
+ * one colour, not an alpha that composites differently on each of the three grounds. 12% is the
+ * same 12% `cards.css` already mixes for `--card-line` and within a point of Keel's #e3dfd8,
+ * where it measures 1.29 against paper and against a card. On ink 12% collapses to 1.13 against
+ * a card that has itself lifted 8%, so it goes to 16% and comes back to 1.30 on the card and
+ * 1.56–1.62 on the page. It is the one mix whose DEPTH genuinely changes with the pole.
+ *
+ * `--brand-edge` is the control boundary, at 50%, and it is the number that carries in both
+ * lightnesses with no branch at all. Half the figure into the ground lands at 3.43–3.64:1
+ * against a paper page and 5.15–5.34:1 against an ink one; against a card 3.43–3.66 / 4.23–4.48,
+ * against a well 3.04–3.19 / 4.74–4.92. Every scheme clears the 3:1 a non-text boundary needs on
+ * both poles, so this token is stated once, with the brand colours, and not in either lightness
+ * block. Keel's hand-picked #8a8378 IS half its ink into its paper, to within a shade either
+ * way, where it measures 3.59:1 — so the mix REPRODUCES a value a designer chose rather than
+ * approximating one. It is deliberately NOT the 38% the block's edge uses: 38% of the figure
+ * measures 2.85–2.97:1 against a dark card, under the bar in all six. What a token cannot do is
+ * put a boundary where the markup draws none. It can only make "every control boundary is a real
+ * boundary" a thing a stylesheet says once, instead of a rule each control is trusted to
+ * remember.
  *
  * A BRAND BLOCK IS A GROUND, NOT AN ACCENT
  * Keel's signature is a dark evergreen block on a light page — two whole routes, and
@@ -74,8 +119,23 @@
  * the same four tiers the page has. They derive as a ramp from this scheme's paper INTO the
  * block, at 6 / 30 / 42 / 62 percent, which are the ratios Keel's own measured set sits at. That
  * is why the derived ramp lands near its published 14.0 / 8.1 / 6.4 / 3.7:1 on any scheme instead
- * of merely looking plausible. Keel still states its four outright, because they were measured
- * against the real ground and a mix that comes close is not the value that was signed off.
+ * of merely looking plausible. NEAR is the operative word and here is how near, measured across
+ * the six rather than quoted from Keel: 14.02–16.28 / 8.08–9.33 / 6.24–6.73 / 3.49–3.68:1. So
+ * the FLOORS of the derived ramp are Slate's 6.24 and 3.49, not Keel's own 6.36 and 3.68 — a
+ * scheme reading this should hold the ranges, and only Keel's four lines hold Keel's figures.
+ * Keel still states its four outright, because they were measured against the real ground and a
+ * mix that comes close is not the value that was signed off.
+ *
+ * THE BLOCK AND ITS RAMP ARE THE ONE THING WRITTEN IN PAPER AND INK RATHER THAN IN POLES, and
+ * that is deliberate. A brand block is a DARK GROUND BY DEFINITION — that is what makes it a
+ * block rather than a card — and the four inks that read on it are cut from the scheme's paper
+ * whichever pole the page happens to be. Written in poles they would invert on a dark page and
+ * the block would come out a pale panel with white text on it. So its published ratios hold
+ * unchanged in both lightnesses. What DOES change is the block's relation to the page: 14.6–18.4
+ * against a paper page, 1.06–1.23 against an ink one. On a dark page the block stops being a
+ * ground by fill and has to become one by edge, which `globals.css` does in one rule. That is a
+ * real limit of the device rather than something the token layer can derive away, and a demo
+ * whose design leans on the block should say `DEMO_LIGHTNESS=light` and mean it.
  *
  * WHY ONLY KEEL OVERRIDES ANYTHING
  * Slate and Deeplight were the two worth checking. Neither needs a line, because the derivation
@@ -87,7 +147,19 @@
  * Deeplight is also the case that shows the block is the right mechanism rather than a Keel
  * special: it is black THROUGHOUT, and it reaches that through `--brand-ink` and `--brand-grey`,
  * never through paper. A scheme that wants a dark app does not need a dark `--brand-paper`. It
- * needs the block, and now has it.
+ * needs the block, or now the dark lightness, and has both.
+ *
+ * AND KEEL'S FOUR GROUNDS ARE A LIGHT-MODE MEASUREMENT, so they are stated at scheme AND
+ * lightness. `[data-scheme='keel']:not([data-lightness='dark'])` is (0,2,0) — the one thing that
+ * beats the derivation block without a bare `:root` and without `!important` — and it is written
+ * as `:not(dark)` rather than as `[data-lightness='light']` so a surface with no lightness
+ * stamped still gets them, the unstamped default being light. In dark, Keel derives off its own
+ * #14120e and #fbfaf7 and comes out a WARM near-black with warm hairlines, which is the right
+ * answer for a warm brand and is not something a copied set of paper values could have said.
+ * THE RULE THIS SETS FOR EVERY FUTURE SCHEME: state a ground in the lightness you measured it
+ * in. A scheme wanting a dark-only ground writes `[data-scheme='x'][data-lightness='dark']`.
+ * Keel's four `--on-brand-*` stay on its plain block, because those are about the block, and the
+ * block is the same object in either lightness.
  *
  * WHY GREY IS A BRAND COLOUR AND NOT A DERIVED ONE
  * It was derived once, by mixing a little of `--brand-a` into a fixed dark grey, and that is
@@ -159,19 +231,18 @@
   --on-field: #ffffff;
   --field-mix: 58%;
 
-  /* THE DERIVED GROUNDS — declared here for EVERY scheme, not just for Violet.
-     `:root` is grouped in above, so these reach any surface; and because each mix names
-     `--brand-paper` and `--brand-ink` rather than a literal, it resolves against whichever
-     scheme is set on the element — Keel's mixes come out warm off #fbfaf7 without Keel
-     restating a thing. That is what makes a ground a scheme's to state only when it cares.
-     Ratios and the reasoning behind each one are in the header. */
-  --brand-surface: var(--brand-paper);
-  --brand-sunken: color-mix(in srgb, var(--brand-paper) 94%, var(--brand-ink) 6%);
-  --brand-line: color-mix(in srgb, var(--brand-paper) 88%, var(--brand-ink) 12%);
-  --brand-edge: color-mix(in srgb, var(--brand-paper) 50%, var(--brand-ink) 50%);
+  /* THE ONE DERIVED GROUND THAT DOES NOT CARE WHICH POLE THE PAGE IS — declared here for EVERY
+     scheme, not just for Violet. `:root` is grouped in above, so it reaches any surface; and
+     because the mix names the POLES rather than a literal, it resolves against whichever scheme
+     AND whichever lightness is set on the element — Keel's edge comes out warm off #fbfaf7
+     without Keel restating a thing. The other three grounds are at the foot of this file, where
+     their depths differ. Ratios and the reasoning are in the header. */
+  --brand-edge: color-mix(in srgb, var(--brand-ground) 50%, var(--brand-figure) 50%);
 
   /* The brand block, and the ramp that reads on it. The ramp mixes toward `--brand-block`
-     rather than `--brand-grey` so that a scheme overriding only the block keeps its ink. */
+     rather than `--brand-grey` so that a scheme overriding only the block keeps its ink. These
+     six stay written in PAPER and INK, never in poles: a block is a dark ground by definition,
+     and in poles it would invert on a dark page. The header says why at length. */
   --brand-block: var(--brand-grey);
   --on-brand-ink: color-mix(in srgb, var(--brand-paper) 94%, var(--brand-block) 6%);
   --on-brand-muted: color-mix(in srgb, var(--brand-paper) 70%, var(--brand-block) 30%);
@@ -231,15 +302,6 @@
   --on-field: #ffffff;
   --field-mix: 6%;
 
-  /* The grounds, and the whole reason a scheme is now allowed to state one. These are not
-     adjustments to the derived set — they are the warm neutrals the product was designed in,
-     copied from `apps/web/app/app.css` rather than nudged until they looked close. The card is
-     LIGHTER than the page, which is the one thing no derivation can do on white paper. */
-  --brand-surface: #fefcf9; /* cards — deliberately not #ffffff; every neutral is warm-biased */
-  --brand-sunken: #efebe3;  /* inset groups, input wells, zero-shadow list canvases */
-  --brand-line: #e3dfd8;    /* decorative hairline, and the fill around the phone column */
-  --brand-edge: #8a8378;    /* 3.59:1 on paper — mandatory on every control boundary */
-
   /* The ink on the evergreen block. `--brand-block` needs no override: `--brand-grey` above IS
      that evergreen, so the derivation already lands on it. These four are stated because each
      was measured against the real ground in the product — the ratios are its own.
@@ -250,6 +312,18 @@
   --on-brand-muted: #a9c3b6;  /* 8.08:1 */
   --on-brand-subtle: #8faf9f; /* 6.36:1 */
   --on-brand-edge: #5e8574;   /* 3.68:1 — a real boundary on the block, not a fill change */
+}
+
+/* Keel's grounds, and the only place in this file a scheme and a lightness are named together.
+   These are not adjustments to the derived set — they are the warm neutrals the product was
+   designed in, copied from `apps/web/app/app.css` rather than nudged until they looked close.
+   The card is LIGHTER than the page, which is the one thing no derivation can do on white paper.
+   They are a LIGHT-MODE measurement and are scoped to say so; the header gives the rule. */
+[data-scheme='keel']:not([data-lightness='dark']) {
+  --brand-surface: #fefcf9; /* cards — deliberately not #ffffff; every neutral is warm-biased */
+  --brand-sunken: #efebe3;  /* inset groups, input wells, zero-shadow list canvases */
+  --brand-line: #e3dfd8;    /* decorative hairline, and the fill around the phone column */
+  --brand-edge: #8a8378;    /* 3.59:1 on paper — mandatory on every control boundary */
 }
 
 /* Signal. The cool one: a working blue against a warm coral, for a demo whose subject is an
@@ -296,3 +370,57 @@
   --on-field: #ffffff;
   --field-mix: 62%;
 }
+
+/* ─────────────────────────────────────────────────────── the lightness, and only it ──
+ * These two blocks carry the POLES and the three grounds whose depth genuinely differs, and NOT
+ * ONE BRAND COLOUR. That is the rule that keeps this axis out of the other two's way: a block
+ * here can never beat a scheme, because there is nothing in it a scheme also states. The
+ * protection is bought by CONTENT rather than by specificity, which is stronger, because it
+ * cannot be forgotten the next time somebody edits the block. There is a test that says so.
+ *
+ * `:root` is grouped into the light block for the same reason it is grouped into Violet's — so a
+ * surface with no attribute stamped still paints, and it paints LIGHT, which is what
+ * `FALLBACK_LIGHTNESS` in `lightness.ts` resolves to. The two must agree or an unstamped frame
+ * paints one lightness while the picker shows the other.
+ *
+ * These come last because the dark block beats the `:root` branch on SOURCE ORDER at equal
+ * specificity, exactly as Deeplight beats Violet's. Order does NOT matter between these and
+ * `--brand-edge` above: a custom property whose value contains `var()` is substituted at
+ * computed-value time against whatever that property computes to ON THAT ELEMENT, so an edge
+ * declared near the top resolves fine against a pole declared at the bottom. Order matters only
+ * between two declarations of the SAME property.
+ */
+:root,
+[data-lightness='light'] {
+  --brand-ground: var(--brand-paper);
+  --brand-figure: var(--brand-ink);
+
+  /* On paper there is nowhere lighter to go, so the card IS the page and its edge makes it a
+     card. The well recesses 6%; the hairline is 12%. Unchanged, in value and in reasoning. */
+  --brand-surface: var(--brand-ground);
+  --brand-sunken: color-mix(in srgb, var(--brand-ground) 94%, var(--brand-figure) 6%);
+  --brand-line: color-mix(in srgb, var(--brand-ground) 88%, var(--brand-figure) 12%);
+}
+
+/* THE MIRROR, and the three numbers are not invented — they are `.brand-block`'s, the dark
+   ground this kit already measured across all six schemes and has been shipping as a SECTION
+   role since it landed. Promoting it to the page is very nearly the whole of dark mode, which is
+   the strongest evidence that this axis is a role change on values that already exist rather
+   than a second design system.
+
+   The card LIFTS 8% because the recess is gone and the lift is available: 1.19–1.24 off the
+   page. The well lifts HALF as far. The hairline goes to 16% so it reads against the page and
+   against the card laid on it. Each is argued in the header. */
+[data-lightness='dark'] {
+  --brand-ground: var(--brand-ink);
+  --brand-figure: var(--brand-paper);
+
+  --brand-surface: color-mix(in srgb, var(--brand-ground) 92%, var(--brand-figure) 8%);
+  --brand-sunken: color-mix(in srgb, var(--brand-ground) 96%, var(--brand-figure) 4%);
+  --brand-line: color-mix(in srgb, var(--brand-ground) 84%, var(--brand-figure) 16%);
+}
+
+/* Scrollbars, form controls and the canvas the UA paints outside the page. Scoped to `:root`,
+   (0,2,0), so it lands on the document and never on a picker button wearing the attribute. */
+:root[data-lightness='dark'] { color-scheme: dark; }
+:root:not([data-lightness='dark']) { color-scheme: light; }

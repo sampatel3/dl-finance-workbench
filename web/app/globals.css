@@ -7,12 +7,24 @@
  * surfaces, one amber accent, Inter Tight for headings, JetBrains Mono for data — taken from
  * `colors_and_type.css` in the brand system rather than invented here.
  *
- * ## The brand is dark-first, and there is only one ground
+ * ## Lightness is the kit's axis now, and this file states neither pole
  *
- * `:root` IS the product: every token below is declared in its dark value rather than being
- * swapped in at the end. There was a second, lighter set behind a cookie, and it is gone —
- * a brand knows its own lightness, so a switch that could put Deeplight on a white page was
- * a way to contradict the palette rather than a feature.
+ * This block used to BE the dark: `--bg: var(--brand-ink)`, panes cut from `--brand-grey`, an ink
+ * ramp mixed out of paper. That was written when the kit had no lightness axis, and it is exactly
+ * the damage `themes.css` now names in its header — a product that has to be dark hard-codes it in
+ * `:root`, and `:root` in a file imported after `themes.css` outranks `[data-lightness]`, so the
+ * axis is dead on arrival in this demo whatever the toggle says.
+ *
+ * So every token below now derives from the POLES — `--brand-ground` is whichever of the scheme's
+ * two colours the page is made of, `--brand-figure` the one everything on it is cut from — and the
+ * pole is chosen in `layout.tsx` from `DEMO_LIGHTNESS` and the cookie. THIS WORKBENCH OPENS LIGHT
+ * (`DEMO_LIGHTNESS=light`), which is a change of default and not a loss: the near-black product is
+ * one click away at `data-lightness='dark'`, and it is the same product rather than a second
+ * palette, because the ramps below are stated once in poles rather than twice in hexes.
+ *
+ * The four grounds — page, card, well, hairline — are the SCHEME'S now, from `themes.css`, which
+ * states them once per pole for all six schemes. This file only says which of the app's names is
+ * which. The ink tiers and the chart series stay this product's own, re-expressed in poles.
  *
  * ## The one place the brand is bent
  *
@@ -30,86 +42,73 @@
  */
 
 /*
- * THE PANES CARRY THE BRAND, AND THE STYLE DECIDES HOW MUCH.
+ * THE PANES DO NOT CARRY THE BRAND, AND THAT IS SETTLED.
  *
- * A scheme that only moves the accent is a scheme nobody can see: the accent is a few dozen
- * pixels of link text on a page that is mostly surface. So the surfaces are mixed from the
- * brand too — a few percent, enough that a card in Deeplight and the same card in Signal are
- * visibly different objects, not enough to tint a figure sitting on one.
+ * They did once, at 4-11%, and on Deeplight that turned a near-black surface brown: amber into
+ * dark grey is mud, and mud is not a brand. Then they carried 1.5-4%, which was a value nobody
+ * could see doing a job nobody had asked for. A pane is now the SCHEME'S ground — the same card
+ * on every scheme in that scheme's own neutral — and the brand lives where it can be read: the
+ * accent, the chart ink and the wash behind the page.
  *
- * `mesh` keeps the panes close to the ground and the corners tight, which is what makes a
- * dense working surface read as an instrument. `soft` lifts them further off it, warms them
- * more and rounds them, which is what makes the same data read as a document. That is the
- * difference between the two systems on a product page, and it is deliberately larger here
- * than the radius change it used to be.
+ * THE STYLE AXIS IS THE KIT'S NOW, THROUGH `--gr-*`. This file used to hold `[data-style]` blocks
+ * for two systems called `mesh` and `soft` that the kit has not had for two rebuilds, so the
+ * toggle moved nothing here at all. It opts in instead — radius, label case, label tracking,
+ * heading tracking, measure, rule width and typeface count all point at the grammar's tokens
+ * below, which is what makes aurora and drift two design systems in this product rather than two
+ * names in a picker.
  */
-
-/*
- * How much brand the panes carry. A percentage rather than a colour, so the two treatments
- * below each mix it into their OWN base and neither has to know which style is on.
- *
- * SMALL, AND SMALLER THAN IT WAS. The first attempt mixed 4-11% of the brand into every pane,
- * which on Deeplight turned a near-black surface brown: amber into dark grey is mud, and mud
- * is not a brand. Deeplight is black, amber and blue, and its panes are supposed to be BLACK —
- * the brand belongs in the accent, the chart ink and the wash behind the page, not smeared
- * through the surface a figure sits on.
- *
- * So this is 1.5-4%: enough that the same card in two schemes is not literally identical,
- * little enough that nobody would call it tinted. The visible difference between the two
- * systems is carried by the radius and by the ground wash, which can be bold precisely
- * because nothing is written on it.
- */
-/* The greys are the SCHEME'S greys now, not a fixed grey with brand mixed in. Mixing amber into
-   #141414 is how Deeplight went brown, and the ratio was never the bug — the hue was. A scheme
-   states the grey it actually uses and every pane in the product is cut from it. */
 
 :root {
   /* ---- Surfaces. Depth is surface lightness plus a hairline, never a shadow.
    *
-   * EVERY COLOUR BELOW COMES FROM THE SCHEME, BAR THREE — and until now almost none of them
-   * did. Fourteen literals sat in this block, `--bg: #0a0a0a` first among them, in a file
-   * imported AFTER `themes.css`; so a scheme could be set on `<html>` and the product would go
-   * on painting Deeplight's own greys with none of that scheme on the page. The NAMES are
-   * unchanged and so is every ratio they were chosen for. Only the source of the values moved,
-   * to the one file both the app and the deck read. The three exceptions are `--pos`, `--neg`
-   * and `--lift`, each stated where it is: the first two are meaning rather than brand, and a
-   * shadow is a depth.
+   * THE FOUR GROUNDS ARE THE SCHEME'S, NOT THIS FILE'S. `themes.css` states the page, the card,
+   * the well and the hairline once per pole for all six schemes — as mixes of `--brand-ground`
+   * and `--brand-figure`, so they arrive in the scheme's own hue on either lightness. This file
+   * used to derive its own out of `--brand-ink` and `--brand-grey`, which is how it hard-coded
+   * the dark: `--brand-grey` is a near-black in every scheme, so a pane cut from it stays a
+   * near-black slab however the page is set. Naming the scheme's grounds instead is what makes
+   * the lightness toggle move this product rather than only its text.
    *
-   * THE DARK IS NOT GIVEN UP. This product is dark-first and stays dark-first: the page is the
-   * scheme's own INK and the panes its own GREY, which is the route `themes.css` names for a
-   * dark app — Deeplight "is black THROUGHOUT, and it reaches that through `--brand-ink` and
-   * `--brand-grey`, never through paper". Mapping `--bg` onto `--brand-paper`, the way the
-   * kit's light template does, would put this workbench on a white page. That is a redesign,
-   * not a change of where a colour comes from.
-   *
-   * THE PERCENTAGES ARE RECOVERED, NOT CHOSEN. Each mix below is the share of the scheme's
-   * paper in its own grey that reproduces, channel by channel, the literal it replaces — so
-   * under `deeplight` nothing on the page shifts weight. #cecece comes back at 79%, #9d9d9d at
-   * 58%, #858585 at 48%, #4a4a4a at 23%, #3f3f3f at 18%, #2a2a2a at 9%, every one of them
-   * within a single value per channel. In any other scheme the same ramp arrives in THAT
-   * scheme's hue — Slate's greys cool off its navy, Keel's warm off its evergreen — which is
-   * the whole reason for moving the source rather than tidying the values.
+   * On a paper page `--brand-surface` IS the page and a card is made a card by its EDGE; on an
+   * ink page the card lifts 8% and the well half as far. Both come from `themes.css`, whose
+   * header carries the measurements. `--surface-3` is the one step this product adds — a hover
+   * and raised tint — and it is the only one stated here, 6% of the ink into the card, which
+   * lands the same distance off the card on either pole.
    */
-  --bg: var(--brand-ink);          /* --dl-night */
-  --surface: var(--brand-grey);                                            /* a pane, not a slab */
-  /* A dark surface steps up WITHIN the dark. Mixing toward paper at 82/68 produced a medium
-     grey that read as another product's chrome on a black page. */
-  --surface-2: color-mix(in srgb, var(--brand-paper) 5%, var(--brand-grey));    /* wells and rows */
-  --surface-3: color-mix(in srgb, var(--brand-paper) 10%, var(--brand-grey));   /* hover and raised */
+  --bg: var(--brand-ground);
+  --surface: var(--brand-surface);      /* a pane, not a slab */
+  --surface-2: var(--brand-sunken);     /* wells and rows */
+  --surface-3: color-mix(in srgb, var(--brand-figure) 6%, var(--brand-surface));  /* hover and raised */
 
-  --border: color-mix(in srgb, var(--brand-paper) 9%, var(--brand-grey));          /* --dl-line */
-  --border-strong: color-mix(in srgb, var(--brand-paper) 18%, var(--brand-grey));  /* --dl-line-strong */
-  --control-border: color-mix(in srgb, var(--brand-paper) 23%, var(--brand-grey));
+  /* `--border` is the scheme's decorative hairline outright — 12% of the figure into the ground
+     on paper and 16% on ink, because 12% collapses against a card that has itself lifted.
+     `--border-strong` takes that hairline one step further into the figure rather than mixing a
+     second time off the ground, so it tracks a scheme that states its own line. `--control-border`
+     is `--brand-edge` and nothing else: 3.43–3.64:1 against a paper page and 5.15–5.34 against an
+     ink one, which is the 3:1 a non-text boundary needs on both poles. The old 23%-of-paper mix
+     measured 1.7:1 on a light page — a control edge a reader would have to hover to find. */
+  --border: var(--brand-line);
+  --border-strong: color-mix(in srgb, var(--brand-line) 91%, var(--brand-figure) 9%);
+  --control-border: var(--brand-edge);
 
   /* ---- Foreground. Four tiers, and they are this product's four rather than the scheme's
      three-inks-and-an-edge: `--faint` exists for the 9.5–10.5px labels the workbench is full
      of, and `--on-brand-edge` is a control boundary, not a text tier. So all four derive on
      one ramp here instead of three borrowing `--on-brand-*` names and the fourth inventing
-     its own — a ramp with one member off a different ladder is a ramp that can invert. */
-  --text: var(--brand-paper);                                              /* --dl-white, headlines */
-  --label: color-mix(in srgb, var(--brand-paper) 79%, var(--brand-grey));  /* --dl-body */
-  --muted: color-mix(in srgb, var(--brand-paper) 58%, var(--brand-grey));  /* --dl-muted */
-  --faint: color-mix(in srgb, var(--brand-paper) 48%, var(--brand-grey));  /* raised to AA for the 9.5–10.5px labels used throughout the workbench */
+     its own — a ramp with one member off a different ladder is a ramp that can invert.
+
+     THE RAMP MOVED FROM 79/58/48 TO 79/68/58, AND LIGHT IS WHY. Mixed into the POLE, the same
+     percentage does not buy the same contrast on both grounds: 48% of the figure measures 4.99:1
+     on Deeplight's ink page and 3.07:1 on its paper one — under AA for the small labels this
+     token exists for, in the lightness this demo now opens in. Carrying the two lower tiers to
+     68/58 clears AA on BOTH poles with four tiers still distinguishable: 15.9 / 10.4 / 6.9 / 4.8
+     on paper and 19.4 / 12.1 / 9.1 / 6.9 on ink, worst case on a lifted card 5.6. The cost is
+     that the dark ink is a shade lighter than the literals this file began with, which is the
+     price of one ramp instead of two. */
+  --text: var(--brand-figure);
+  --label: color-mix(in srgb, var(--brand-figure) 79%, var(--brand-ground) 21%);
+  --muted: color-mix(in srgb, var(--brand-figure) 68%, var(--brand-ground) 32%);
+  --faint: color-mix(in srgb, var(--brand-figure) 58%, var(--brand-ground) 42%);
 
   /* ---- Amber: interactive only. Never a value, and never decorative. */
   /* The brand, from the scheme. `deeplight` sets it to the #f2a900 this file used to state
@@ -117,29 +116,54 @@
   /*
    * TWO ACCENT TOKENS, BECAUSE A FILL AND AN INK ARE NOT THE SAME COLOUR.
    *
-   * `--accent` is the FILL — a button, a chip, a bar. It is the brand, untouched, in both
-   * skins. `--accent-line` is the brand used as TEXT: a link, a caption, a chevron. On a dark
-   * ground they are nearly the same; on paper they are not, and that is the whole problem this
-   * split exists to solve (see the paper skin below).
+   * `--accent` is the FILL — a button, a chip, a bar. It is the brand, untouched, with `--on-a`
+   * on top of it, and a fill needs no pole: whether black or white reads on a brand colour is a
+   * fact about that colour, which is why the scheme states it. `--accent-line` is the brand used
+   * as TEXT: a link, a caption, a chevron. THAT one needs a pole, and it is the whole reason the
+   * split exists — amber measures 2.0:1 on paper, so on the lightness this demo now opens in the
+   * link colour has to be carried toward the ink or it is not a link, it is a smudge.
    *
-   * Everything is derived from `--brand-a` now. It used to be five hardcoded ambers, which is
-   * why choosing Slate or Signal left the product still faintly amber.
+   * SO THE FOUR INK AMBERS ARE MIXES TOWARD THE FIGURE RATHER THAN FIXED oklch LIGHTNESSES. A
+   * literal `.78` is a dark-page number: it produced a pale amber that worked on near-black and
+   * 2.2:1 on white. Carried 60% into the figure, `--accent-line` measures 4.8–12.7:1 on the page
+   * across the six schemes and BOTH poles, which is the kit template's own measured value.
+   * `--accent-bright` is the hover, one step LOUDER on either pole — further from the ground —
+   * so hover still means "more" on paper, where louder is darker.
+   *
+   * WHAT IS GIVEN UP IS SATURATION, and on this scheme it is the objection the deleted paper skin
+   * raised: amber carried into black is a brown, and Deeplight contains no brown. The alternative
+   * is a full-strength amber with `--on-a` on it, which is exactly on brand and cannot be a link
+   * or a focus ring on paper. The fill keeps the brand; the ink pays for being readable.
    */
   --accent: var(--brand-a);
   --accent-ink: var(--on-a);
-  --accent-line: oklch(from var(--brand-a) .78 c h);
-  --accent-bright: oklch(from var(--brand-a) .88 c h);
-  --accent-deep: oklch(from var(--brand-a) .55 c h);
-  --accent-soft: color-mix(in srgb, var(--brand-a) 14%, var(--brand-ink));
+  --accent-line: color-mix(in srgb, var(--brand-a) 60%, var(--brand-figure) 40%);
+  --accent-bright: color-mix(in srgb, var(--brand-a) 80%, var(--brand-figure) 20%);
+  --accent-deep: color-mix(in srgb, var(--brand-a) 44%, var(--brand-figure) 56%);
+  --accent-soft: color-mix(in srgb, var(--brand-a) 14%, var(--brand-ground) 86%);
 
   /* ---- Direction. The brand's GO/NO-GO pair, used for favourable and adverse.
      THE TWO EXCEPTIONS, and they stay literals on purpose. `themes.css` refuses to own them:
      green favourable and red adverse is meaning rather than brand, and the moment a scheme can
      repaint them a figure that moved the right way looks different in Deeplight than it does
-     in Keel, and the reader has to learn the palette to read the number. */
-  --pos: #2e9e63;   /* --dl-success */
-  --neg: #dc675b;   /* --dl-danger, raised to AA for small adverse variances */
-  --warn: oklch(from var(--brand-a) .62 c h);  /* --dl-warning */
+     in Keel, and the reader has to learn the palette to read the number.
+
+     FOUR NAMES FOR TWO COLOURS. The hue is stated once under a name nothing redefines, because
+     the dark block below has to reach it: a ground cannot derive `--pos` from `var(--pos)` — a
+     custom property that references itself on the same element is a cycle, and CSS answers a
+     cycle by throwing the declaration away.
+
+     THE PAIR IS THE PAPER PAIR, recovered from this repo's own deleted light skin rather than
+     invented: #1d7a49 and #a63a30 measure 5.0:1 and 6.4:1 on white, where the near-black page's
+     #2e9e63 and #dc675b measure 3.4 and 3.35 and fail AA on the small adverse variances this
+     product is full of. The dark block lifts them back. */
+  --favourable: #1d7a49;    /* --dl-success, at the paper weight */
+  --unfavourable: #a63a30;  /* --dl-danger, at the paper weight */
+  --pos: var(--favourable);
+  --neg: var(--unfavourable);
+  /* Amber as a signal rather than as an action, carried one step further into the figure than
+     `--accent-line` so the two are separable on either pole. 6.2:1 on paper, 13:1 on ink. */
+  --warn: color-mix(in srgb, var(--brand-a) 52%, var(--brand-figure) 48%);  /* --dl-warning */
 
   /* ---- Chart ink. Held as tokens rather than hex in JSX so a treatment can restate them.
      These are ink, not meaning: no line here is good or bad, which is what --pos and --neg are
@@ -147,17 +171,32 @@
 
      ONE BRANDED SERIES AND THREE TONES, which is this chart's design and not the kit's: the
      template builds four series from the brand PAIR, and a second hue here would make the
-     comparative line as loud as the actual. So series 1 is the scheme's primary outright and
-     the other three are the same paper-into-grey ramp as the ink above, recovered at 58 / 37 /
-     18% from #9d9d9d, #6b6b6b and #3f3f3f. */
-  --series-1: var(--brand-a);
-  --series-2: color-mix(in srgb, var(--brand-paper) 58%, var(--brand-grey));
-  --series-3: color-mix(in srgb, var(--brand-paper) 37%, var(--brand-grey));
-  --series-4: color-mix(in srgb, var(--brand-paper) 18%, var(--brand-grey));
+     comparative line as loud as the actual. So series 1 is the scheme's primary and the other
+     three are a figure-into-ground ramp at 58 / 37 / 18%, which is the ramp this file already
+     had, re-read as DISTANCE FROM THE PAGE rather than as an amount of paper. That reading is
+     what makes it survive the pole: 58 is the loudest and 18 the quietest on ink AND on paper,
+     where before it was three shares of white that came out three shades of nearly-white.
 
-  /* ---- Radii. Square-ish: buttons and badges 4px, cards 8px. No pills in this brand. */
-  --radius: 8px;
-  --radius-md: 4px;
+     SERIES 1 IS CARRIED 74% RATHER THAN STATED OUTRIGHT. Full-strength amber is a 2.0:1 stroke
+     on a paper page — under the 3:1 a 2px line needs, in the lightness this demo opens in. 74%
+     is the kit template's measured carry: 3.1–19.4:1 on the page and on the card, six schemes,
+     both poles, and still unmistakably the brand.
+
+     SERIES 3 AND 4 ARE FILLS AND ARE NOT CLAIMED AS STROKES. 37% measures 2.5:1 on paper and
+     3.0 on ink, 18% about 1.4 on either — the same place they have always sat, and the reason
+     `MultiTrend` calls series 4 "near-black — fine as a fill behind". */
+  --series-1: color-mix(in srgb, var(--brand-a) 74%, var(--brand-figure) 26%);
+  --series-2: color-mix(in srgb, var(--brand-figure) 58%, var(--brand-ground) 42%);
+  --series-3: color-mix(in srgb, var(--brand-figure) 37%, var(--brand-ground) 63%);
+  --series-4: color-mix(in srgb, var(--brand-figure) 18%, var(--brand-ground) 82%);
+
+  /* ---- Radii. Square-ish: buttons and badges 4px, cards 8px. No pills in this brand — and
+     that is now the AURORA reading of the brand rather than the only one. The kit's grammar owns
+     the radius: `--gr-radius` is 8/6 under aurora, which is what this file has always had, and
+     12/9 under drift, which is the same product composed as a document. The literals stay as the
+     fallback for a surface with no style stamped. */
+  --radius: var(--gr-radius, 8px);
+  --radius-md: var(--gr-radius-md, 4px);
 
   /* Flat. The token stays so the kit's shell can read it; it resolves to nothing. */
   --lift: none;
@@ -169,16 +208,69 @@
      template, which argued figures should read as money rather than as engineering output. In this
      product the opposite is true: a reader is comparing columns of figures against each other, and a
      mono face makes a column scan in a way a proportional one cannot. The brand agrees — it lists
-     mono for "data values, annotations, technical badges". Prose stays proportional. */
+     mono for "data values, annotations, technical badges". Prose stays proportional.
+
+     THE TYPEFACE COUNT IS THE GRAMMAR'S, AND IT IS THE LOUDEST TELL IT HAS. Aurora is two faces
+     and drift collapses them to one, so `--ff-mono` — which this file uses for every figure,
+     every label and every technical badge — points at `--gr-figure-face`. Under aurora that is a
+     real monospace and nothing moves; under drift it resolves to `--sans`, and the whole
+     workbench is set in Inter with tabular numerals, which is drift's argument about figures.
+     `--sans` is declared below and drift reads it, so the one face is this demo's own. */
   --ff-display: var(--font-display), 'Inter Tight', system-ui, sans-serif;
   --ff-body: var(--font-body), Inter, system-ui, sans-serif;
-  --ff-mono: var(--font-mono), ui-monospace, monospace;
+  --ff-mono: var(--gr-figure-face, var(--font-mono), ui-monospace, monospace);
   --sans: var(--ff-body);
 
+  /* THE LABEL TREATMENT, AS ONE PAIR OF TOKENS INSTEAD OF TWENTY-FOUR PAIRS OF LITERALS.
+     Every uppercase micro-label in this file used to state its own `text-transform` and its own
+     tracking — 0.06, 0.08, 0.09 and 0.14em, four values for one idea — and a literal is a place
+     the style toggle silently stops working. Aurora is uppercase at .16em, drift is sentence case
+     at 0, and the four tracks collapse into whichever the grammar says. `--tt-label` is new; the
+     other two keep their names, so every rule below is untouched. */
+  --tt-label: var(--gr-label-case, uppercase);
+  --ls-label: var(--gr-label-track, 0.14em);
+
   --ls-display: -0.025em;
-  --ls-heading: -0.015em;
-  --ls-label: 0.14em;
+  --ls-heading: var(--gr-head-track, -0.015em);
 }
+
+/* THE ONE `[data-style]` RULE THIS FILE OWNS, and it sets a typeface rather than a ground.
+   Aurora's `--gr-mono` names families — `ui-monospace, 'SF Mono', 'JetBrains Mono', …` — and the
+   JetBrains Mono this app ships is SELF-HOSTED by `next/font`, so it answers to the generated
+   family in `--font-mono` and not to its own name. Pointing `--ff-mono` at the grammar without
+   this would silently trade the shipped face for whatever mono the viewer's machine happens to
+   have, which is a different thing on every screenshot. Putting the shipped face at the head of
+   aurora's own stack keeps both: the grammar decides WHETHER there is a second typeface, this
+   decides WHICH. `:root[data-style='aurora']` is (0,1,1) and beats the shell's (0,1,0), which is
+   the only reason a demo can say this from a stylesheet imported before the shell's. */
+:root[data-style='aurora'] {
+  --gr-mono: var(--font-mono), ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+/* ---------------------------------------------------------------- the other lightness */
+/*
+ * NEARLY NOTHING, WHICH IS THE POINT. Every token above names the poles, so `themes.css` swapping
+ * which of the scheme's two colours the page is made of re-derives all of them in the scheme's own
+ * hue. Two things do not follow the poles and both are here.
+ *
+ * Green favourable and red unfavourable are MEANING, so a lightness may change how legible they
+ * are and never what they are. At their paper weights they measure about 2.6:1 on a near-black
+ * page — a figure that moved the right way would be a smudge. Carried 55% into the page's own
+ * figure they come back to roughly 8:1 on the page and 7 on a card.
+ *
+ * `--lift` is not restated: it already resolves to `none` in this product, and a dark shadow on a
+ * dark ground stops showing, which is what a shadow should do there.
+ */
+[data-lightness='dark'] {
+  --pos: color-mix(in srgb, var(--favourable) 55%, var(--brand-figure) 45%);
+  --neg: color-mix(in srgb, var(--unfavourable) 55%, var(--brand-figure) 45%);
+}
+
+/* A brand block has nowhere to go on a dark page — 1.06:1 against Deeplight's own — so it stops
+   being a ground by FILL and becomes one by EDGE, the rule a card already follows on paper.
+   Nothing in this product paints one yet; the shell's card stylesheet can, and a block that
+   arrives later should not arrive invisible. */
+[data-lightness='dark'] .brand-block { border: 1px solid var(--border); }
 
 * { box-sizing: border-box; }
 
@@ -199,7 +291,9 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  /* `background-color`, not the shorthand, for the reason `.skin` below is written out at
+     length: a ground stated as a shorthand deletes whatever image a style lays on the element. */
+  background-color: var(--bg);
   color: var(--label);
   font-family: var(--ff-body);
   font-size: 15px;
@@ -212,9 +306,24 @@ html, body {
 a { color: inherit; transition: opacity 120ms cubic-bezier(0.2, 0.7, 0.2, 1); }
 a:hover { opacity: 0.72; }
 
-/* The treatment wrapper has to fill the viewport, or the dark canvas ends where the content
-   does and the page has a white foot. */
-.skin { min-height: 100dvh; background: var(--bg); }
+/* The treatment wrapper has to fill the viewport, or the canvas ends where the content does and
+   the page has a foot in the other colour.
+
+   TWO PROPERTIES, NOT ONE SHORTHAND, and this is the only rule in the app that paints `.skin`.
+   The style's wash arrives as `--ground` — a TOKEN handed over by `[data-style]` in the shell —
+   and `background: var(--bg)` here is a shorthand that resets `background-image`, so for as long
+   as this rule said that, the aurora and drift washes were painted and then deleted by whichever
+   stylesheet `layout.tsx` imported last. The colour is the demo's; the treatment is the
+   grammar's; they are different properties and neither can silently win. */
+.skin {
+  min-height: 100dvh;
+  background-color: var(--bg);
+  background-image: var(--ground, none);
+  /* Fixed, so the wash belongs to the window rather than to the scroll — a gradient sliding
+     under a long table reads as a rendering fault. Harmless with no image. */
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
 
 
 /* ------------------------------------------------------------------------- the gate */
@@ -271,7 +380,7 @@ a:hover { opacity: 0.72; }
 .masthead {
   display: flex; align-items: baseline; gap: 10px;
   padding-bottom: 14px; margin-bottom: 18px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--gr-rule-w, 1px) solid var(--border);
 }
 .masthead-mark {
   display: grid; place-items: center; width: 30px; height: 30px; flex: none;
@@ -294,7 +403,16 @@ a:hover { opacity: 0.72; }
    the page read as one undifferentiated column; the whole hierarchy problem was that a section
    heading looked exactly like a caption. */
 .section { margin-bottom: 48px; scroll-margin-top: 16px; }
-.section-head { margin-bottom: 16px; max-width: 84ch; }
+
+/* THE MEASURE, AND WHY IT IS A `min()` RATHER THAN THE TOKEN OUTRIGHT.
+   Measure is one of the grammar's nine — aurora runs to ~84ch and drift to ~56 — and every prose
+   block in this file carries its own: 84 for a section head, 78 for a standfirst, 66 for a finding.
+   Written as `var(--gr-measure)` those eight values collapse into one and aurora WIDENS six of
+   them, which is a redesign in the lightness and style this demo already opens in. `min()` takes
+   the grammar's ceiling where it is the tighter of the two, so aurora is unchanged to the pixel and
+   drift narrows everything to 56ch. The idiom is used at every prose measure below and nowhere
+   else; a caption at 34ch and an entity column at 30ch are layout, not reading measure. */
+.section-head { margin-bottom: 16px; max-width: min(84ch, var(--gr-measure, 84ch)); }
 
 /* A real heading: the display face at h3, sentence case, tightly tracked. The template had this as
    an 11px uppercase grey eyebrow, which is a label rather than a heading — and a page whose every
@@ -306,7 +424,7 @@ a:hover { opacity: 0.72; }
 }
 .section-note {
   display: block; margin-top: 6px;
-  font-size: 13.5px; line-height: 1.55; color: var(--muted); max-width: 78ch;
+  font-size: 13.5px; line-height: 1.55; color: var(--muted); max-width: min(78ch, var(--gr-measure, 78ch));
 }
 
 /* The mark `?focus=` leaves. Long enough to be seen, short enough not to become a state —
@@ -380,7 +498,7 @@ a:hover { opacity: 0.72; }
 .card + .card { border-left: 1px solid var(--border); }
 .card-k {
   display: block; font-size: 11px; font-weight: 500;
-  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--muted);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--muted);
 }
 .card-v {
   display: block; margin-top: 12px;
@@ -433,7 +551,7 @@ a:hover { opacity: 0.72; }
 }
 .three-way-list { margin-top: 14px; border-top: 1px solid var(--border-strong); }
 .three-way-horizon { padding: 15px 0; }
-.three-way-horizon + .three-way-horizon { border-top: 1px solid var(--border); }
+.three-way-horizon + .three-way-horizon { border-top: var(--gr-rule-w, 1px) solid var(--border); }
 .three-way-horizon-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
 }
@@ -451,7 +569,7 @@ a:hover { opacity: 0.72; }
 }
 .three-way-subject {
   display: block; margin-top: 2px; font-family: var(--ff-mono); font-size: 9.5px;
-  text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--faint);
+  text-transform: var(--tt-label); letter-spacing: var(--ls-label); color: var(--faint);
 }
 .three-way-variances { margin: 11px 0 0; }
 .three-way-variance {
@@ -467,7 +585,7 @@ a:hover { opacity: 0.72; }
   margin: 10px 0 0; font-size: 11px; line-height: 1.45; color: var(--faint);
 }
 .three-way-basis {
-  margin: 0; padding-top: 12px; border-top: 1px solid var(--border);
+  margin: 0; padding-top: 12px; border-top: var(--gr-rule-w, 1px) solid var(--border);
   font-size: 10.5px; line-height: 1.5; color: var(--faint);
 }
 .three-way-basis strong { color: var(--muted); font-weight: 500; }
@@ -512,10 +630,10 @@ a:hover { opacity: 0.72; }
   margin: 0; font-family: var(--ff-display); font-size: 20px; font-weight: 600;
   letter-spacing: var(--ls-heading); line-height: 1.25; color: var(--text);
 }
-.brief-b { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--label); max-width: 72ch; }
+.brief-b { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--label); max-width: min(72ch, var(--gr-measure, 72ch)); }
 .brief-meta {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+  margin-top: 14px; padding-top: 12px; border-top: var(--gr-rule-w, 1px) solid var(--border);
   font-size: 11.5px; color: var(--muted);
 }
 .tag {
@@ -551,7 +669,7 @@ a:hover { opacity: 0.72; }
 }
 .chip:hover { border-color: var(--accent-line); color: var(--text); }
 
-.answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.answer { margin-top: 14px; padding-top: 14px; border-top: var(--gr-rule-w, 1px) solid var(--border); }
 .answer-q { margin: 0 0 8px; font-size: 12px; font-weight: 500; color: var(--muted); }
 .answer-a { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: var(--label); }
 .answer.unavailable .answer-a { color: var(--label); }
@@ -622,7 +740,7 @@ a:hover { opacity: 0.72; }
 .rail-eyebrow {
   margin: 0 0 2px; padding-left: 12px;
   font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
-  letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 .rail-list { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
 .rail .nav-link {
@@ -649,7 +767,7 @@ a:hover { opacity: 0.72; }
   .rail {
     position: static; width: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
     gap: 6px 18px; padding: 0 0 12px; margin-bottom: 18px;
-    border-right: 0; border-bottom: 1px solid var(--border); background: transparent;
+    border-right: 0; border-bottom: var(--gr-rule-w, 1px) solid var(--border); background: transparent;
   }
   .rail-brand { margin: 0 8px 0 0; }
   .rail-group { flex-direction: row; align-items: center; gap: 6px; }
@@ -711,7 +829,7 @@ a:hover { opacity: 0.72; }
 
 .domain-switch {
   display: flex; flex-wrap: wrap; gap: 4px; margin: -10px 0 28px;
-  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  padding-bottom: 12px; border-bottom: var(--gr-rule-w, 1px) solid var(--border);
 }
 
 /* ------------------------------------------------------------------- selectors
@@ -726,7 +844,7 @@ a:hover { opacity: 0.72; }
 .context-shell { margin-bottom: 28px; }
 .context-bar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px;
-  padding: 10px 0 14px; border-bottom: 1px solid var(--border);
+  padding: 10px 0 14px; border-bottom: var(--gr-rule-w, 1px) solid var(--border);
 }
 .context-current {
   display: flex; flex-wrap: wrap; align-items: center; gap: 2px 7px; margin: 0;
@@ -758,7 +876,7 @@ a:hover { opacity: 0.72; }
 }
 .sel-label {
   font-family: var(--ff-mono); font-size: 10.5px; letter-spacing: var(--ls-label);
-  text-transform: uppercase; color: var(--faint); white-space: nowrap;
+  text-transform: var(--tt-label); color: var(--faint); white-space: nowrap;
 }
 .sel-chips { display: flex; flex-wrap: wrap; gap: 2px; min-width: 0; max-width: 100%; }
 .chip-link {
@@ -771,7 +889,7 @@ a:hover { opacity: 0.72; }
 }
 .chip-mark {
   margin-left: 6px; font-family: var(--ff-mono); font-size: 9.5px;
-  letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 
 /* --------------------------------------------------------------------- banners
@@ -836,7 +954,7 @@ a:hover { opacity: 0.72; }
 .evidence-summary > div { min-width: 0; padding: 10px 12px; background: var(--surface-2); }
 .evidence-summary dt {
   font-family: var(--ff-mono); font-size: 9.5px; letter-spacing: var(--ls-label);
-  text-transform: uppercase; color: var(--faint);
+  text-transform: var(--tt-label); color: var(--faint);
 }
 .evidence-summary dd { margin: 4px 0 0; font-size: 12px; color: var(--label); overflow-wrap: anywhere; }
 @media (max-width: 560px) { .evidence-summary { grid-template-columns: 1fr; } }
@@ -856,7 +974,7 @@ a:hover { opacity: 0.72; }
    page a person actually reads rather than scans. */
 .narration {
   margin: 20px 0 0; padding-left: 16px; border-left: 2px solid var(--accent);
-  font-size: 15px; line-height: 1.6; color: var(--label); max-width: 74ch;
+  font-size: 15px; line-height: 1.6; color: var(--label); max-width: min(74ch, var(--gr-measure, 74ch));
 }
 .narration strong { color: var(--text); font-weight: 600; }
 
@@ -886,7 +1004,7 @@ a:hover { opacity: 0.72; }
   margin: 0; padding: 0 20px 20px; font-size: 13.5px; color: var(--faint); line-height: 1.55;
 }
 .board-note {
-  margin: 0; padding: 12px 20px; border-top: 1px solid var(--border);
+  margin: 0; padding: 12px 20px; border-top: var(--gr-rule-w, 1px) solid var(--border);
   background: var(--surface-2); font-size: 11.5px; color: var(--faint); line-height: 1.5;
 }
 
@@ -899,17 +1017,17 @@ a:hover { opacity: 0.72; }
   line-height: 1.3; letter-spacing: var(--ls-heading); color: var(--text);
 }
 .finding-statement {
-  margin: 9px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); max-width: 66ch;
+  margin: 9px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); max-width: min(66ch, var(--gr-measure, 66ch));
 }
 
 /* The figures are the evidence, so they are set as data: mono, right-aligned to their own
    column, larger than the prose around them. */
 .finding-figures {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px;
-  margin: 16px 0 0; padding: 14px 0 0; border-top: 1px solid var(--border);
+  margin: 16px 0 0; padding: 14px 0 0; border-top: var(--gr-rule-w, 1px) solid var(--border);
 }
 .finding-figure dt {
-  font-size: 10.5px; letter-spacing: var(--ls-label); text-transform: uppercase;
+  font-size: 10.5px; letter-spacing: var(--ls-label); text-transform: var(--tt-label);
   color: var(--faint);
 }
 .finding-figure dd {
@@ -948,7 +1066,7 @@ a:hover { opacity: 0.72; }
   flex: none; white-space: nowrap; padding: 2px 7px; border-radius: var(--radius-md);
   border: 1px solid var(--border-strong); background: transparent;
   font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 .chip-high { border-color: var(--text); color: var(--text); }
 .chip-draft { margin-left: 8px; vertical-align: middle; }
@@ -1020,10 +1138,18 @@ a:hover { opacity: 0.72; }
   text-align: left; padding-bottom: 14px;
   font-family: var(--ff-display); font-size: 14px; font-weight: 600; color: var(--text);
 }
+/* THE TWO PLACES A RULE STAYS A LITERAL, AND IT IS DELIBERATE.
+   Every divider in this file now composes `var(--gr-rule-w, 1px)`, so drift deletes it and is left
+   with the space that was already there — which is drift's own argument: separate with a plane, not
+   a hairline. A FIGURE TABLE HAS NO SUCH SPACE. `.grid` and `.status-grid` are dense, six columns
+   wide and twenty rows deep, with no zebra and no gap; the row rule is the only thing holding a
+   value to its row label across that width, so deleting it does not restate the separation, it
+   removes it. Structure rather than decoration, and the one knob of the grammar this product
+   declines. Reported as a judgement rather than hidden. */
 .grid th, .grid td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .grid thead th {
   font-family: var(--ff-mono); font-size: 10px; font-weight: 500;
-  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--faint);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
   border-bottom-color: var(--border-strong);
 }
 .grid tbody th { text-align: left; font-weight: 500; color: var(--label); }
@@ -1147,7 +1273,7 @@ a:hover { opacity: 0.72; }
   display: inline-flex; padding: 6px 10px; border: 1px solid var(--border-strong);
   border-radius: var(--radius-md); color: var(--accent-line); font-size: 12px; text-decoration: none;
 }
-.technical-evidence { margin-top: 16px; border-top: 1px solid var(--border); }
+.technical-evidence { margin-top: 16px; border-top: var(--gr-rule-w, 1px) solid var(--border); }
 .technical-evidence > summary { padding: 12px 0; cursor: pointer; color: var(--muted); }
 .drill-evidence { margin-top: 16px; }
 .drill-evidence-summary {
@@ -1158,7 +1284,7 @@ a:hover { opacity: 0.72; }
 .drill-evidence-summary::before { content: '+'; font-family: var(--ff-mono); }
 .drill-evidence[open] .drill-evidence-summary::before { content: '−'; }
 .drill-evidence-summary span { margin-left: auto; color: var(--faint); font-size: 11px; font-weight: 400; }
-.drill-evidence[open] .drill-evidence-summary { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.drill-evidence[open] .drill-evidence-summary { margin-bottom: 16px; padding-bottom: 14px; border-bottom: var(--gr-rule-w, 1px) solid var(--border); }
 /* A refused total, not a missing one. The title attribute carries the reason. */
 .cell-none { color: var(--faint); cursor: help; }
 /* The point count under a horizon's error: present so a reader never trusts the least-supported
@@ -1207,12 +1333,12 @@ a:hover { opacity: 0.72; }
 }
 .commentary-kicker {
   display: block; font-family: var(--ff-mono); font-size: 10px; font-weight: 500;
-  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--faint);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 .commentary-state {
   flex: none; padding: 4px 8px; border: 1px solid var(--border-strong);
   border-radius: var(--radius-md); font-family: var(--ff-mono); font-size: 9.5px;
-  font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  font-weight: 600; letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--muted);
 }
 .commentary-state.is-published { border-color: var(--pos); color: var(--pos); }
 .commentary-state.is-rejected { border-color: var(--neg); color: var(--neg); }
@@ -1225,14 +1351,14 @@ a:hover { opacity: 0.72; }
 }
 .commentary-identity div { min-width: 0; padding: 9px 11px; background: var(--surface-2); }
 .commentary-identity dt, .commentary-provenance dt {
-  font-family: var(--ff-mono); font-size: 9.5px; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--faint);
+  font-family: var(--ff-mono); font-size: 9.5px; letter-spacing: var(--ls-label);
+  text-transform: var(--tt-label); color: var(--faint);
 }
 .commentary-identity dd, .commentary-provenance dd {
   margin: 3px 0 0; font-size: 12px; color: var(--label); overflow-wrap: anywhere;
 }
 .commentary-board-copy {
-  max-width: 74ch; margin: 18px 0 0; padding-left: 14px; border-left: 2px solid var(--accent);
+  max-width: min(74ch, var(--gr-measure, 74ch)); margin: 18px 0 0; padding-left: 14px; border-left: 2px solid var(--accent);
   font-size: 14px; line-height: 1.6; color: var(--label);
 }
 .commentary-pin, .commentary-prior {
@@ -1246,10 +1372,10 @@ a:hover { opacity: 0.72; }
 .commentary-pin small { display: block; margin-top: 3px; color: var(--faint); }
 .commentary-prior { display: block; border-left: 2px solid var(--border-strong); }
 .commentary-prior > strong { display: block; margin-top: 7px; }
-.commentary-prior p { max-width: 72ch; margin: 5px 0; }
+.commentary-prior p { max-width: min(72ch, var(--gr-measure, 72ch)); margin: 5px 0; }
 .commentary-meta { font-family: var(--ff-mono); font-size: 10.5px; color: var(--faint); }
 
-.commentary-detail { min-width: 0; margin-top: 18px; border-top: 1px solid var(--border); }
+.commentary-detail { min-width: 0; margin-top: 18px; border-top: var(--gr-rule-w, 1px) solid var(--border); }
 .commentary-detail > summary {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 14px 2px; cursor: pointer; list-style: none;
@@ -1285,12 +1411,12 @@ a:hover { opacity: 0.72; }
 .commentary-source-table { min-width: 900px; }
 .commentary-governance {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px;
-  margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);
+  margin-top: 20px; padding-top: 20px; border-top: var(--gr-rule-w, 1px) solid var(--border);
 }
 .commentary-history { margin: 10px 0 0; padding: 0; list-style: none; }
 .commentary-history li {
   display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 10px;
-  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted);
+  padding: 8px 0; border-bottom: var(--gr-rule-w, 1px) solid var(--border); font-size: 11px; color: var(--muted);
 }
 .commentary-history strong { font-weight: 500; color: var(--label); }
 .commentary-history time { font-family: var(--ff-mono); color: var(--faint); }
@@ -1325,7 +1451,7 @@ a:hover { opacity: 0.72; }
 
 .control-jumps {
   display: flex; flex-wrap: wrap; gap: 4px;
-  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);
+  margin-top: 16px; padding-top: 14px; border-top: var(--gr-rule-w, 1px) solid var(--border);
 }
 .control-empty {
   margin: 0; padding: 10px 0; font-size: 13.5px; line-height: 1.55; color: var(--faint);
@@ -1334,7 +1460,7 @@ a:hover { opacity: 0.72; }
   display: inline-flex; padding: 2px 7px;
   border: 1px solid var(--border-strong); border-radius: var(--radius-md);
   font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
-  letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); white-space: nowrap;
 }
 .control-status-ok { border-color: var(--pos); color: var(--pos); }
 .control-status-warn { border-color: var(--warn); color: var(--warn); }
@@ -1363,7 +1489,7 @@ a:hover { opacity: 0.72; }
 }
 .control-lineage-k {
   font-family: var(--ff-mono); font-size: 9.5px; letter-spacing: var(--ls-label);
-  text-transform: uppercase; color: var(--faint);
+  text-transform: var(--tt-label); color: var(--faint);
 }
 .control-lineage-later { box-shadow: inset 2px 0 0 var(--warn); }
 
@@ -1375,7 +1501,7 @@ a:hover { opacity: 0.72; }
 .control-permission-grid > div { padding: 14px; background: var(--surface); }
 .control-permission-grid dt {
   font-family: var(--ff-mono); font-size: 9.5px; letter-spacing: var(--ls-label);
-  text-transform: uppercase; color: var(--faint);
+  text-transform: var(--tt-label); color: var(--faint);
 }
 .control-permission-grid dd { margin: 6px 0 0; color: var(--label); line-height: 1.45; }
 .control-permission-grid + * { margin-top: 16px; }
@@ -1455,8 +1581,8 @@ a:hover { opacity: 0.72; }
   margin-right: 8px;
   font-family: var(--ff-mono);
   font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  text-transform: var(--tt-label);
   color: var(--faint);
 }
 .status-on_schedule .status-mark { color: var(--warn); }
@@ -1468,7 +1594,7 @@ a:hover { opacity: 0.72; }
   vertical-align: top;
 }
 .status-grid thead th {
-  border-top: 0; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  border-top: 0; font-size: 10px; letter-spacing: var(--ls-label); text-transform: var(--tt-label);
   color: var(--faint); font-weight: 500;
 }
 .status-grid tbody th { color: var(--text); font-weight: 600; }
@@ -1505,7 +1631,7 @@ a:hover { opacity: 0.72; }
 }
 .driver-move { margin-left: 8px; font-family: var(--ff-mono); font-size: 13px; }
 .driver-cut {
-  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  font-size: 10px; letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
   white-space: nowrap;
 }
 
@@ -1530,11 +1656,11 @@ a:hover { opacity: 0.72; }
    when they are scanning nine findings for the one with their name on it. */
 .decision-row {
   display: flex; flex-wrap: wrap; gap: 0 24px;
-  margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border);
+  margin: 10px 0 0; padding: 10px 0 0; border-top: var(--gr-rule-w, 1px) solid var(--border);
 }
 .decision-cell { min-width: 0; }
 .decision-cell dt {
-  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  font-size: 10px; letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 .decision-cell dd { margin: 2px 0 0; font-size: 12.5px; color: var(--label); }
 .decision-impact { font-family: var(--ff-mono); font-weight: 600; }
@@ -1555,7 +1681,7 @@ a:hover { opacity: 0.72; }
 
 /* Seven paragraphs read top to bottom, so they are a column rather than a grid. A board narrative that
    wraps into two columns is one a reader loses their place in halfway down. */
-.story-para { padding: 14px 0; border-top: 1px solid var(--border); }
+.story-para { padding: 14px 0; border-top: var(--gr-rule-w, 1px) solid var(--border); }
 .story-para:first-child { border-top: 0; padding-top: 0; }
 
 .story-heading {
@@ -1569,7 +1695,7 @@ a:hover { opacity: 0.72; }
    nobody finishes. */
 .story-text {
   margin: 0 0 8px;
-  max-width: 78ch;
+  max-width: min(78ch, var(--gr-measure, 78ch));
   font-size: 13.5px; line-height: 1.65; color: var(--label);
 }
 
@@ -1577,7 +1703,7 @@ a:hover { opacity: 0.72; }
    not a second reading of it. */
 .story-bases { display: flex; flex-wrap: wrap; gap: 0 22px; margin: 0; }
 .story-basis dt {
-  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  font-size: 10px; letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 .story-basis dd { margin: 2px 0 0; font-family: var(--ff-mono); font-size: 12px; }
 
@@ -1587,8 +1713,8 @@ a:hover { opacity: 0.72; }
   margin-left: 10px;
   font-family: var(--ff-mono);
   font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  text-transform: var(--tt-label);
   font-weight: 500;
   color: var(--faint);
 }
@@ -1614,7 +1740,7 @@ a:hover { opacity: 0.72; }
   display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 12px 0 0;
 }
 .stamp-facts dt {
-  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  font-size: 10px; letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 .stamp-facts dd { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
 .stamp-note {
@@ -1628,7 +1754,7 @@ a:hover { opacity: 0.72; }
   flex: none; padding: 2px 7px; border-radius: var(--radius-md);
   border: 1px solid var(--border-strong); background: transparent;
   font-family: var(--ff-mono); font-size: 9.5px; font-weight: 500;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+  letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
   white-space: nowrap;
 }
 .finding-tag.is-dated { border-color: var(--accent-line); color: var(--accent-line); }
@@ -1641,7 +1767,7 @@ a:hover { opacity: 0.72; }
   color: var(--muted);
 }
 .finding-when-key {
-  font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+  font-size: 9.5px; letter-spacing: var(--ls-label); text-transform: var(--tt-label); color: var(--faint);
 }
 /* Outside experience is a caution, not an unfavourable variance — and red already means the second
    one everywhere else in this product. */

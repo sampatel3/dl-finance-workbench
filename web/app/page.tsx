@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import {
+  LIGHTNESS_COOKIE,
   SCHEME_COOKIE,
   STYLE_COOKIE,
+  LightnessToggle,
   SchemeToggle,
   StyleToggle,
+  resolveLightness,
   resolveScheme,
   resolveStyle,
   TourNotes,
@@ -51,6 +54,12 @@ export default async function Shell({
   const jar = await cookies();
   const scheme = resolveScheme(jar.get(SCHEME_COOKIE)?.value ?? 'deeplight');
   const style = resolveStyle(jar.get(STYLE_COOKIE)?.value);
+  /* Resolved the SAME WAY as in `layout.tsx`, env fallback included, or the picker shows pressed
+     something the page is not wearing — which is a control a reader would reasonably call broken. */
+  const lightness = resolveLightness(
+    jar.get(LIGHTNESS_COOKIE)?.value,
+    resolveLightness(process.env.DEMO_LIGHTNESS),
+  );
 
   return (
     <TourWindow
@@ -64,6 +73,7 @@ export default async function Shell({
         <>
           <SchemeToggle scheme={scheme} />
           <StyleToggle style={style} />
+          <LightnessToggle lightness={lightness} />
         </>
       }
       notes={<TourNotes tour={TOUR} view={view} link={Link} />}
