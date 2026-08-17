@@ -49,6 +49,23 @@ round that came back four times silent._
 
 ## Round 2 — 2026-08-17 — 8384b6e
 
+**Round 2 was run twice, concurrently, by two runs of the skill in one working tree.** This run
+(`claude -p /demo-kit-review`, pid 94237, started 14:00) opened round 2, ran five reviewers,
+recorded `5 no — 14 critical, 32 high, 7 low`, and fixed. A second run (pid 63532, started 14:13)
+was executing the same skill against the same checkout: it re-emitted these briefs and its own
+reviewers wrote over the same five `.reply.md` paths. `cpo.reply.md` was replaced at 15:13 and
+`user.reply.md` at 15:23 — both after this run had already recorded the round and committed
+against it. The two runs also shared `/tmp/demo-review-dev.pid`, which is why the dev server pid
+went missing mid-round and had to be recovered from `ps`.
+
+So the tally above is a true reading of five complete, independent, correctly-shaped replies as
+they stood when `--record` read them, and it is **not** reproducible from the files now on disk.
+Every fix committed under round 2 was separately verified against the code before it was made —
+each one names the file and line it corrects — so the fixes stand on their own evidence rather
+than on the bookkeeping. What cannot be trusted is the round's provenance. The loop stopped here
+rather than opening round 3 or deploying: a round is only worth what its independence is worth,
+and two runs writing one round have no independence to measure.
+
 | Reviewer | Verdict |
 | --- | --- |
 | cpo | no |
