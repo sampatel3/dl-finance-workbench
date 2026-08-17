@@ -131,3 +131,15 @@ Blocking gaps:
 - `LOW` **deck** — A grammatical error is baked into a screenshot: "not every posting carries a entity", in the note under the revenue-by-entity table on slide 4. `deck lint` cannot see inside a JPEG, so I am flagging it here.
 
 _0 of 5 returned yes — 14 critical · 32 high · 7 low. Fix what blocked, then run the next round with reviewers who have not seen this one._
+
+## Round 3 — 2026-08-17 — 9bac57e
+
+| Reviewer | Verdict |
+| --- | --- |
+| cpo | — no reply yet |
+| ceo | — no reply yet |
+| domain | — no reply yet |
+| user | — no reply yet |
+| deck | — no reply yet |
+
+_Open: 0 of 5 replies recorded. A round with a missing verdict is not a round._
