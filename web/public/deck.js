@@ -103,13 +103,22 @@
 
   const SCHEMES = ['violet', 'deeplight', 'keel', 'slate', 'signal', 'ember'];
   const STYLES = ['aurora', 'drift'];
+  /* Three axes, so three controls. The deck had two and the lightness attribute was reaching it
+     from the page it was served in, which meant a reader could see the deck in only one of the
+     two grounds and had no way to know the other existed. */
+  const LIGHTNESS = ['light', 'dark'];
 
   let scheme = deck.getAttribute('data-scheme') ?? SCHEMES[0];
   let style = deck.getAttribute('data-style') ?? STYLES[0];
+  let lightness = deck.getAttribute('data-lightness') ?? LIGHTNESS[0];
 
   const apply = () => {
     deck.setAttribute('data-scheme', scheme);
     deck.setAttribute('data-style', style);
+    deck.setAttribute('data-lightness', lightness);
+    for (const b of bar.querySelectorAll('[data-lightness-pick]')) {
+      b.setAttribute('aria-pressed', String(b.dataset.lightnessPick === lightness));
+    }
     for (const b of bar.querySelectorAll('[data-scheme-pick]')) {
       b.setAttribute('aria-pressed', String(b.dataset.schemePick === scheme));
     }
@@ -146,6 +155,20 @@
     b.dataset.stylePick = s;
     b.textContent = s;
     b.addEventListener('click', () => { style = s; apply(); });
+    bar.append(b);
+  }
+
+  const sep2 = document.createElement('span');
+  sep2.className = 'deck-treat-sep';
+  bar.append(sep2);
+
+  for (const s of LIGHTNESS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'deck-st';
+    b.dataset.lightnessPick = s;
+    b.textContent = s;
+    b.addEventListener('click', () => { lightness = s; apply(); });
     bar.append(b);
   }
 
