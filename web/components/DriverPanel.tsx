@@ -51,7 +51,10 @@ export function DriverPanel({
     `rows=${contributors.dimension}&cols=measure&measure=${contributors.measureId}`;
 
   return (
-    <article className="driver-panel">
+    /* A card, and a plain one. It carries no state class on purpose: it explains a movement that
+       has already happened, so it is information rather than something waiting on a person or
+       something that was refused. Most cards should look like this. */
+    <article className="card-kit driver-panel">
       <header className="driver-head">
         <h3 className="driver-title">
           {headline.label}

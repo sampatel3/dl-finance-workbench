@@ -180,6 +180,17 @@ export function BoardPanel({
  * system message, and a control names the thing, the owner and the date. So the outstanding ledgers are a
  * table: a reader scanning for whose it is should not have to read a paragraph to find a name, and a date
  * buried in prose is a date nobody schedules against.
+ *
+ * ## Why this one breathes
+ *
+ * It is a `.card-kit` card, and it takes `.card-attn` whenever the close is not final. That is the kit's
+ * ring used for what it is for and not as emphasis: the table below has a column headed **Waiting on**,
+ * and every row in it is a named person with a date. An open ledger is not a warning about the numbers,
+ * it is a person who has not finished — which is the one thing the kit's ring means.
+ *
+ * When every ledger is closed the ring goes away and the card is a plain hairline, because then nothing
+ * on it is waiting for anybody. The grade — final, on schedule, at risk — is a status rather than an
+ * affordance, so it stays on the mark inside the card rather than claiming the border.
  */
 export function AccountingStatusBanner({
   status,
@@ -191,7 +202,7 @@ export function AccountingStatusBanner({
 }) {
   return (
     <section
-      className={`status-banner status-${status.grade}`}
+      className={`card-kit${status.final ? '' : ' card-attn'} status-banner status-${status.grade}`}
       aria-label="Accounting status"
       role={status.grade === 'at_risk' ? 'alert' : 'status'}
     >

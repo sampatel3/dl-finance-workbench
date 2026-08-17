@@ -316,6 +316,57 @@ a:hover { opacity: 0.72; }
 }
 .focusable:focus { outline: 2px solid var(--accent); outline-offset: 6px; }
 
+/* ------------------------------------------------------------------ the kit's card
+
+   `@demo-kit/shell/cards.css` owns the card now, and it is imported before this file so that the
+   few values this product needs different can be stated here rather than edited in the kit.
+
+   The bargain the kit makes is that the card is quiet and its OWN BORDER carries the one thing a
+   card has to say at a glance — is it waiting on you:
+
+     .card-attn   a brand ring that breathes  → a named person has to act on this
+     .card-flag   a static warning-tinted edge → this was refused
+     (neither)    the plain hairline           → information only
+
+   Three surfaces in this product take it, and they are the three that are objects with a state
+   rather than wells around a table: the accounting-status card, one driver card per material
+   movement, and the commentary approval queue. The two states are used where they are TRUE and
+   nowhere else — see `AccountingStatusBanner` and `CommentaryCard` for which state and why.
+
+   WHAT IS RESTATED, AND WHY. The kit's defaults are paper-first: its surface is `--brand-paper`
+   with a little brand mixed in and its hairline is `--brand-ink` at 12%, and on a near-black page
+   the first is a white card and the second is invisible. So the card takes THIS product's pane
+   colours, which come from the same scheme by the same route as every other surface here — no
+   hex is introduced. `--card-ring` is left alone: the kit already sets it to `--brand-a`, which
+   is what `--accent` resolves to.
+
+   The radius and the flatness are the brand's — 8px, and depth is surface lightness plus a
+   hairline, never a shadow. Only the BASE shadow is dropped, and dropping it at one class is
+   deliberate: `.card-attn` and `.card-flag` are two classes, so their rings outrank this rule and
+   survive. A card that stops asking must not lose its ring to a tidy-up. */
+.card-kit {
+  --card-surface: var(--surface);
+  --card-line: var(--border);
+
+  border-radius: var(--radius);
+  box-shadow: none;
+
+  /* The kit stacks a card's parts on one 10px gap. This product's cards space their own parts —
+     18px to an identity strip, 16px to a pinned snapshot, 12px to a caption — because the parts
+     are not peers. Dropping the gap keeps those margins rather than adding to every one of them. */
+  gap: 0;
+}
+
+/* The kit gives a card's own direct-child <p> body type, at `.card-kit > p` — which outranks a
+   single class. Every paragraph this product puts inside a card is already something named: a
+   board quotation, the sentence a driver card exists for, a caption under a table. Each is
+   restated here at the card's own specificity so its own rule is reached. Nothing is decided
+   twice — these are the values those rules state, and they are stated below as well. */
+.card-kit > .commentary-board-copy { margin: 18px 0 0; line-height: 1.6; color: var(--label); }
+.card-kit > .driver-because { margin: 10px 0 12px; line-height: 1.6; color: var(--label); }
+.card-kit > .chart-note { margin: 12px 0 0; line-height: 1.5; color: var(--faint); }
+.card-kit > .status-route { margin: 8px 0 0; color: var(--label); }
+
 /* A group of cards, not a stack of boxes: one pane, hairlines between the cells. On a narrow
    screen it becomes one column and the hairlines turn to face the other way. */
 /* Numbers lead. The brand's own rule, and the figures were at 24px — smaller than the section
@@ -355,6 +406,11 @@ a:hover { opacity: 0.72; }
   .card-v { font-size: 34px; }
 }
 
+/* A well around a table or a chart — and deliberately NOT `.card-kit`.
+   A pane has no title, no prose, no action and no state; it is the surface a nine-column grid
+   sits on. The kit's card is an object that answers "is this waiting on you", and forty-five
+   wells wearing that class would be adopting the class without adopting the design — a page of
+   cards where nothing is a card. The chrome is the same hairline either way. */
 .pane {
   padding: 20px; border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--surface);
@@ -1138,10 +1194,11 @@ a:hover { opacity: 0.72; }
 .commentary-role { font-size: 12px; color: var(--muted); }
 .commentary-role strong { color: var(--text); font-weight: 600; }
 .commentary-list { display: grid; gap: 18px; min-width: 0; }
-.commentary-card {
-  min-width: 0; padding: 22px; border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface);
-}
+/* The queue card is `.card-kit`, and it is the one surface here that uses both state classes —
+   `in_review` breathes because a controller has to approve or reject it, `rejected` carries the
+   refused edge. The surface, hairline, radius and padding all come from the kit; `min-width` is
+   the only thing left, and it is grid behaviour rather than card chrome. */
+.commentary-card { min-width: 0; }
 .commentary-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .commentary-card-head h3 {
   max-width: 34ch; margin: 5px 0 0;
@@ -1248,7 +1305,9 @@ a:hover { opacity: 0.72; }
 }
 .commentary-actions small { flex-basis: 100%; font-size: 10.5px; color: var(--faint); }
 .commentary-action-note { margin: 14px 0 0; font-size: 11px; color: var(--faint); }
-.commentary-empty p { margin-bottom: 0; color: var(--muted); }
+/* `margin-top` restated because the card it now sits in zeroes a direct-child paragraph's margins,
+   and without it the sentence would sit against the line above. */
+.commentary-empty p { margin: 10px 0 0; color: var(--muted); }
 
 @media (max-width: 760px) {
   .commentary-toolbar { align-items: flex-start; flex-direction: column; }
@@ -1368,19 +1427,21 @@ a:hover { opacity: 0.72; }
    Accounting status — a control, not a system message
    ---------------------------------------------------------------------------
    It was one amber line. The review's point was that a reader needs the entity, the owner, the date and
-   the reason before they can do anything about it, so the outstanding ledgers are a table. The grade
-   carries the colour: `final` is quiet, `on_schedule` is a note, `at_risk` is the only one that gets the
-   danger rule — because a ledger closing on Friday as planned and one that has already missed its date
-   are different conversations. */
+   the reason before they can do anything about it, so the outstanding ledgers are a table.
+
+   IT IS A CARD NOW, AND THE GRADE MOVED INSIDE IT. This was a coloured rule down the left edge —
+   `--warn` for on-schedule, `--neg` for at-risk — which is exactly the pattern `cards.css` exists
+   to end: a rail fights the surface's own border and, on a dark ground, is the loudest thing in
+   the section while carrying the least information. So the surface is `.card-kit`, the border says
+   the one thing worth a border — an open ledger is waiting on a named person, so the card breathes
+   until every ledger is closed — and the GRADE, which is a status rather than an affordance, goes
+   to the badge that names it. That split is the kit's, and it is why the two are not the same
+   colour: `at_risk` and `on_schedule` are both waiting on someone, and a ledger closing on Friday
+   as planned is still a different conversation from one that has already missed its date. */
 
 .status-banner {
   margin: 0 0 24px;
-  padding: 12px 0 12px 16px;
-  border-left: 2px solid var(--border-strong);
 }
-.status-final { border-left-color: var(--border); }
-.status-on_schedule { border-left-color: var(--warn); }
-.status-at_risk { border-left-color: var(--neg); }
 
 .status-line {
   margin: 0;
@@ -1398,6 +1459,7 @@ a:hover { opacity: 0.72; }
   text-transform: uppercase;
   color: var(--faint);
 }
+.status-on_schedule .status-mark { color: var(--warn); }
 .status-at_risk .status-mark { color: var(--neg); }
 
 .status-grid { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 12.5px; }
@@ -1432,11 +1494,11 @@ a:hover { opacity: 0.72; }
 }
 @media (max-width: 900px) { .drivers { grid-template-columns: 1fr; } }
 
-.driver-panel {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  padding: 16px 18px;
-}
+/* The panel itself is `.card-kit`: a titled object carrying a sentence, a table and a route, which
+   is the shape the kit's card is for. Its surface, hairline and padding come from there, so what
+   was stated here — a `--surface-2` well with its own border — is gone rather than restated. It
+   takes neither state class: a driver card explains a movement that has already happened, and
+   nobody is waiting on it. */
 .driver-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .driver-title {
   margin: 0; font-family: var(--ff-display); font-size: 15px; font-weight: 600; color: var(--text);

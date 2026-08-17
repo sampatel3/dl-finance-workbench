@@ -368,8 +368,27 @@ function CommentaryCard({
   const snapshot = item.publishedSnapshot;
   const evidence = commentaryEvidence(item, view, world());
   const prior = carriedCommentary(queue, item);
+  /*
+   * The card's own border carries the one thing this queue has to say at a glance.
+   *
+   * `in_review` is the only state where the product is waiting on a named person: a controller has to
+   * approve it or reject it, and until they do nothing else can happen to it. So it is the only state
+   * that breathes. `rejected` is the only state where something was refused, so it is the only one
+   * that takes the refused edge.
+   *
+   * Draft, approved and published are information. A draft is waiting on its author rather than on a
+   * reviewer, an approved item is waiting on a publisher only if this principal may publish, and a
+   * published item is immutable — none of those is a ring on this page, and marking them would leave
+   * five cards all asking at once, which is a page that asks for nothing.
+   *
+   * The state ALSO has a chip inside the card, and that is deliberate rather than redundant: the chip
+   * names the outcome in the state's own colour, and the border says whether a person is needed. Two
+   * different things, which is why the ring is the brand rather than a status hue.
+   */
+  const attention =
+    item.state === 'in_review' ? ' card-attn' : item.state === 'rejected' ? ' card-flag' : '';
   return (
-    <article className="commentary-card" id={`commentary-${index + 1}`}>
+    <article className={`card-kit${attention} commentary-card`} id={`commentary-${index + 1}`}>
       <header className="commentary-card-head">
         <div>
           <span className="commentary-kicker">Executive / Board commentary</span>
@@ -601,7 +620,14 @@ export default async function Commentary({ searchParams }: { searchParams: Promi
         </div>
 
         {visibleQueue.length === 0 ? (
-          <div className="pane commentary-empty">
+          /* Two different empties, and only one of them was refused. An empty filter result is
+             information — nothing matched the state chip that is switched on. A narrower principal
+             getting nothing is a refusal: the queue exists, it is anchored to Group figures, and it
+             is withheld rather than sliced. So the second takes the refused edge and the first does
+             not, in the place the cards themselves would have been. */
+          <div
+            className={`card-kit${view.entityId === 'group' ? '' : ' card-flag'} commentary-empty`}
+          >
             <strong>No commentary is visible in this scope.</strong>
             <p>
               {view.entityId === 'group'
