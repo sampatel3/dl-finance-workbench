@@ -1573,3 +1573,39 @@ ul.plus li::before {
 .contents .item.sub { border-top: 0; padding-top: .2cqi; }
 .contents .item.sub .nm { padding-left: 3.4cqi; font-size: 1.5cqi; color: var(--mute); font-weight: 400; }
 .contents .item.sub .no { visibility: hidden; }
+
+/* A SPLIT HOLDING TWO BLOCKS, not media and text.
+   `.split` was written for a picture beside a paragraph, so a block dropped into one half
+   keeps its full-width sizing and runs off the slide — a four-up team stacked four deep in a
+   half column is 270px of overflow. Inside a split the two halves are columns of their own:
+   the team pairs up, and both halves step their type down a notch, which is what makes
+   "record on one side, people on the other" fit at all. */
+.split { align-items: start; }
+.split > div > .label {
+  display: block; margin-bottom: 1cqi; font-family: var(--label-face); font-size: .78cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case); color: var(--mute);
+}
+.split .team { grid-template-columns: 1fr 1fr; gap: 1.4cqi; }
+.split .team .member { padding: 1.4cqi; min-height: 0; }
+.split .team .ini { width: 3.4cqi; height: 3.4cqi; font-size: 1.1cqi; }
+.split .team .name { font-size: 1.35cqi; }
+.split .team .role { font-size: .72cqi; }
+.split .team p { font-size: .84cqi; line-height: 1.5; }
+.split .ruled > div { padding: 1.1cqi 0; }
+.split .ruled .verdict { font-size: 1.25cqi; }
+.split .ruled p { font-size: .86cqi; line-height: 1.55; }
+
+/* THE WORDMARK. Opt in with `data-brand="Deeplight"` on the deck root and every slide carries
+   it, top right, quiet — a deck that is one company's says so on every page a reader might
+   photograph, and setting it once beats pasting it into fourteen slides and missing one.
+   Off by default: a demo whose product is not that company's should not wear its name. */
+.deck[data-brand] .slide::after {
+  content: attr(data-brand);
+  position: absolute; top: 3.4cqi; right: 4.4cqi;
+  font-family: var(--label-face); font-size: .8cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); color: var(--mute); opacity: .72; pointer-events: none;
+}
+/* The title page introduces the company in type ten times this size, and the dividers are
+   deliberately bare. */
+.deck[data-brand] .slide.divider::after,
+.deck[data-brand] .slide:has(> .cover)::after { content: none; }
