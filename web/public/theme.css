@@ -107,6 +107,32 @@
   --field-mix: 4%;
 }
 
+/*
+ * Keel. The warm one, and the only scheme taken from a product rather than invented.
+ *
+ * Keel is the personal-finance demo this kit's design began in, and it was never in the kit —
+ * so a demo that wanted to look like it had to guess. Every value below is copied from
+ * `apps/web/app/app.css` in that repo, including its contrast measurements, rather than
+ * approximated from a screenshot.
+ *
+ * Two things make it what it is. The neutrals are WARM and the paper is deliberately not
+ * #ffffff — #fbfaf7 is the canvas and #fefcf9 the card, so a card reads as a card without a
+ * shadow doing the work. And the evergreen is the brand while the lime is only ever a FILL:
+ * the lime measures 1.24:1 on paper, so lime TEXT is invisible, which is why `--on-b` is the
+ * near-black it carries 14.44:1 against. Same trap Deeplight's yellow sets, same answer.
+ */
+[data-scheme='keel'] {
+  --brand-a: #1b6b52;   /* evergreen — 6.15:1 on paper, so it works as fill AND as ink */
+  --brand-b: #c6f24f;   /* signal lime — a fill only; see --on-b */
+  --brand-ink: #14120e;
+  --brand-grey: #0b2b22; /* the deep evergreen the agent canvas and brand blocks are cut from */
+  --brand-paper: #fbfaf7;
+  --on-a: #fbfaf7;
+  --on-b: #14120e;      /* 14.44:1 on the lime, measured in the source */
+  --on-field: #ffffff;
+  --field-mix: 6%;
+}
+
 /* Signal. The cool one: a working blue against a warm coral, for a demo whose subject is an
    alert or an exception rather than a product. */
 [data-scheme='signal'] {
