@@ -1011,6 +1011,11 @@ ul.plus li::before {
 [data-style='drift'] .contents {
   grid-template-columns: 1fr 1fr; column-gap: 6cqi; row-gap: 2.1cqi;
 }
+/* ONE COLUMN once the contents has sub-items. The two-column grid fills left to right, row by
+   row, so a section lands in one column and the slides under it land in the other — "The
+   Problem" on the left with "Why Now" adrift on the right, attached to nothing. A contents
+   that shows structure has to be read down. */
+[data-style='drift'] .contents:has(.item.sub) { grid-template-columns: 1fr; row-gap: 1.1cqi; }
 [data-style='drift'] .contents .item { font-weight: 500; }
 [data-style='drift'] .contents .item .no {
   font-size: 1cqi; color: var(--faint); font-weight: 500; min-width: 2.2cqi;
@@ -1591,7 +1596,9 @@ ul.plus li::before {
 .split .team .name { font-size: 1.35cqi; }
 .split .team .role { font-size: .72cqi; }
 .split .team p { font-size: .84cqi; line-height: 1.5; }
-.split .ruled > div { padding: 1.1cqi 0; }
+.split .ruled { grid-template-columns: 1fr; gap: 0; }
+.split .ruled > div { padding: 1.1cqi 0 1.1cqi 0; border-left: 0; border-top: .07cqi solid var(--faint); }
+.split .ruled > div:first-child { padding-top: 0; border-top: 0; }
 .split .ruled .verdict { font-size: 1.25cqi; }
 .split .ruled p { font-size: .86cqi; line-height: 1.55; }
 
@@ -1609,3 +1616,14 @@ ul.plus li::before {
    deliberately bare. */
 .deck[data-brand] .slide.divider::after,
 .deck[data-brand] .slide:has(> .cover)::after { content: none; }
+
+/* THE MARK. `data-logo="<url>"` on the deck root puts the real logo where the wordmark was —
+   the same opt-in, one rung better, because a company that has a mark should use it rather
+   than its name set in the label face. The wordmark stays the fallback for a deck that has
+   no image to point at. */
+.deck[data-logo] .slide::after {
+  content: '';
+  width: 9cqi; height: 1.9cqi;
+  background: var(--logo) center right / contain no-repeat;
+  opacity: .9;
+}
