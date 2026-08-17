@@ -277,6 +277,15 @@ export interface ScenarioResult {
   readonly confidence: Confidence;
   /** The funding route where the scenario puts the group through the floor. */
   readonly funding?: FundingPlan;
+  /**
+   * Present only where the horizon's cash improves while trading worsens — a working-capital release
+   * rather than a better business. `releaseMinor` is the headroom the release bought, once;
+   * `monthlyEbitdaMinor` is what the scenario costs in trading, every month.
+   */
+  readonly oneOff?: {
+    readonly releaseMinor: number;
+    readonly monthlyEbitdaMinor: number;
+  };
 }
 
 /** One changed assumption, as a governance record rather than a slider position. */
@@ -425,6 +434,25 @@ export function runScenario(view: View, params: Params): ScenarioResult {
 
   const ebitda = lines.find((line) => line.measureId === 'ebitda');
   const margin = lines.find((line) => line.measureId === 'gross_margin');
+
+  /**
+   * Where thirteen weeks of cash improve while trading gets worse, say so on the face of it.
+   *
+   * A lower run rate collects a book built at the old one while settling suppliers at the new one, so
+   * the horizon shows a working-capital release. The release happens once; the lost margin recurs
+   * every month after it. Without this the surface reported that losing a tenth of the group's volume
+   * removed its cash-floor breach — while the same page recommended a fixed-cost reduction because
+   * EBITDA was down 20%. A floor that clears on a one-off is not a floor that holds.
+   */
+  const ebitdaWorse = (ebitda?.movement ?? 0) < 0;
+  const cashBetter = scenarioHeadroom > baseHeadroom;
+  const oneOff =
+    ebitdaWorse && cashBetter
+      ? {
+          releaseMinor: scenarioHeadroom - baseHeadroom,
+          monthlyEbitdaMinor: ebitda?.movement ?? 0,
+        }
+      : undefined;
   const decisions = impliedDecisions({
     movedLevers: moved,
     leverMovement: Object.fromEntries(
@@ -458,6 +486,7 @@ export function runScenario(view: View, params: Params): ScenarioResult {
     trail,
     decisions,
     confidence: confidenceOf(trail.map((row) => row.precedent)),
+    ...(oneOff === undefined ? {} : { oneOff }),
     ...(funding === undefined ? {} : { funding }),
   };
 }

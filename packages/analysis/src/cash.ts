@@ -29,6 +29,7 @@
 
 import type { FiscalMonth, ForecastWeek, PeriodScope } from '@kestrel/model';
 import {
+  ACTUAL_VERSION,
   CASH_HORIZON_WEEKS,
   addMonths,
   daysInMonth,
@@ -169,8 +170,34 @@ export function directForecast(
   };
   const at = (measureId: string): number => computeMeasure(measureId, anchorCtx).value ?? 0;
 
-  const opening = at('cash');
-  const receivables = at('receivables');
+  /**
+   * The balance sheet this forecast opens on is HISTORY; the rates and flows across the horizon are
+   * the caller's.
+   *
+   * A 13-week direct forecast starts from the cash the group has and the book it is owed, not from
+   * what a plan said either would be — a closing balance cannot be re-forecast. Reading the opening
+   * from the caller's own context is what made the treasury surface and the scenario base case state
+   * two different 13-week forecasts for the same group in the same month: the cash page opened at
+   * actual July cash of £4.8m and the scenario's "Approved forecast" column at Forecast v6's £5.9m,
+   * putting the breach in different weeks with different shortfalls and no label on either.
+   *
+   * The split has to be drawn at balances rather than at cash alone. Pinning the cash and letting the
+   * receivables BALANCE follow a scenario that rewrote history gives a forecast opening on actual
+   * cash and a counterfactual book, which reversed the sign of the collections case: a scenario
+   * collecting ten days slower reported better headroom than the approved forecast, because its
+   * rewritten past had left it a larger book to collect. Balances are actual; `dso`, `dpo` and every
+   * forward flow stay with the caller, which is what a lever is entitled to move.
+   */
+  const actualCtx: MeasureContext = {
+    ...anchorCtx,
+    scenario: 'ACTUAL',
+    versionId: ACTUAL_VERSION,
+  };
+  const asRecorded = (measureId: string): number =>
+    computeMeasure(measureId, actualCtx).value ?? 0;
+
+  const opening = asRecorded('cash');
+  const receivables = asRecorded('receivables');
   const dso = at('dso');
   const dpo = at('dpo');
 

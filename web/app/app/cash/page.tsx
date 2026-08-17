@@ -1,5 +1,5 @@
 import { resolveView } from '@demo-kit/shell';
-import { entity, tradingEntities } from '@kestrel/model';
+import { entity, formatMonthShort, tradingEntities } from '@kestrel/model';
 import { computeMeasure, formatValue } from '@kestrel/measures';
 import {
   MINIMUM_CASH,
@@ -87,7 +87,9 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
           <span className="section-note">
             Receipts and payments as opposed columns rather than one net figure, because a week that
             nets to zero because £2m arrived and £2m left is not a quiet week. Opening balance{' '}
-            {formatValue(forecast.opening, 'currency')}.
+            {formatValue(forecast.opening, 'currency')} — actual closing cash at{' '}
+            {formatMonthShort(forecast.anchor)}, which is the same balance the scenario surface opens
+            from, because a closing balance is history and no plan version moves it.
           </span>
         </div>
         <div className="pane">

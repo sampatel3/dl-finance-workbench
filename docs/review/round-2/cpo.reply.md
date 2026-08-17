@@ -1,234 +1,68 @@
 Verdict: no
 
-The demo does not contradict the deck on the three surfaces the deck shows. I checked every figure
-on slides 4, 5 and 6 against the running product and they reconcile to the penny. Where the demo
-contradicts itself is worse in one specific place: **the Cash surface and the Scenarios surface give
-two different answers for the same 13-week cash forecast, both labelled "the approved forecast", and
-the demo's own click path takes you from one to the other.** That is finding 2 below and it is in my
-driving notes.
-
 ## Blocking
 
-- **Critical** — The Commentary surface — stop 9 of 12, and the one surface that proves the product
-  can do the work the deck's problem slide is built on — produces ungrammatical English in every
-  paragraph, and this is the state the demo ships in keyless. The README's claim that without a key
-  "the demo is whole" is not true. I would have to see seven paragraphs a group financial controller
-  could paste into a board pack unedited before I believed the deck's central claim that this
-  removes the commentary rewrite.
-  - Seven paragraphs, seven broken sentences: "Against Forecast it £618k higher", "Against Forecast
-    it £588k higher", "Against Forecast it 194bps lower", "Against Forecast it £94k higher",
-    "Against Forecast it £64k lower", "Against Forecast it £92k lower", "Against Forecast it £1.1m
-    lower". The verb is missing from the template, not from one instance.
-  - `web/lib/story.ts:159` — `` `Against ${against.label} it ${said(against.movement, against.unit)}` ``.
-    Every period, every entity, every comparator inherits the defect.
-  - The deck sells this exact page twice. Slide 2: "The pack, and the commentary explaining it.
-    Written from scratch every month." The guided tour's own stop 9 calls it "A concise Board-ready
-    statement". It is not board-ready; it is not sentence-ready.
-  - Same class of defect in the Overview's entity notes: "not every posting carries **a** entity",
-    printed under all four measures.
+- **Critical** — The deck and the running product disagree on the deck's own flagship product slide, and both are on screen at the same time. Slide 4 ("Every figure on this screen opens into the working behind it") ships `shots/july-position.jpg` and an alt text that both state **EBITDA £2.1m down 3.0%** and **cash £4.8m down 18.4%**. The product at `http://localhost:3002/app` right now says **EBITDA −11.6%** and **cash −20.4%**. The slide also carries `data-route="/app?view=inner&focus=section-headline"` in a live `<iframe>`, so the frame that renders beside the stale JPEG renders the numbers that contradict it. I need the deck's figures generated from the same run as the product's, or the screenshots regenerated as part of whatever gate ships a seed change — not by hand, because a hand step is the step that was skipped here.
+  - Verified: `/api/v1/measures?pretty` returns `ebitda … movement −0.116…`, `cash … movement −0.204…`; the JPEG (read directly) shows `-3.0%` and `-18.4%`.
+  - The revenue bridge on slide 5 (£582k volume, £22k price, −£19k mix, £83k unmeasured, −£50k intercompany, £90.2m YTD, £63.1m remaining) and the entity drill on slide 6 (£5.3m / £3.0m / £2.7m / £1.5m / £730k, intercompany −£855k) still match exactly. So this is one slide out of step, which is worse rather than better: it means nothing checks.
 
-- **High** — Two surfaces state materially different 13-week cash forecasts for the same group, the
-  same month and the same approved basis, and neither reconciles to the other. The product exists to
-  stop exactly this. I would have to see one 13-week line, or both pages naming their opening
-  balance and basis on the face of the table, before I would put this in front of a treasurer.
-  - `/app/cash`: "Opening balance £4.8m … Week 9 closes at £1.7m, £760k under the £2.5m floor. Its
-    low point is £1.3m in week 10." Funding panel: "£7.9m can arrive in time against a shortfall of
-    £760k."
-  - `/app/scenarios`, row labelled **"Approved forecast"**: "LOW POINT £2.2m · HEADROOM −£273k ·
-    BREACH Week 10", and the decision card reads "The floor is breached in week 10 by £273k, and
-    £8.8m can be reached in time."
-  - I reached the second by clicking the first. The Overview raises "Cash breaches the floor by £760k
-    in week 9" as a HIGH risk whose named action is "Stress the cash floor"; that link lands on the
-    page that says £273k in week 10. The number I clicked from is nowhere on the page I arrived at.
-  - The cause is a deliberate basis difference — `web/lib/scenario.ts:354` runs plan-against-plan off
-    forecast cash (£5.9m) while the Cash surface runs off actual cash (£4.8m) — which makes it worse,
-    not better: the code comment at line 419 asserts that "'fund it by week seven' on this page and
-    on the cash page are the same claim", and the running product proves it is not.
+- **Critical** — The product gives two irreconcilable answers to the one question a treasurer would take to the board, one click apart, and the click is a link the product itself puts in front of you. `/app/cash` states: *"Week 9 closes at £1.7m, £760k under the £2.5m floor … its low point is £1.3m in week 10"*, and tabulates four weeks (9, 10, 11, 12) under the floor. `/app/scenarios`, before any lever is moved, tabulates **"Approved forecast · low point £2.6m · headroom +£142k · Breach None."** Same month, same group, same approved Forecast v6, same £2.5m board minimum. The Overview raises "Cash breaches the floor by £760k in week 9" as a *high* risk owned by the Group Treasurer, and its action button links to `/app/scenarios?focus=section-headroom&month=2026-07&dsoDays=10` — the page that says the approved forecast never breaches. I would have to see one thirteen-week engine, quoted once, with both surfaces reading it; and if the two are legitimately different bases (actual-anchored vs plan-anchored) then the row labelled "Approved forecast" has to say which, because as labelled one of the two is simply wrong.
+  - `web/lib/scenario.ts:417` carries the comment *"so 'fund it by week seven' on this page and on the cash page are the same claim."* They are not.
+  - This is not a rounding difference. It is the difference between a board paper that says "we need £760k in week 9" and one that says "we are fine."
 
-- **High** — There is no user evidence of any kind, and I could not find a trace of one. Every input
-  to this product is the vendor's own. That is the finding, not a caveat.
-  - The source material named in `docs/review/00-source-review.md` is
-    `DEEPLIGHT_Finance_Workbench_PRD_120826.docx` and `DEEPLIGHT_Finance_Transformation_AI_120826.pptx`
-    — Deeplight's own PRD and Deeplight's own slides. The review's own words: "the findings are all
-    about what neither says."
-  - I grepped the entire `docs/` tree for interview, user research, design partner, pilot customer,
-    "we asked", "spoke to". Zero hits.
-  - The deck's credentials slide is two data-platform programmes (ADCB, EWEC) and 1,300+ models. None
-    of it is this product, and none of it is a finance close. The deck offers no CFO who has seen
-    this, no close it has been run against, and no number about what a close costs today.
-  - I would have to see three named group CFOs or financial controllers who have driven this for
-    twenty minutes each, with what they said, and at least one of them a person who then asked when
-    they could have it. Absent that, everything in it is a hypothesis about a buyer, expressed very
-    fluently.
+- **High** — Nobody has used this. I looked for the difference between a product built out of what a user said and one built out of what its authors imagined, and I could not find it. There is a client PRD behind it (`docs/plan/00-build-plan.md` refers to "the PRD's own illustrative question", "the revised PRD", four §9 questions), which is real demand evidence and more than most demos have — but a PRD is a buyer describing a product, not a user using one. There is no record anywhere of a controller or an FP&A lead sitting in front of this: no session note, no task timing, no "we watched three people try to find the £212k and two went to the wrong surface", no instrumentation in the app to produce one later. I would need two named design partners who have each run one real month-end question through it, and the list of things they could not do.
 
-- **High** — Only one month of the demo is alive, and the failure is silent. Every period other than
-  July 2026 reads +0.0% against the default comparator, the MATERIAL flags disappear and the four
-  decision boards empty out to "No headline movement cleared the materiality policy this period."
-  The first thing a CFO does with a variance product is look at last month.
-  - Driven, all on the default `vs Forecast v6`: Jun 26 revenue +0.0% / EBITDA +0.0% / cash +0.0%;
-    May 26, Apr 26, Mar 26, Dec 25 all +0.0% / +0bps on all four measures. `/api/v1/measures?month=2026-06`
-    returns `comparative` equal to `value` to the penny on three of the four measures.
-  - The Explore grid prints the whole of it in one screen: six columns Feb–Jul 2026, and only the
-    July column has a non-zero variance on any row.
-  - The model can do better and the UI will not let you reach it. `packages/measures/src/comparator.ts`
-    hardcodes `choice.versionId ?? 'v6'`; v4 and v5 exist with earlier `actualsThrough`, and
-    `/app?month=2026-04&version=v4` gives a full live variance (−3.8% revenue, −326bps margin,
-    −19.7% EBITDA). But the version picker exists only on `/app/forecast`, and the context bar on
-    every other surface prints "Comparator: vs Forecast v6" with no way to change it.
-  - I would have to see the comparator resolve to the forecast version that was in force when the
-    period opened, or, failing that, the page say on its face why a variance is zero. A blank
-    decision board with no explanation reads as a broken product, and in a demo it reads as one
-    month of stagecraft.
+- **High** — The Ask surface, which is half the name of a top-level nav item ("Explore & Ask"), does not work in the state I was given, and the repo claims it does. Six POSTs to `/api/ask` over the session — the flagship question, a plain lookup, a board-commentary request, a permission-probing question as `gulf-controller`, gibberish, and an empty body — returned **six identical** `{"kind":"unavailable","failure":"no_client"}` replies: *"The answer service is not running here, so nothing could be looked up."* The panel gives no warning before you type; it offers four question chips; all four fail; and the failure payload hands the same four chips back, so the obvious next click is the one that just failed. The README says that without a key *"the demo is whole"*. It is not whole — it is a twelve-surface product with a dead thirteenth door, and `docs/plan/03-requirements-traceability.md` states the correct standard in the team's own words: *"a chip the demo refuses is worse than no chip."* I would need the keyless build to either hide the chips and say why, or answer the four questions deterministically from the same tools the model would have used.
 
-- **High** — The deck says "The workbench is built" on the only slide that carries a schedule and a
-  price, and never says what is not built. Everything missing sits inside the fixed twelve weeks and
-  the US$185K.
-  - Not built, on the evidence of the running product and its own copy: any ERP or consolidation
-    connector (deck slide 7 puts these in weeks 9–11); persistence of any kind ("Nothing a visitor
-    does persists on this tier", "this tier stores nothing"); the approval workflow the product
-    repeatedly names — "the commentary workflow is draft, review, approve, publish, and this tier
-    stores nothing"; authentication, since a persona is a URL parameter (`?as=gulf-controller`).
-  - The problem slide's whole argument is "nothing above the ledger can read it in place". The part
-    that reads the ledger in place is the part that does not exist.
-  - I would have to see one slide, or one line on slide 7, that says plainly what exists today and
-    what week 12 has to create. As it stands the reader prices a product and buys an integration
-    project, and I would not sign that for a team of mine.
+- **High** — As scoped I cannot staff it, because I cannot tell what the one thing is. Twelve surfaces, fifty-seven governed measures, four personas, a materiality policy, a mapping set, a version diff, a 13-week direct cash forecast *and* an indirect bridge, forecast-bias scoring, an approvals workflow, an AI usage log — before one user. The wedge that is actually differentiated is narrow and good: **a figure → its movement → its named drivers → its formula → its rows and load vintage.** That is slides 4, 5 and 6, and it is the only part I would fund. Everything else is either a report a BI tool already draws or a workflow a planning tool already owns. Before funding I would cut Capex & Procurement, People, KPIs, Year to Go, Scenarios and the approvals workflow, and I would want to know whether the pitch still stands with six surfaces gone — because if the answer is "no, the buyer needs the whole close", then this is not a product decision, it is a platform decision, and it is a different and much larger conversation than the one this deck opens.
 
-- **High** — Twelve surfaces is at least eight too many for what the case needs, and the extra ones
-  are where the incoherences live. The argument gets stronger under the cut, which is the tell.
-  - The case that lands is one spine: position → bridge → drill to rows, plus 13-week cash. That is
-    four surfaces (Overview, Performance, Cash, Explore) and it is genuinely good.
-  - I would cut KPIs, Year to Go, Capex & Procurement, People and Forecast Quality before funding it.
-    Every one of them is another surface to keep coherent with the other eleven, and the two
-    coherence breaks I found are both between surfaces I would have cut or between one of them and
-    the spine. Scenarios I would keep only because the lever genuinely re-runs the generator — but it
-    is also the source of finding 2.
-  - The deck already knows this: it shows three surfaces and mentions twelve. If three carry the hour,
-    the other nine are cost, not proof.
+- **High** — The commercial shape in the deck is a services engagement, not a product I can put a product team on. Slide 9 makes the ask explicit: **Accelerate, from US$185K, twelve weeks, "one workflow, live"**, and slide 7 is a bespoke per-client plan (connect one close, reproduce a close you signed, wire it in, run a close). Nothing in the deck or the demo says what is reused between client one and client two: not one connector named as built, no mapping-import path, no claim that the measure catalogue survives contact with a second chart of accounts. Every figure I drove is computed from one seed string over a synthetic group whose ledger rows the product itself calls *"seeded and shaped like ledger lines; they are not ledger lines"* — which is admirably honest and also means the hard half (real ERP extracts, real mapping mess, real intercompany) is entirely unevidenced. A team of mine would be doing bespoke integration at $185k a client with a shared demo asset. That is a consulting practice with a good sales tool, and I would fund it out of a different budget with different people.
 
-- **High** — Nothing anywhere says what this is worth, so there is no case against doing nothing.
-  Doing nothing is what I would do.
-  - The deck quantifies the problem as "twelve times a year, the same work" and stops. No days, no
-    FTE, no cost of an argued figure, no cycle time. The one measurable thing on offer is a baseline
-    that the buyer pays to have taken in week one — the engagement discovers whether the engagement
-    was worth it.
-  - What it competes with, and none of it is addressed: the spreadsheet (free, already trusted, no
-    integration project); the group FP&A analyst who already writes the commentary in two days; and
-    the incumbent, which is doing nothing for another quarter. The deck's own layer diagram concedes
-    BI and planning are "already solved", which means the buyer already has a place to look at
-    numbers.
-  - I would have to see one number of the form "the July close took N days and M of them were spent
-    reconstructing figures somebody already had", taken from a real finance function — and then this
-    product's claim on N.
+- **Low** — Money below £10,000 renders to the penny beside abbreviated peers in the same column, which no board pack does. On `/app`: "Eliminations and unattributed **−£5,886.36**" sits under "+£51k". On `/app/commentary`: "Capital spend in the month … **+£366.31**" sits beside "+£53k", and the driver-contribution table runs "+£335k, +£240k, **+£6,491.34**, **+£9,749.37**, **−£45.23**". `packages/measures/src/units.ts` shows this is deliberate — *"£4,182 abbreviated to £4k is a rounding a reader did not ask for"* — and the intent is right for a standalone figure and wrong inside a column, where it reads as a bug and costs the product a little credibility every time.
 
-- **High** — Week seven, this becomes a thing someone opens when asked. I do not think it survives,
-  and I want to be specific about why rather than gesture at novelty wearing off.
-  - There is no write path. No approval, no publish, no persistence, by construction. So the close
-    still happens in the existing tools and this is a second place to look, which is one more thing
-    to reconcile rather than one fewer. Week-seven products that add a reconciliation die.
-  - The one thing that removes work is the commentary, and the commentary does not produce publishable
-    prose (finding 1).
-  - The demo's coherence is calibrated on one month with one planted set of conditions — two unmapped
-    codes, one restatement, one intercompany break, one three-month subcontract run. In week seven
-    the data has grown and the conditions are different ones, and I have no evidence the product
-    handles a month where nothing interesting happened other than by going blank (finding 4).
-  - What would have to be true for it to still be in use: the commentary is good enough to publish
-    from, the approval and publish steps exist so the pack is produced here rather than copied out of
-    here, and the comparator behaves on any month a user picks.
+- **Low** — The version diff contradicts its own prose. On `/app/forecast`, "Cost to serve, services" moved 94.1% → 100.8% and its note says *"Every version has under-called it — the margin miss on services, the rate above assumption and the forecast bias are all this one number"* — while the **Moves** column for that row reads "—", i.e. it moves no measure. Same for "Unit cost" and "Subcontract hours". The guided tour sells that column as *"the edge between an assumption and the measure it moves"*, so an empty edge on the assumption the page calls the cause of everything is the row a sceptic will point at.
+
+- **Low** — The deck's own map does not match the deck. Its comment header says *"Eleven numbered slides"* and *"folios read `n/11`"*; the folios read `1/10` … `10/10`, and two slides in the declared arc (`7b — OUR TEAM`, `9 — THE CLOSE`) exist only as comments with no section under them. Whatever `deck lint` is checking, it is not checking this.
 
 ## Would improve
 
-- The Explore grid and the segment table label percentage-point differences as if they were relative
-  changes. `/app/performance` prints Equipment margin ACTUAL 35.8%, COMPARATIVE 36.2%, VARIANCE
-  −0.3%, RELATIVE −32bps — the VARIANCE and RELATIVE columns are the same quantity in two units, and
-  neither is the relative change. A CFO reads "−0.3%" beside a 35.8% margin as a relative decline.
-- The Ask panel announces "Answer ready." in the live region and then renders "The answer service is
-  not running here, so nothing could be looked up." Two statements, opposite meanings, same moment.
-- The AI usage log on a keyless server attributes seeded narrations to `claude-opus-5` with outputs
-  and human dispositions. One row correctly says `no-model:deterministic-template`. On a page whose
-  purpose is an append-only record of what a model actually did, the mixture invites the wrong
-  question at the wrong moment.
-- The repo states its own demo-kit pin as `cc844bf6e94…` in two places; `git ls-tree HEAD
-  vendor/demo-kit` says `e2da3bb98…`; the most recent commit message says it moved to `6506c84`.
-  Three SHAs for one pointer, verifiable in one command. Slide 7 sells "model documentation, control
-  mapping … produced by the build rather than written up afterwards", and this is the one piece of
-  documentation I could check.
-- The server became unresponsive for stretches of two to four minutes while I was driving it, on
-  `/api/health` as well as on app routes. I could not attribute this cleanly — it is a dev-mode
-  server and I could see another reviewer's browser process hitting it at the same time — so I am not
-  counting it as a defect. It is worth knowing that two concurrent drivers were enough to produce it,
-  and that nothing in the deck or the product says what a scenario costs to compute.
+- The comparator defaults are now right and were not when I started (see the last section): stepping back to May 2026 against Forecast v6 used to render four headline measures at **+0.0%** and *"No headline movement cleared the materiality policy this period"*, because v6 holds actuals through June. It now auto-falls to *"May 26 Forecast v5 — the version in force at close, because v6 already held this period as actual"*, and the page comes alive. Worth keeping the sentence: it is the best one-line explanation of versioned comparators I have seen in a product.
+- The `Explore` grid still shows a wall of `+0.0%` variance cells for closed months when the forecast dataset is the actualised one. The default landing grid is the first thing an analyst drives, and twenty-odd zeros with no note reads as broken data for the several seconds before a finance reader works out why.
+- `/app/scenarios` says *"Nothing has moved, so this is the approved forecast against itself"* and then prints a table of em-dashes. A baseline state that shows nothing is a wasted first screen; show the saved scenario a treasurer would run first, and let "nothing moved" be a state you return to.
+- Nothing persists ("Nothing a visitor does persists on this tier"), which is the right call for a demo tier and is stated plainly — but it means the commentary lifecycle the product describes in detail (draft → review → approve → publish, *"Group CFO has no transition from this state"*) can only ever be read, never performed. The one interaction a controller would most want to try is the one that is display-only.
+- Small copy errors in the highest-traffic prose: *"not every posting carries **a** entity"* (repeated on every Overview breakdown), and the Mix driver borrowing the Price driver's factor sentence verbatim (*"Operational factor moved from £721.26 to £721.45"* under both).
 
 ## What it gets right
 
-The measure layer is real engineering, not a stage set. Entity, period, comparator and currency lens
-propagate through every navigation as URL state and genuinely recompute — I changed each one and the
-numbers moved coherently, including a scenario lever that pushed the cash breach from week 10 to week
-2. Every row is computed at its own level and the product says so, refuses to make ratios additive,
-names a residual instead of hiding it, and shows an elimination line rather than forcing parts to sum
-— the drill on deck slide 6 is exactly what the app produces, to the penny. The Quality & Controls
-surface, the four-way partition of findings by direction and horizon, and the refusal to fake a sent
-email or a posted journal are all better product judgement than most funded products have.
+- The evidence spine genuinely holds. I opened the July revenue cell in Explore and got the five entities computed at their own level, the intercompany elimination named as its own line at −£855k, the formula, the owner, the approval state, the contributing load vintages and eleven source rows — and the parts tie. That is the differentiated thing, it works, and it is rarer than the people who built it seem to think.
+- The product's writing is the best part of it. Truncated axes explain themselves; ratios explain why they have no share column; the drill says out loud that the rows are seeded and not ledger lines; a mistyped URL says *"Part of this address could not be read, so a default was used"* instead of silently showing something else. Permissions are real — as `gulf-controller` the entity picker collapses to one entity and the API refuses the rest.
+- The judgement calls are the calls a finance person would make: materiality as a floor **and** a threshold with both stated, "the misses shrink each time, which is why no single version's variance looked like a pattern", separating currency before any commercial bar. Somebody here knows what a close is.
 
 ## Questions it failed to pre-empt
 
-- Who has used this, and what did they say? Nothing in the deck or the repo answers it.
-- What does a month-end cost today, in days or in pounds? The deck asserts the pain and never sizes it.
-- What is built and what is not? I had to derive the answer from the product's own disclaimers.
-- Why is every month except July flat against the forecast? The product prints +0.0% and an empty
-  decision board and offers no explanation on the page.
-- Which 13-week cash forecast is the real one — week 9 at £760k, or week 10 at £273k?
-- What is the second month of a real deployment like, when the planted conditions are different ones?
-- What is the smallest version of this? Twelve surfaces is an answer to a question nobody asked.
-- What happens when a controller disagrees with a figure? There is no write path, so where does the
-  disagreement go?
+- **Who has used it, and what did they fail to do?** The deck answers "who built it" (ADCB, EWEC, 1,300+ models) and never answers "who wanted it". Credentials are not demand.
+- **What does the second customer cost?** Twelve weeks and $185k is stated once; the reuse between customer one and customer two is stated nowhere. That is the only number that decides whether this is a product.
+- **Which system is it replacing on the invoice?** The deck's layer diagram carefully says BI, planning and OCR are "already solved" and the ERP stays — so the budget for this comes from headcount, or from nothing. It should say which, because "an additional layer nobody's budget line owns" is how this dies in procurement.
+- **What happens when the mapping set is not clean?** The demo plants exactly two unmapped accounts worth £212k and handles them beautifully. A real ledger arrives with two hundred, and the answer to "what does week three look like then" is the whole risk of the twelve-week plan.
+- **Why is a governed measure layer possible now and not five years ago?** The "Why Now" slide argues the gap exists; it never argues the timing. That is the question a CFO who has been pitched a semantic layer three times before will ask first.
+- **What is the AI actually for?** The deck's product slides are all deterministic computation — correctly so — and the model's only job in the product is phrasing. If that is the honest position, say it on the slide, because right now the AI story is inferred from a chat box that, in the build I was given, could not answer anything.
 
 ## What I made of the product after driving it
 
-Roughly two hours, one headless Chromium, twenty-five probe scripts, plus direct calls to the three
-JSON endpoints.
+Roughly ninety HTTP interactions against `localhost:3002` over the session: every one of the thirteen app routes, the deck, both `/api/v1` endpoints, the CSV export, and `/api/ask` six times. Warm response times were 0.1–0.9s throughout; the multi-minute stalls I hit twice coincided with a twelve-worker `vitest` run and memory pressure on the same machine, so I am not reporting them as product behaviour.
 
-What I drove. The shell at `/` (defaults to an iPhone frame at 90% — I switched to desktop). The
-guided tour at stops 0, 1, 2, 4, 8, 9 and 12, checking the narration against the surface inside the
-iframe each time; the narration is unusually good and stop 9's "concise Board-ready statement" is the
-one that does not survive contact. Free mode. All twelve app surfaces. The deck at `/deck.html`: 13
-sections, 10 folios, no `[[ placeholders ]]`, no failed requests, and all three live embeds loaded
-their real routes at 1194×834 — the deck is showable and its live frames work.
+What I clicked and typed, and what happened:
 
-The recompute test, nine variations. `month=2026-06` (£13.9m, all variances zero), back to July
-(identical to the first read — deterministic), `entity=gulf` (£2.7m, +5.9%, entity share correctly
-100%), `comparator=prior_year` (+6.8%, and the contribution table correctly switched from BY ENTITY
-to BY SEGMENT), `comparator=budget` (+6.6%), `comparator=trend` (−9.2%, and correctly labelled "an
-expectation, not an approved plan" and excluded from materiality), `lens=constant` (revenue £12.4m →
-£12.5m, and only the currency-sensitive figures moved), `period=ytd` (£90.2m, +0.7%),
-`as=gulf-controller` (role and scope both narrowed together). All of it moved, all of it moved
-coherently, and setting a context then walking the nav preserved it. This is the best part of the
-product and it is not fake.
+- **The July position** (`/app`). Matches the deck's slide-4 layout exactly and contradicts its numbers (Critical 1). Four material headlines, nine findings across four boards, the close banner ahead of any figure. `/api/v1/measures?pretty` returns the same four measures with raw minor units, movements, materiality reasons and owners — the "is there an API or is this a screen" question answers itself, which is the right instinct.
+- **Stepping back a month.** The single most informative thing I did. At `?month=2026-05` the product used to show four headline measures at `+0.0%` against "May 26 Forecast v6" and then tell me nothing was material — a dead page one click from the default, because v6 holds May as actual. `?comparator=prior_year` or `?version=v5` brought it back to life, which told me the data supported the right answer and the view did not. **This was fixed while I was reviewing** — it now auto-selects v5 with the reason written on the figure.
+- **The bridge** (`/app/performance`). Matches slide 5 to the pound: £11.8m → £12.4m through +£582k volume, +£22k price, −£19k mix, +£83k unmeasured units, −£50k intercompany, residual +£0k. At May 2026 the same chart used to render with **no bars at all** — two terminals reading "£13.0m Forecast / £13.0m Actual" and "the bars sum to the movement exactly — residual £0" — for the same reason as above.
+- **The drill** (`/app/explore?…&drill=0:5`). Matches slide 6 exactly. Early in the session the Technical evidence panel's **Source rows** table rendered every row with a `£` sign regardless of the entity's functional currency — Kestrel Gulf's AED 10.4m and AED 2.1m appeared as "£10.4m" and "£2.1m" against a Gulf entity total of £2.7m, so the eleven rows behind a £12.4m cell summed to about £22.6m. `/app/commentary` had it right at the time (an entity column and `AED 10.4m`, `€1.3m`, `$763k`), which is what made it a bug rather than a convention. **Also fixed mid-review**: the explore table now carries the entity column and the correct currency symbols.
+- **Cash and scenarios.** Fetched both twice, hours apart, with default parameters. `/app/cash` said "week 9, £1.7m, £760k under the floor, low point £1.3m in week 10" on both occasions. `/app/scenarios` said "breach week 10 by £273k" on the first and "Breach None, +£142k headroom" on the second, both under a row labelled *Approved forecast*. Either state contradicts the cash surface, and the Overview's own "Stress the cash floor" button walks you from one to the other (Critical 2).
+- **Ask.** Six calls, six refusals, described above. `POST /api/ask` with `{}` correctly returns `400 {"error":"A question is required."}`; a forged `as` in the body is resolved through `resolvePrincipal` rather than trusted; `gulf-controller` requesting `uk-mfg` is silently resolved back to Gulf with `parametersFellBackToDefaults: true` rather than leaking. The plumbing is careful. There is just nothing at the end of it here.
+- **Permissions and bad input.** `?entity=nope`, `?month=2099-01`, `?drill=99:99` all degrade to a default *and say so*. As `gulf-controller` the whole shell narrows to one entity and one ledger. This is the most enterprise-ready part of the demo.
 
-Then I went backwards in time and the product went quiet. June, May, April, March and December 2025
-all read +0.0% on revenue, EBITDA and cash against the default comparator, and the four decision
-boards collapse to "No headline movement cleared the materiality policy this period". The Explore
-grid shows six months side by side and only July has a variance in it. `?version=v4` on April brings
-the whole product back to life — so the data is there, and the UI will not let a mouse reach it.
+**One thing about this review that the team should weigh.** The working tree changed under me while I was driving it: at the start `git status` showed one modified file, and by the end `packages/model/src/seed.ts`, `packages/analysis/src/{detectors,forecast,funding,outlook,contributors}.ts`, `packages/measures/src/comparator.ts` and `web/app/app/cash/page.tsx` were all modified, the May comparator behaviour had changed, the drill's currency rendering had changed, the commentary's grammar had changed (*"Against Forecast it £618k higher"* → *"it is £618k higher"*), and the July EBITDA variance had moved from −3.0% to −11.6% because the £212k of unmapped accounts is now carried inside operating expense. Three findings I had verified with evidence evaporated between capture and writing. That is good engineering reflex and bad review hygiene: it is also the direct cause of Critical 1, because the deck's screenshots did not move when the seed did. Freeze the tree for the length of a review round, then fix.
 
-The Ask panel, four times — three typed questions plus one repeat, and five more times through
-`POST /api/ask`. Nine attempts, nine identical refusals: "The answer service is not running here, so
-nothing could be looked up." It is an honest refusal and I will not mark a fallback as a crash. But
-on the attempt where I typed the deck's own example question, the live region said "Answer ready."
-above a body that said nothing could be looked up.
+**Week seven.** As it stands, week seven is somebody opening this when the board asks. The reason is not the quality of the surfaces, it is that nothing accumulates: no state persists, no scenario can be saved, no commentary can be approved, and there is no reason for a controller to come back on a Tuesday. What would have to be true for the other answer is narrow and knowable — the monthly variance pack has to be *produced* here rather than *previewed* here, so that not opening it costs someone their Thursday. Everything in the twelve surfaces that does not serve that is scenery.
 
-The Commentary page is where I stopped giving the demo the benefit of the doubt. Seven paragraphs, and
-every one of them contains a sentence that is not English: "Against Forecast it £618k higher". This
-is the code-written commentary the README calls whole, on the surface that carries the deck's central
-promise, at stop 9 of 12.
-
-Then the click path that decided it. From the Overview I clicked the HIGH risk "Cash breaches the
-floor by £760k in week 9" — its named action, "Stress the cash floor" — and landed on Scenarios,
-where the row labelled "Approved forecast" says the low point is £2.2m, the headroom −£273k and the
-breach week 10. I went to `/app/cash` to check which was right: £4.8m opening, week 9 at £1.7m, £760k
-under, low point £1.3m in week 10, £7.9m available. Scenarios says £8.8m available against £273k in
-week 10. Both pages describe the group's 13-week direct cash forecast on the approved basis. Neither
-mentions the other. The scenario lever itself works properly — dsoDays +10 moved the breach to week 2
-and the low point to −£248k — so the machinery is sound and the labelling is what is wrong. For a
-product whose entire pitch is that a figure means one thing everywhere, being handed two answers by
-following its own link is the finding I would have led with if the commentary had been publishable.
+**What would change my answer**, concretely: (1) the deck and the product generated from one run, proven by a gate rather than a habit; (2) one thirteen-week cash engine quoted identically on every surface, and the same for every other figure that appears twice; (3) two named design partners who have each put one real month of their own ledger through it, with the failures written down; (4) the scope cut to the evidence spine, and the pitch re-made on that cut alone; (5) a number for what customer two costs that is not the same as customer one. Do those and I would want to talk about it in the quarter after next — not because the idea is weak, but because on this evidence I would be funding a services engagement with a very good demo attached, and I already have one of those.

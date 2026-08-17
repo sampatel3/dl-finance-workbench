@@ -19,7 +19,7 @@ import {
   stepLabel,
 } from '../../../lib/scenario';
 import type { Params } from '../../../lib/world';
-import { viewOf } from '../../../lib/world';
+import { hrefFor, viewOf } from '../../../lib/world';
 
 /**
  * Scenarios — assumptions moved, the generator re-run, the difference shown, and the decision named.
@@ -392,7 +392,10 @@ export default async function Scenarios({ searchParams }: { searchParams: Promis
             The board&rsquo;s minimum is {formatValue(MINIMUM_CASH.amountMinor, 'currency')}, set in{' '}
             {MINIMUM_CASH.owner}. Headroom is measured at the horizon&rsquo;s low point rather than
             at its close, because a forecast that ends comfortably and dips in week nine still needs
-            funding in week nine.
+            funding in week nine. Both rows open at{' '}
+            {formatValue(result.baseCash.opening, 'currency')} — actual closing cash, the same
+            balance the <a href={hrefFor('/cash', view)}>Cash</a> surface opens from, so the two
+            pages state one 13-week forecast rather than two.
           </span>
         </div>
         <div className="pane">
@@ -427,12 +430,27 @@ export default async function Scenarios({ searchParams }: { searchParams: Promis
                   {movement(result.scenarioHeadroom, 'currency')}
                 </td>
                 <td className={scenarioBreach === undefined ? '' : 'neg'}>
-                  {scenarioBreach === undefined ? 'None' : `Week ${scenarioBreach.index}`}
+                  {scenarioBreach === undefined
+                    ? result.oneOff === undefined
+                      ? 'None'
+                      : 'None — on a one-off'
+                    : `Week ${scenarioBreach.index}`}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        {result.oneOff === undefined ? null : (
+          <p className="narration">
+            Read this row with the trading result, not instead of it. Cash across the horizon improves
+            by {formatValue(result.oneOff.releaseMinor, 'currency')}, and that is a working-capital
+            release: a lower run rate collects a book built at the old one while suppliers settle at
+            the new one. It happens <strong>once</strong>. EBITDA is{' '}
+            {formatValue(Math.abs(result.oneOff.monthlyEbitdaMinor), 'currency')} lower every month,
+            which is what continues after the release is banked — so the horizon holding above the
+            floor is not evidence that the floor holds.
+          </p>
+        )}
       </section>
 
       <section className="section focusable" id="section-cashline" aria-label="Scenario cash line">
