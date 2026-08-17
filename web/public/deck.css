@@ -493,6 +493,31 @@ h1 {
 }
 .foot b { font-weight: 650; color: var(--ink); }
 
+/*
+ * EXCEPT ON THE TITLE SLIDE, WHERE THE FOOT IS THE PITCH.
+ *
+ * On every other slide `.foot` is the qualifier nobody is obliged to read, and it is dressed
+ * as one: .8cqi, grey, under a rule. The title slide's foot is the opposite — it is the first
+ * prose a reader meets and the only text that has to earn the next ten minutes. Set at the
+ * footnote size it opened the deck by whispering: measured, 11px of pitch under a 34px name.
+ *
+ * The same markup is PROMOTED here rather than given a class of its own, because a new class
+ * would leave every deck already shipping a title foot whispering until someone edited it —
+ * and this is a house standard, not one deck's problem.
+ *
+ * The lead sentence is the one that must land, since it says what the product IS, so it takes
+ * ink and the larger step. The beats after it — who built this, what is in the deck — stay in
+ * --mute so the eye reaches the first one first.
+ */
+.slide[data-job='title'] .foot {
+  padding-top: 1.8cqi; font-size: 1.24cqi; line-height: 1.52; max-width: 74ch;
+}
+.slide[data-job='title'] .foot > :first-child {
+  margin: 0 0 .9cqi; color: var(--ink); font-size: 1.62cqi; line-height: 1.38;
+}
+.slide[data-job='title'] .foot > :last-child { margin: 0; }
+.slide[data-job='title'] .foot b { font-weight: 700; }
+
 .folio {
   position: absolute; right: 4.2cqi; bottom: 1.5cqi;
   font-family: var(--label-face); font-size: .72cqi; letter-spacing: var(--label-track);
