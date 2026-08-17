@@ -1660,3 +1660,40 @@ ul.plus li::before {
 .layers .lay.on .lt { color: var(--ink); }
 .layers .lay.on .tag { color: var(--accent-ink, var(--ink)); opacity: .9; }
 .layers .lay.on p { color: var(--ink); opacity: .82; }
+
+/* THE GATES — three questions a fit call answers, then the one strip saying what you leave
+ * with.
+ *
+ * The reference decks all close this way and the kit had no block for it, so an ask slide fell
+ * back to three columns of prose — which reads as a list of topics rather than as a sequence
+ * with an output. The coloured top edge on each card is what makes them read as steps; the
+ * strip beneath is the deliverable, and without it the reader has three questions and no
+ * answer to take away.
+ */
+.gates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.2cqi; margin-top: 1.8cqi; }
+.gates .gate {
+  display: flex; flex-direction: column; padding: 2cqi 2cqi 1.8cqi;
+  border-radius: var(--radius); background: var(--pane); border: .07cqi solid var(--pane-edge);
+  border-top: .3cqi solid var(--brand-a);
+}
+.gates .gate .gn {
+  font-family: var(--label-face); font-size: .74cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); color: var(--mute);
+}
+.gates .gate .gq { margin-top: .9cqi; font-size: 1.45cqi; letter-spacing: -0.02em; font-weight: 480; }
+.gates .gate .gi {
+  margin-top: auto; padding-top: 1.2cqi; font-family: var(--label-face); font-size: .72cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case); line-height: 1.7; color: var(--mute);
+}
+/* What the hour produces. One line, because a deliverable in a paragraph is not a deliverable. */
+.leave {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 1.6cqi;
+  margin-top: 1.8cqi; padding: 1.4cqi 2cqi; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--brand-a) 12%, var(--pane)); border: .07cqi solid var(--pane-edge);
+}
+.leave .lk {
+  font-family: var(--label-face); font-size: .74cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); color: var(--mute);
+}
+.leave b { font-size: 1.15cqi; letter-spacing: -0.014em; font-weight: 500; }
+.leave span.sep { color: var(--faint); }
