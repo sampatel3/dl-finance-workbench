@@ -101,7 +101,7 @@
   const deck = document.querySelector('.deck');
   if (!deck || !location.protocol.startsWith('http')) return;
 
-  const SCHEMES = ['default', 'deeplight', 'slate', 'signal', 'ember'];
+  const SCHEMES = ['violet', 'deeplight', 'keel', 'slate', 'signal', 'ember'];
   const STYLES = ['aurora', 'drift'];
 
   let scheme = deck.getAttribute('data-scheme') ?? SCHEMES[0];

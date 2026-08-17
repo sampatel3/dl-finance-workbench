@@ -8,12 +8,20 @@ import {
   resolveStyle,
 } from '@demo-kit/shell';
 import '@demo-kit/shell/themes.css';
+import '@demo-kit/shell/cards.css';
 import './globals.css';
 import '@demo-kit/shell/shell.css';
 import { DEMO_DESCRIPTION, DEMO_NAME } from '../lib/demo';
 
 /**
  * The root layout: the fonts, and the one place the treatment is decided.
+ *
+ * ## The stylesheet order is load-bearing
+ *
+ * `themes.css` first, because it declares the scheme primitives every other stylesheet reads.
+ * `cards.css` beside it and BEFORE `globals.css`, so a card rule this demo wants different is
+ * overridden here rather than edited in the kit. `shell.css` last, because the shell falls back
+ * to its own values only where this demo has defined none.
  *
  * ## The fonts are self-hosted
  *

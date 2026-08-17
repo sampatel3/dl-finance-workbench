@@ -64,23 +64,52 @@
    states the grey it actually uses and every pane in the product is cut from it. */
 
 :root {
-  /* ---- Surfaces. Depth is surface lightness plus a hairline, never a shadow. */
-  --bg: #0a0a0a;          /* --dl-night */
+  /* ---- Surfaces. Depth is surface lightness plus a hairline, never a shadow.
+   *
+   * EVERY COLOUR BELOW COMES FROM THE SCHEME, BAR THREE — and until now almost none of them
+   * did. Fourteen literals sat in this block, `--bg: #0a0a0a` first among them, in a file
+   * imported AFTER `themes.css`; so a scheme could be set on `<html>` and the product would go
+   * on painting Deeplight's own greys with none of that scheme on the page. The NAMES are
+   * unchanged and so is every ratio they were chosen for. Only the source of the values moved,
+   * to the one file both the app and the deck read. The three exceptions are `--pos`, `--neg`
+   * and `--lift`, each stated where it is: the first two are meaning rather than brand, and a
+   * shadow is a depth.
+   *
+   * THE DARK IS NOT GIVEN UP. This product is dark-first and stays dark-first: the page is the
+   * scheme's own INK and the panes its own GREY, which is the route `themes.css` names for a
+   * dark app — Deeplight "is black THROUGHOUT, and it reaches that through `--brand-ink` and
+   * `--brand-grey`, never through paper". Mapping `--bg` onto `--brand-paper`, the way the
+   * kit's light template does, would put this workbench on a white page. That is a redesign,
+   * not a change of where a colour comes from.
+   *
+   * THE PERCENTAGES ARE RECOVERED, NOT CHOSEN. Each mix below is the share of the scheme's
+   * paper in its own grey that reproduces, channel by channel, the literal it replaces — so
+   * under `deeplight` nothing on the page shifts weight. #cecece comes back at 79%, #9d9d9d at
+   * 58%, #858585 at 48%, #4a4a4a at 23%, #3f3f3f at 18%, #2a2a2a at 9%, every one of them
+   * within a single value per channel. In any other scheme the same ramp arrives in THAT
+   * scheme's hue — Slate's greys cool off its navy, Keel's warm off its evergreen — which is
+   * the whole reason for moving the source rather than tidying the values.
+   */
+  --bg: var(--brand-ink);          /* --dl-night */
   --surface: var(--brand-grey);                                            /* a pane, not a slab */
   /* A dark surface steps up WITHIN the dark. Mixing toward paper at 82/68 produced a medium
      grey that read as another product's chrome on a black page. */
-  --surface-2: color-mix(in srgb, #ffffff 5%, var(--brand-grey));    /* wells and rows */
-  --surface-3: color-mix(in srgb, #ffffff 10%, var(--brand-grey));   /* hover and raised */
+  --surface-2: color-mix(in srgb, var(--brand-paper) 5%, var(--brand-grey));    /* wells and rows */
+  --surface-3: color-mix(in srgb, var(--brand-paper) 10%, var(--brand-grey));   /* hover and raised */
 
-  --border: #2a2a2a;         /* --dl-line */
-  --border-strong: #3f3f3f;  /* --dl-line-strong */
-  --control-border: #4a4a4a;
+  --border: color-mix(in srgb, var(--brand-paper) 9%, var(--brand-grey));          /* --dl-line */
+  --border-strong: color-mix(in srgb, var(--brand-paper) 18%, var(--brand-grey));  /* --dl-line-strong */
+  --control-border: color-mix(in srgb, var(--brand-paper) 23%, var(--brand-grey));
 
-  /* ---- Foreground */
-  --text: #ffffff;   /* --dl-white, headlines */
-  --label: #cecece;  /* --dl-body */
-  --muted: #9d9d9d;  /* --dl-muted */
-  --faint: #858585;  /* raised to AA for the 9.5–10.5px labels used throughout the workbench */
+  /* ---- Foreground. Four tiers, and they are this product's four rather than the scheme's
+     three-inks-and-an-edge: `--faint` exists for the 9.5–10.5px labels the workbench is full
+     of, and `--on-brand-edge` is a control boundary, not a text tier. So all four derive on
+     one ramp here instead of three borrowing `--on-brand-*` names and the fourth inventing
+     its own — a ramp with one member off a different ladder is a ramp that can invert. */
+  --text: var(--brand-paper);                                              /* --dl-white, headlines */
+  --label: color-mix(in srgb, var(--brand-paper) 79%, var(--brand-grey));  /* --dl-body */
+  --muted: color-mix(in srgb, var(--brand-paper) 58%, var(--brand-grey));  /* --dl-muted */
+  --faint: color-mix(in srgb, var(--brand-paper) 48%, var(--brand-grey));  /* raised to AA for the 9.5–10.5px labels used throughout the workbench */
 
   /* ---- Amber: interactive only. Never a value, and never decorative. */
   /* The brand, from the scheme. `deeplight` sets it to the #f2a900 this file used to state
@@ -103,18 +132,28 @@
   --accent-deep: oklch(from var(--brand-a) .55 c h);
   --accent-soft: color-mix(in srgb, var(--brand-a) 14%, var(--brand-ink));
 
-  /* ---- Direction. The brand's GO/NO-GO pair, used for favourable and adverse. */
+  /* ---- Direction. The brand's GO/NO-GO pair, used for favourable and adverse.
+     THE TWO EXCEPTIONS, and they stay literals on purpose. `themes.css` refuses to own them:
+     green favourable and red adverse is meaning rather than brand, and the moment a scheme can
+     repaint them a figure that moved the right way looks different in Deeplight than it does
+     in Keel, and the reader has to learn the palette to read the number. */
   --pos: #2e9e63;   /* --dl-success */
   --neg: #dc675b;   /* --dl-danger, raised to AA for small adverse variances */
   --warn: oklch(from var(--brand-a) .62 c h);  /* --dl-warning */
 
   /* ---- Chart ink. Held as tokens rather than hex in JSX so a treatment can restate them.
      These are ink, not meaning: no line here is good or bad, which is what --pos and --neg are
-     for. Amber leads because a chart's subject is the thing a reader came for. */
-  --series-1: #f2a900;
-  --series-2: #9d9d9d;
-  --series-3: #6b6b6b;
-  --series-4: #3f3f3f;
+     for. Amber leads because a chart's subject is the thing a reader came for.
+
+     ONE BRANDED SERIES AND THREE TONES, which is this chart's design and not the kit's: the
+     template builds four series from the brand PAIR, and a second hue here would make the
+     comparative line as loud as the actual. So series 1 is the scheme's primary outright and
+     the other three are the same paper-into-grey ramp as the ink above, recovered at 58 / 37 /
+     18% from #9d9d9d, #6b6b6b and #3f3f3f. */
+  --series-1: var(--brand-a);
+  --series-2: color-mix(in srgb, var(--brand-paper) 58%, var(--brand-grey));
+  --series-3: color-mix(in srgb, var(--brand-paper) 37%, var(--brand-grey));
+  --series-4: color-mix(in srgb, var(--brand-paper) 18%, var(--brand-grey));
 
   /* ---- Radii. Square-ish: buttons and badges 4px, cards 8px. No pills in this brand. */
   --radius: 8px;

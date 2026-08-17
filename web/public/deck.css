@@ -4,7 +4,7 @@
  * THREE AXES, AND THEY ARE INDEPENDENT
  *   · purpose — which arc the deck runs.   `data-purpose`  build | sell | court | invest
  *   · style   — which design system.       `data-style`    aurora | drift
- *   · scheme  — which brand.               `data-scheme`   default | deeplight | slate | signal | ember
+ *   · scheme  — which brand.               `data-scheme`   violet | deeplight | keel | slate | signal | ember
  * All three sit on the deck root, and none knows about the others. A deck can be a `court`
  * deck in `drift` wearing `deeplight`, and every slide follows.
  *

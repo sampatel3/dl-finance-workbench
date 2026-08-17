@@ -2,7 +2,7 @@
  * The schemes — the brand layer, and the only place a brand colour is written down.
  *
  * TWO AXES, AND THEY ARE NOT THE SAME AXIS
- *   · scheme — which brand.         `[data-scheme="…"]`  default | deeplight | slate | signal | ember
+ *   · scheme — which brand.         `[data-scheme="…"]`  violet | deeplight | keel | slate | signal | ember
  *   · style  — which design system. `[data-style="…"]`   aurora | drift
  * They compose: any brand in either grammar. Keeping them apart is what stops "the dark one"
  * and "the orange one" from becoming hand-maintained palettes that drift.
@@ -13,10 +13,81 @@
  * it, which is two ways to be wrong in exchange for nothing.
  *
  * WHAT A SCHEME IS ALLOWED TO SET
- * Four values and no more: two brand colours, a ground, and the grey that sits on it.
- * Everything else on every surface — panes, hairlines, chart ink, the deck's mesh — is derived
- * from these by the stylesheet that consumes them. A scheme that could set `--surface` would be
- * a second design system rather than a palette, and the next one would disagree with it.
+ * Two brand colours, and then the GROUNDS: the page, the card, the well, the hairline, the
+ * control edge, and the dark brand block with the four inks that read on it. Everything else on
+ * every surface — panes, chart ink, the deck's mesh — is still derived from these by the
+ * stylesheet that consumes them.
+ *
+ * This paragraph used to say "four values and no more", and gave a reason: a scheme that could
+ * set `--surface` would be a second design system rather than a palette, and the next one would
+ * disagree with it. That reason held for five of the six schemes and failed completely for the
+ * sixth. Keel's identity IS a ground pair — a warm #fbfaf7 page under #fefcf9 cards, neither of
+ * them white — so under the old rule the one scheme copied from a real product was the one the
+ * kit could not express, and the app it shipped in fell back to a hex of its own. Refusing to
+ * name a surface did not prevent a second design system. It moved that system into
+ * `globals.css`, where no scheme could reach it and no reader would look.
+ *
+ * So the contract grew and the protection moved rather than lifted: every ground has a DERIVED
+ * default, stated once in the `:root` block below as a `color-mix` of this scheme's own paper
+ * and ink. A scheme states a ground only where its design has an opinion, and gains nothing to
+ * maintain where it does not — Keel overrides eight values, and nobody else overrides any.
+ *
+ * THE GROUNDS, AND WHY EACH IS DERIVED THE WAY IT IS
+ * `--brand-surface` is the card and it derives to `--brand-paper` EXACTLY, with no mix. On white
+ * paper there is nowhere lighter to go, and the only mix available — ink into the card — makes
+ * the card darker than the page, which reads as a well rather than as a card. So the derived
+ * answer is that a card is the same fill as the page and is made a card by its EDGE. That is
+ * Keel's own rule, that a fill change is never the sole boundary of anything, applied in the one
+ * place the rule is unavoidable; and it lets a consumer write `var(--brand-surface)` on every
+ * card without asking which scheme is on.
+ *
+ * `--brand-sunken` is a well, at 6% ink into paper. Recessing always works — however light the
+ * paper, there is room below it — and 6% is where Keel's own #efebe3 measures against its paper,
+ * channel by channel, rather than a number that looked about right.
+ *
+ * `--brand-line` is the decorative hairline, at 12% — the same 12% `cards.css` already mixes for
+ * `--card-line`, and within a point of where Keel's #e3dfd8 sits. Opaque rather than a
+ * translucent ink because this colour is also a FILL: Keel paints the area around the phone
+ * column with it. A token that is sometimes a border and sometimes a background has to be one
+ * colour and not an alpha that composites differently on each of the three grounds, and at 12%
+ * the error from drawing a paper-derived line on a card is below a perceptible step.
+ *
+ * `--brand-edge` is the control boundary, at 50%, and the honest answer to whether a derived
+ * default can carry that role on white paper is yes. Half a scheme's ink into its paper lands at
+ * 3.43–3.64:1 against that paper across all six, clearing the 3:1 a non-text boundary needs. And
+ * Keel's hand-picked #8a8378 IS half its ink into its paper, to within a shade either way, where
+ * it measures 3.59:1 — so the mix REPRODUCES a value a designer chose rather than approximating
+ * one. What a token cannot do is put a boundary where the markup draws none. It can only make
+ * "every control boundary is a real boundary" a thing a stylesheet says once, instead of a rule
+ * each control is trusted to remember.
+ *
+ * A BRAND BLOCK IS A GROUND, NOT AN ACCENT
+ * Keel's signature is a dark evergreen block on a light page — two whole routes, and
+ * `bg-brand-900` in fourteen files of the product — and the colour it is cut from was already
+ * here, as `--brand-grey`. That is also the colour every raised pane in the deck comes from. In
+ * Keel those are the same value and they are not the same ROLE: a pane steps UP from the page, a
+ * block REPLACES it. So `--brand-block` names the role, derived from `--brand-grey` because for
+ * all six schemes here the two coincide, and named separately so that the first scheme wanting a
+ * block darker than its panes can say so in one line instead of having to choose between them.
+ *
+ * `--on-brand-ink` / `-muted` / `-subtle` / `-edge` are the four inks that read on that block —
+ * the same four tiers the page has. They derive as a ramp from this scheme's paper INTO the
+ * block, at 6 / 30 / 42 / 62 percent, which are the ratios Keel's own measured set sits at. That
+ * is why the derived ramp lands near its published 14.0 / 8.1 / 6.4 / 3.7:1 on any scheme instead
+ * of merely looking plausible. Keel still states its four outright, because they were measured
+ * against the real ground and a mix that comes close is not the value that was signed off.
+ *
+ * WHY ONLY KEEL OVERRIDES ANYTHING
+ * Slate and Deeplight were the two worth checking. Neither needs a line, because the derivation
+ * carries HUE — it mixes the scheme's own ink, not a shared grey. Slate's wells, hairlines and
+ * edges come out cool off its navy #0e1720 rather than flat neutral, which is the cast those two
+ * demos already have; Deeplight's come out neutral off its #0d0d0d, which is what a
+ * black-and-yellow brand wants. They stay neutral because every mix here reaches for the ink and
+ * never for `--brand-a` — which is exactly the trap the paragraph below this one is about.
+ * Deeplight is also the case that shows the block is the right mechanism rather than a Keel
+ * special: it is black THROUGHOUT, and it reaches that through `--brand-ink` and `--brand-grey`,
+ * never through paper. A scheme that wants a dark app does not need a dark `--brand-paper`. It
+ * needs the block, and now has it.
  *
  * WHY GREY IS A BRAND COLOUR AND NOT A DERIVED ONE
  * It was derived once, by mixing a little of `--brand-a` into a fixed dark grey, and that is
@@ -42,8 +113,8 @@
  * TEXT LAID ON A FIELD OF THE BRAND
  * `--on-field` is the ink for `aurora`'s full-bleed gradient — a whole slide made of the brand
  * pair. It is separate from `--on-a` because a pill of one flat colour and a field that runs
- * from a bright peak to a deep base are not the same surface: the default scheme takes black on
- * a violet pill and white across a violet field.
+ * from a bright peak to a deep base are not the same surface: Violet takes black on its pill
+ * and white across its field.
  *
  * Every scheme sets white, and the field is built to earn it — carried down toward the
  * scheme's own ink until white clears 4.5:1 even for the lightest pair here. It stays a token
@@ -62,13 +133,22 @@
  * WHO READS THIS FILE
  *   · the product — `import '@demo-kit/shell/themes.css'`, scheme on a wrapper attribute
  *   · the deck    — via the demo's own `public/theme.css`, which is a copy of this file;
- *                   `deck lint` fails if the copy has drifted from this one
+ *                   the two are held BYTE-IDENTICAL by a vitest assertion in
+ *                   `packages/deck/test/templates.test.mjs`. `deck lint` does not check this,
+ *                   so edit this file and copy it over — never hand-edit both.
  */
 
-/* Default. The scheme a demo gets before anybody has chosen one, so it is the one that has
-   to look deliberate rather than neutral. */
+/* Violet. The kit's own palette, and the one a demo gets when it names no other — see
+   `FALLBACK_SCHEME` in `scheme.ts`. It is a brand like any other rather than a neutral
+   starting point, so it has to look deliberate.
+
+   `:root` IS THIS PALETTE. It is grouped in on purpose, so a surface paints in a real brand
+   before any attribute is set — a deck opened off the filesystem, a frame not yet stamped.
+   `:root` and `[data-scheme='…']` carry EQUAL specificity, so every block below wins on
+   SOURCE ORDER alone: that is how Deeplight overrides this one, and it is why no other scheme
+   may be moved above it. */
 :root,
-[data-scheme='default'] {
+[data-scheme='violet'] {
   --brand-a: #8b5cf6;
   --brand-b: #ec4899;
   --brand-ink: #14101f;
@@ -78,6 +158,25 @@
   --on-b: #000000;
   --on-field: #ffffff;
   --field-mix: 58%;
+
+  /* THE DERIVED GROUNDS — declared here for EVERY scheme, not just for Violet.
+     `:root` is grouped in above, so these reach any surface; and because each mix names
+     `--brand-paper` and `--brand-ink` rather than a literal, it resolves against whichever
+     scheme is set on the element — Keel's mixes come out warm off #fbfaf7 without Keel
+     restating a thing. That is what makes a ground a scheme's to state only when it cares.
+     Ratios and the reasoning behind each one are in the header. */
+  --brand-surface: var(--brand-paper);
+  --brand-sunken: color-mix(in srgb, var(--brand-paper) 94%, var(--brand-ink) 6%);
+  --brand-line: color-mix(in srgb, var(--brand-paper) 88%, var(--brand-ink) 12%);
+  --brand-edge: color-mix(in srgb, var(--brand-paper) 50%, var(--brand-ink) 50%);
+
+  /* The brand block, and the ramp that reads on it. The ramp mixes toward `--brand-block`
+     rather than `--brand-grey` so that a scheme overriding only the block keeps its ink. */
+  --brand-block: var(--brand-grey);
+  --on-brand-ink: color-mix(in srgb, var(--brand-paper) 94%, var(--brand-block) 6%);
+  --on-brand-muted: color-mix(in srgb, var(--brand-paper) 70%, var(--brand-block) 30%);
+  --on-brand-subtle: color-mix(in srgb, var(--brand-paper) 58%, var(--brand-block) 42%);
+  --on-brand-edge: color-mix(in srgb, var(--brand-paper) 38%, var(--brand-block) 62%);
 }
 
 /* Deeplight. Black and yellow, and nothing else.
@@ -131,6 +230,26 @@
   --on-b: #14120e;      /* 14.44:1 on the lime, measured in the source */
   --on-field: #ffffff;
   --field-mix: 6%;
+
+  /* The grounds, and the whole reason a scheme is now allowed to state one. These are not
+     adjustments to the derived set — they are the warm neutrals the product was designed in,
+     copied from `apps/web/app/app.css` rather than nudged until they looked close. The card is
+     LIGHTER than the page, which is the one thing no derivation can do on white paper. */
+  --brand-surface: #fefcf9; /* cards — deliberately not #ffffff; every neutral is warm-biased */
+  --brand-sunken: #efebe3;  /* inset groups, input wells, zero-shadow list canvases */
+  --brand-line: #e3dfd8;    /* decorative hairline, and the fill around the phone column */
+  --brand-edge: #8a8378;    /* 3.59:1 on paper — mandatory on every control boundary */
+
+  /* The ink on the evergreen block. `--brand-block` needs no override: `--brand-grey` above IS
+     that evergreen, so the derivation already lands on it. These four are stated because each
+     was measured against the real ground in the product — the ratios are its own.
+
+     Its source also carries an on-block decorative line and a link colour. Neither has a
+     consumer in the kit yet, and a token with no consumer is a value that drifts unread. */
+  --on-brand-ink: #f2f7f4;    /* 14.02:1 */
+  --on-brand-muted: #a9c3b6;  /* 8.08:1 */
+  --on-brand-subtle: #8faf9f; /* 6.36:1 */
+  --on-brand-edge: #5e8574;   /* 3.68:1 — a real boundary on the block, not a fill change */
 }
 
 /* Signal. The cool one: a working blue against a warm coral, for a demo whose subject is an
