@@ -22,10 +22,12 @@
 import type { FiscalMonth, PeriodScope, Scenario } from '@kestrel/model';
 import {
   CALENDAR_YEAR,
+  VERSIONS,
   addMonths,
   fiscalHalfOf,
   fiscalQuarterOf,
   fiscalYearOf,
+  forecastInForce,
   formatMonthShort,
   priorPeriodScope,
   priorYearScope,
@@ -120,7 +122,37 @@ export function resolveComparator(
       };
     }
     case 'forecast': {
-      const versionId = choice.versionId ?? 'v6';
+      const requested = choice.versionId ?? 'v6';
+      /* A version's own actuals are not its forecast. Where the selected month sits inside the
+         requested version's actuals window, that version RECORDED the month rather than projecting
+         it, so the comparative equals the actual and the variance is structurally nil — which is how
+         every closed month came to read `+0.0%` against Forecast v6 and told the reader the forecast
+         had been correct to the penny. The honest comparative is the forecast that was in force when
+         the month closed, and it is named in the basis so nobody has to infer the substitution. */
+      const requestedSpec = VERSIONS.find((v) => v.id === requested);
+      const projectedByRequested =
+        requestedSpec === undefined || requestedSpec.actualsThrough < ctx.scope.endMonth;
+      const inForce = projectedByRequested ? undefined : forecastInForce(ctx.scope.endMonth);
+      const versionId = inForce?.id ?? requested;
+      const period = financePeriodLabel(ctx.scope);
+
+      if (!projectedByRequested && inForce === undefined) {
+        /* No forecast ever projected this month: it predates the version set. There is nothing to
+           compare against, and saying so is a better answer than a nil variance. */
+        return {
+          id: choice.id,
+          label: 'Forecast',
+          kind: 'lookup',
+          admissibleForMateriality: true,
+          scope: ctx.scope,
+          scenario: 'FORECAST',
+          versionId: 'none',
+          basis:
+            `${period} — no forecast projected this period. Every version on file already held it ` +
+            `as actual, so there is no assumption to measure against.`,
+        };
+      }
+
       return {
         id: choice.id,
         label: 'Forecast',
@@ -129,7 +161,11 @@ export function resolveComparator(
         scope: ctx.scope,
         scenario: 'FORECAST',
         versionId,
-        basis: `${financePeriodLabel(ctx.scope)} Forecast ${versionId}`,
+        basis:
+          inForce === undefined
+            ? `${period} Forecast ${versionId}`
+            : `${period} Forecast ${versionId} — the version in force at close, because ` +
+              `${requested} already held this period as actual`,
       };
     }
     case 'trend':

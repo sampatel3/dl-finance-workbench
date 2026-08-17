@@ -592,8 +592,11 @@ export function scenarioHref(
     if (viewKeys.has(key)) continue;
     if (value !== '') next.set(key, value);
   }
+  /* The pathname comes from `hrefFor`, which routes it through `productPath` — the surface is
+     `/scenarios` and it is mounted at `/app/scenarios`. Writing the logical path back out here
+     would send every lever, and the guided tour's own assumption step, to a 404. */
   const query = next.toString();
-  return query === '' ? '/scenarios' : `/scenarios?${query}`;
+  return query === '' ? canonical.pathname : `${canonical.pathname}?${query}`;
 }
 
 /** The approved forecast's own value for a lever, which is where every step is measured from. */

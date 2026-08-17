@@ -625,3 +625,45 @@ describe('rates are computed, never stored', () => {
     expect(Math.abs(group ?? 0)).toBeGreaterThan(1);
   });
 });
+
+describe('the forecast comparator never compares a month against its own actuals', () => {
+  /**
+   * A forecast version replays the actual drivers up to its own cut-off, so its figure for a month
+   * inside that window IS the actual. Comparing against it produced `+0.0%` for every closed month
+   * and told the reader the forecast had been correct to the penny — on the surface a CFO opens
+   * first. Eleven honest months read as fabricated data because of it.
+   */
+  it('substitutes the version that was in force, and says which', () => {
+    const june = resolveComparator({ id: 'forecast', versionId: 'v6' }, ctx({ scope: monthScope('2026-06') }));
+    // v6's actuals run to 2026-06, so it recorded June. v5 stops at 2026-03 and projected it.
+    expect(june.versionId).toBe('v5');
+    expect(june.basis).toContain('the version in force at close');
+
+    const january = resolveComparator({ id: 'forecast', versionId: 'v6' }, ctx({ scope: monthScope('2026-01') }));
+    expect(january.versionId).toBe('v4');
+  });
+
+  it('leaves the flagship month alone, because v6 genuinely forecast it', () => {
+    const july = resolveComparator({ id: 'forecast', versionId: 'v6' }, ctx({ scope: monthScope(SEED_END) }));
+    expect(july.versionId).toBe('v6');
+    expect(july.basis).not.toContain('in force at close');
+  });
+
+  it('so every closed month carries a real variance rather than a structural nil', () => {
+    for (const month of ['2026-01', '2026-03', '2026-05', '2026-06'] as const) {
+      const compared = compareMeasure('ebitda', ctx({ scope: monthScope(month) }), {
+        id: 'forecast',
+        versionId: 'v6',
+      });
+      expect(compared.movement).not.toBeNull();
+      expect(Math.abs(compared.movement ?? 0)).toBeGreaterThan(0);
+    }
+  });
+
+  it('and says there is nothing to compare where no version ever projected the month', () => {
+    // Before the version set begins, every version on file already holds the month as actual.
+    const early = resolveComparator({ id: 'forecast', versionId: 'v6' }, ctx({ scope: monthScope('2024-06') }));
+    expect(early.versionId).toBe('none');
+    expect(early.basis).toContain('no forecast projected this period');
+  });
+});

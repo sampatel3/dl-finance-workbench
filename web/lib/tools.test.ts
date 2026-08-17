@@ -115,7 +115,12 @@ describe('the selected page view', () => {
       { id: 't', name: 'compare_measures', input: { measure: 'revenue' } },
       { view: viewOf({ ...paramsForView(selected), comparator: 'forecast' }) },
     );
-    expect(forecast.content).toMatch(/Forecast v7/);
+    /* Not v7, even though v7 is the selected version. The scope ends Apr 26 and v7's actuals run to
+       Jul 26, so v7 RECORDED this quarter rather than projecting it — comparing against it would
+       report the forecast as correct to the penny. The comparator substitutes the version that was in
+       force at the time and says so in the basis, which is the disclosure that makes it honest. */
+    expect(forecast.content).toMatch(/Forecast v5/);
+    expect(forecast.content).toMatch(/the version in force at close/);
   });
 
   it('states the same context to the model, so "this period" is not reinterpreted', () => {

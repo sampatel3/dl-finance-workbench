@@ -70,11 +70,24 @@ export interface StoryParagraph {
 }
 
 /** `-0.041` → `4.1 points lower`; `£618k` → `£618k higher`. Direction as a word, never a sign. */
+/**
+ * The comparative phrase for a movement, with no verb in it.
+ *
+ * Verbless on purpose: the sentence belongs to the caller. A helper that carried "is" for two of
+ * its three returns and not the third is what put "Against Forecast it £618k higher" into every
+ * paragraph of the board commentary — the verb was missing from the template, not from one
+ * instance, so every period, entity and comparator inherited it.
+ */
 function said(movement: number | null, unit: Unit): string {
-  if (movement === null) return 'is not comparable';
-  if (movement === 0) return 'is unchanged';
+  if (movement === null) return 'not comparable';
+  if (movement === 0) return 'unchanged';
   const magnitude = formatValue(Math.abs(movement), unit);
   return `${magnitude} ${movement > 0 ? 'higher' : 'lower'}`;
+}
+
+/** A movement against a named basis: "£618k higher than June", "unchanged from June". */
+function comparedWith(movement: number | null, unit: Unit, label: string): string {
+  return movement === 0 ? `unchanged from ${label}` : `${said(movement, unit)} than ${label}`;
 }
 
 function comparisonsFor(measureId: string, ctx: MeasureContext, view: View): StoryComparison[] {
@@ -156,7 +169,7 @@ function paragraphFor(
 
   if (against !== undefined) {
     sentences.push(
-      `Against ${against.label} it ${said(against.movement, against.unit)}` +
+      `Against ${against.label} it is ${said(against.movement, against.unit)}` +
         (against.favourable === null
           ? '.'
           : `, which is ${against.favourable ? 'ahead of' : 'behind'} where it was expected to be.`),
@@ -167,10 +180,12 @@ function paragraphFor(
      a trend or a month — and splitting them makes a reader hold the first while reading the second. */
   const trend: string[] = [];
   if (priorMonth?.movement !== null && priorMonth !== undefined) {
-    trend.push(`${said(priorMonth.movement, priorMonth.unit)} than ${priorMonth.label}`);
+    trend.push(comparedWith(priorMonth.movement, priorMonth.unit, priorMonth.label));
   }
   if (priorYear?.movement !== null && priorYear !== undefined) {
-    trend.push(`${said(priorYear.movement, priorYear.unit)} than the same month a year earlier`);
+    trend.push(
+      comparedWith(priorYear.movement, priorYear.unit, 'the same month a year earlier'),
+    );
   }
   if (trend.length > 0) sentences.push(`It is ${trend.join(', and ')}.`);
 

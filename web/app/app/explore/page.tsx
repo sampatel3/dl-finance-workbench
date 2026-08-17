@@ -484,6 +484,7 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                   <tr>
                     <th scope="col">Account</th>
                     <th scope="col">Month</th>
+                    <th scope="col">Entity</th>
                     <th scope="col">Segment</th>
                     <th scope="col">Cost centre</th>
                     <th scope="col" className="num">
@@ -499,9 +500,18 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                     <tr key={i}>
                       <th scope="row">{row.accountId}</th>
                       <td>{row.month}</td>
+                      <td>{entity(row.entityId).name}</td>
                       <td>{row.segmentId ?? '—'}</td>
                       <td>{row.costCentreId ?? '—'}</td>
-                      <td className="num">{formatValue(row.amountMinor, 'currency')}</td>
+                      {/* In the entity's own functional currency, which is what `Fact.amountMinor`
+                          holds. Printing an AED or USD row with the group's £ symbol made the rows
+                          appear not to tie to the figure they are evidence for — the Gulf rows read
+                          4.6× their sterling contribution. */}
+                      <td className="num">
+                        {formatValue(row.amountMinor, 'currency', {
+                          currency: entity(row.entityId).functional,
+                        })}
+                      </td>
                       <td className="mono-cell">{row.vintageId}</td>
                     </tr>
                   ))}
@@ -515,6 +525,13 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
               ) : null}
             </div>
 
+            <p className="chart-note">
+              Each row is in its own entity&rsquo;s functional currency, which is how the ledger
+              holds it. So these rows do not add up to the consolidated figure above them, and are
+              not meant to: reaching that figure means translating each row at the closing rate for
+              its month and then eliminating intercompany trade. The provenance table above shows
+              that translated total; this table shows what was posted.
+            </p>
             <p className="chart-note">
               The rows terminate the drill spine. They are seeded and shaped like ledger lines; they
               are not ledger lines, which is the accepted weakness this demo states rather than

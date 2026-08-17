@@ -341,15 +341,33 @@ const BUCKETS = [
 /**
  * How the book distributes across the buckets at a given collection period.
  *
- * A weight per bucket, then normalised — so the buckets always sum to the balance whatever the DSO. The
- * weight falls away with distance from the DSO, which puts the mass of the book around the period it is
- * actually collecting in: at 30 days most of it is current, at 77 most of it is past terms. That is the
- * behaviour a reader expects and the reason this is derived rather than fixed.
+ * The age profile of an outstanding book is proportional to the **survival curve** of an invoice —
+ * the chance it is still unpaid at age `t`. Steady billing means every age appears in proportion to
+ * how long invoices of that age stay outstanding, so the profile decays monotonically from Current
+ * and DSO is its **mean** age.
+ *
+ * Both of those were wrong before. Weighting by distance from the DSO centred the *mode* of the
+ * distribution on it, which at 65 days put 41% of the book in 61–90 days and only 14.5% in Current.
+ * That is not a shape this ledger can produce: against £12.4m of monthly billing, the Current bucket
+ * alone has to be roughly one month of it. The old shape published "85.4% overdue", which is a
+ * collections crisis no other surface knew about.
+ *
+ * `S(t) = exp(-(t/λ)²)` — an invoice becomes more likely to be collected the further past terms it
+ * goes, which is what a collections function does — with `λ` set so that `∫S = DSO`.
  */
 function weightsFor(dso: number): number[] {
-  const centres = [15, 45, 75, 120];
-  const spread = Math.max(20, dso * 0.6);
-  return centres.map((centre) => Math.exp(-Math.abs(centre - dso) / spread));
+  if (dso <= 0) return [1, 0, 0, 0];
+  const lambda = (dso * 2) / Math.sqrt(Math.PI);
+  const survival = (t: number): number => Math.exp(-((t / lambda) ** 2));
+  /* Simpson's rule across each closed bucket. The open-ended bucket is the balance of the mean:
+     ∫₀^∞ S is exactly the DSO, so the tail needs no integration and cannot go negative. */
+  const area = (from: number, to: number): number =>
+    ((to - from) / 6) * (survival(from) + 4 * survival((from + to) / 2) + survival(to));
+  const closed = BUCKETS.filter((bucket) => bucket.toDays !== null).map((bucket) =>
+    area(bucket.fromDays === 0 ? 0 : bucket.fromDays - 1, bucket.toDays as number),
+  );
+  const tail = Math.max(0, dso - closed.reduce((sum, a) => sum + a, 0));
+  return [...closed, tail];
 }
 
 export function ageingFor(ctx: MeasureContext, entityId: string, anchor?: FiscalMonth): Ageing {

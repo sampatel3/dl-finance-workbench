@@ -55,6 +55,16 @@ export const CONTRIBUTOR_DIMENSION_LABELS: Readonly<Record<ContributorDimension,
   cost_centre: 'cost centre',
 };
 
+/**
+ * The indefinite article for a dimension label.
+ *
+ * Interpolating a bare "a" printed "not every posting carries a entity" under every measure on the
+ * opening page — a grammatical error in governed copy, which is the copy a reader trusts most.
+ */
+function anArticleFor(label: string): 'a' | 'an' {
+  return /^[aeiou]/i.test(label) ? 'an' : 'a';
+}
+
 export interface Contribution {
   readonly key: string;
   readonly label: string;
@@ -249,7 +259,7 @@ function noteFor(
   return (
     `Each row is computed at that ${where} independently, never apportioned from the total. They do ` +
     `not sum to it: intercompany trade is eliminated on consolidation, and not every posting carries ` +
-    `a ${where}. The remainder is shown rather than spread across the rows.${truncation}`
+    `${anArticleFor(where)} ${where}. The remainder is shown rather than spread across the rows.${truncation}`
   );
 }
 

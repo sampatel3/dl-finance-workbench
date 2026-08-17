@@ -144,9 +144,10 @@ export function codeAlertFor(month: FiscalMonth): CodeAlert {
     reviewWindowDays: CODE_REVIEW_WINDOW_DAYS,
     dueBy: `${month}-10T17:00:00Z`,
     risk:
-      'A code that reaches the ledger without a mapping carries value outside the reported profit ' +
-      'and loss, and one created outside the standard breaks comparability with the prior year — ' +
-      'both are cheap to fix in the month they appear and expensive to fix at year end.',
+      'A code that reaches the ledger without a mapping still reaches the reported profit and loss ' +
+      '— it lands on the unmapped line rather than the line it belongs on, so the total is right ' +
+      'and the split is wrong — and one created outside the standard breaks comparability with the ' +
+      'prior year. Both are cheap to fix in the month they appear and expensive to fix at year end.',
     sent: false,
   };
 }

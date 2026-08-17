@@ -808,9 +808,13 @@ const unmappedAccounts: DetectorDefinition = {
           `${unmapped.length} ledger accounts appeared in the load with nothing in mapping set ` +
           `${set.id} to place them, carrying ${formatValue(total, 'currency')}: ` +
           unmapped.map((u) => `${u.sourceCode} ${u.sourceLabel}`).join(', ') +
-          `. Until they are mapped that value is outside the reported profit and loss, so the figures ` +
-          `are complete against the mapping and not against the ledger — which is the difference this ` +
-          `line exists to show.`,
+          `. That value is reported, not missing: it is held on the unmapped operating expense line ` +
+          `inside total operating expense, which is what makes the mapped profit and loss tie to the ` +
+          `trial balance. What is wrong is where it sits, not whether it is there — so this is a ` +
+          `classification exception for the mapping owner, not a completeness exception for the audit ` +
+          `committee. EBITDA is right in total and wrong by line, and any margin that depends on the ` +
+          `split between cost of sales and operating expense is wrong by this amount until the codes ` +
+          `are mapped.`,
         direction: 'adverse',
         horizon: 'current',
         priority: priorityFromMultiple(Math.abs(total) / POLICY.thresholds.pl.absoluteMinor),

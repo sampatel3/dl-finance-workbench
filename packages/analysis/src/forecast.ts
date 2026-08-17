@@ -260,21 +260,17 @@ export function versionList(): readonly VersionSpec[] {
 /**
  * The forecast that was in force during a given month.
  *
- * The most recent version whose actuals stop *before* that month — so the figure it holds for the month
- * is a projection rather than a record. Needed by any rule that looks for a run across months, because
- * comparing three months against today's version compares two of them to themselves: a version's own
- * actuals are not its forecast, so an actual can never be "above assumption" inside its cut-off.
+ * Re-exported from the model, which is where it has to live now that the comparator needs it too —
+ * the comparator sits below this package. Needed by any rule that looks for a run across months,
+ * because comparing three months against today's version compares two of them to themselves: a
+ * version's own actuals are not its forecast, so an actual can never be "above assumption" inside
+ * its cut-off.
  *
  * It is also how an FP&A team actually reads it. "We have been over on contractor rates for three
  * months" means over on whatever we were assuming at the time, and a run that spans two versions is a
  * stronger finding than one inside a single version, not a weaker one — it survived a re-forecast.
  */
-export function forecastInForce(month: string): VersionSpec | undefined {
-  return VERSIONS.filter((v) => v.scenario === 'FORECAST')
-    .filter((v) => v.actualsThrough < month)
-    .sort((a, b) => (a.actualsThrough < b.actualsThrough ? -1 : 1))
-    .pop();
-}
+export { forecastInForce } from '@kestrel/model';
 
 /** The version in force: the approved forecast, not the draft on top of it. */
 export function activeApprovedForecast(): VersionSpec {

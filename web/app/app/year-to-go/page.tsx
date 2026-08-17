@@ -313,9 +313,10 @@ export default async function YearToGo({ searchParams }: { searchParams: Promise
               the table above. Money exposures are ranked first and rates after them — basis points
               and pounds are not the same kind of thing, and ordering them together by size would put
               every money figure above every rate whatever it was worth. The second line on each card
-              answers a different question — the largest single gap to budget for the year, which is
-              where a recovery would have to come from. It is not a sizing of the exposure above it,
-              and the two do not reconcile.
+              answers a different question — the largest single gap to budget year to date, which is
+              where a recovery would have to come from. It is measured over the closed months on both
+              sides, so it is a like-for-like gap rather than actuals-so-far against a whole-year
+              plan. It is not a sizing of the exposure above it, and the two do not reconcile.
             </span>
           </div>
           <div className="board-items">

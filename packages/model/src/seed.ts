@@ -665,6 +665,25 @@ export const ACTUAL_ASSUMPTIONS: AssumptionSet = {
   pipelineConversion: PIPELINE_CONVERSION_ACTUAL,
 };
 
+/**
+ * The forecast that was in force during a given month.
+ *
+ * The most recent version whose actuals stop *before* that month — so the figure it holds for the
+ * month is a projection rather than a record. `undefined` where no forecast ever projected the
+ * month, which is a real answer: the month predates the version set, and there is nothing to
+ * compare it against.
+ *
+ * This lives beside `VERSIONS` rather than in the analysis layer because the comparator needs it
+ * too, and the comparator sits below analysis. Comparing a closed month against today's forecast
+ * compares it to itself: a version's own actuals are not its forecast.
+ */
+export function forecastInForce(month: FiscalMonth): VersionSpec | undefined {
+  return VERSIONS.filter((v) => v.scenario === 'FORECAST')
+    .filter((v) => v.actualsThrough < month)
+    .sort((a, b) => (a.actualsThrough < b.actualsThrough ? -1 : 1))
+    .pop();
+}
+
 export interface VersionSpec {
   readonly id: string;
   readonly label: string;
@@ -853,6 +872,15 @@ function monthPl(
   carried: Carried,
   rates: Rates,
   healthy: boolean,
+  /**
+   * True where this month is being projected by a plan version rather than recorded as actual.
+   *
+   * `healthy` alone cannot answer this: a forecast version replays the actual drivers up to its
+   * own `actualsThrough` and only then applies its assumptions. Without this flag the planted
+   * unmapped accounts were emitted into every version, so their variance was exactly nil on the
+   * one surface built to find them.
+   */
+  projecting: boolean,
 ): MonthPl {
   const season = seasonalRelative(month);
   const revenueBySegment = new Map<SegmentCode, { revenue: number; units: number | null }>();
@@ -943,9 +971,11 @@ function monthPl(
     revenue * s.otherOpexRate * (1 + noise(`${seed}|${s.id}|${month}|opex`) * 0.017);
 
   // PLANTED 7 — the unmapped accounts land in July only, and only as actuals: a forecast cannot
-  // have failed to map an account that had not appeared when it was made.
+  // have failed to map an account that had not appeared when it was made. `!projecting` is what
+  // enforces that second half; without it every plan version carried the same £212k and the
+  // unmapped bar in the EBITDA bridge read £0k.
   const unmappedOpex =
-    !healthy && month === SEED_END
+    !healthy && !projecting && month === SEED_END
       ? UNMAPPED_JULY.filter((u) => u.entityId === s.id).reduce((sum, u) => sum + u.major, 0)
       : 0;
 
@@ -1597,6 +1627,10 @@ const OPEN_CLOSE_ENTITY = 'inc';
 function buildClosePositions(healthy: boolean): ClosePosition[] {
   const positions: ClosePosition[] = [];
   for (const month of MONTHS) {
+    /* A period is closed in the month AFTER it ends, on the same calendar as the load register:
+       July's ledgers arrive in early August, so July cannot be submitted on 4 July. Dating these
+       inside the period itself closed the month three weeks before it finished. */
+    const closingMonth = addMonths(month, 1);
     for (const e of tradingEntities()) {
       const open = !healthy && month === SEED_END && e.id === OPEN_CLOSE_ENTITY;
       positions.push({
@@ -1604,8 +1638,8 @@ function buildClosePositions(healthy: boolean): ClosePosition[] {
         month,
         state: open ? 'submitted' : 'closed',
         owner: open ? 'US Financial Controller' : 'Group Financial Controller',
-        submittedAt: `${month}-04T09:00:00Z`,
-        ...(open ? {} : { closedAt: `${month}-06T17:00:00Z` }),
+        submittedAt: `${closingMonth}-04T09:00:00Z`,
+        ...(open ? {} : { closedAt: `${closingMonth}-06T17:00:00Z` }),
         ...(open
           ? {
               note:
@@ -1613,7 +1647,7 @@ function buildClosePositions(healthy: boolean): ClosePosition[] {
                 'review, so the figures may move before close.',
               /* Two working days after the group's own close date, which is what makes this a
                  schedule slip a reader can size rather than an open-ended "pending". */
-              expectedCloseAt: `${month}-08T17:00:00Z`,
+              expectedCloseAt: `${closingMonth}-08T17:00:00Z`,
             }
           : {}),
       });
@@ -1647,7 +1681,17 @@ function generateEntity(
     const a = projecting ? assumptions : ACTUAL_ASSUMPTIONS;
     const effective = healthy ? healthyAssumptions(a) : a;
 
-    const pl = monthPl(s, month, index, effective, seed, carried ?? zeroCarried(s), rates, healthy);
+    const pl = monthPl(
+      s,
+      month,
+      index,
+      effective,
+      seed,
+      carried ?? zeroCarried(s),
+      rates,
+      healthy,
+      projecting,
+    );
     if (carried === null) carried = openingCarried(s, pl, month, effective);
 
     const closed = closeMonth(s, month, pl, carried, effective, index, healthy);

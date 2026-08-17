@@ -19,8 +19,8 @@ export const NARRATION: Readonly<Record<string, BriefRecord>> = {
       "cash": 479485248,
       "revenue_movement": 0.05247724884508832,
       "gross_margin_movement": -194.19172508795103,
-      "ebitda_movement": -0.029629522850643023,
-      "cash_movement": -0.18429261185372736,
+      "ebitda_movement": -0.11637453765795747,
+      "cash_movement": -0.2035113515757282,
       "ledgersClosed": 4,
       "ledgersTotal": 5
     },

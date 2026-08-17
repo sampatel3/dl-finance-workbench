@@ -414,7 +414,7 @@ function managementFor(
  * that. The reverse is the opportunity — a plan below the run rate is assuming a fade the actuals do not
  * show.
  */
-function risksFor(lines: readonly OutlookLine[], yearCtx: MeasureContext): LandingRisk[] {
+function risksFor(lines: readonly OutlookLine[], ytdCtx: MeasureContext): LandingRisk[] {
   return lines
     .filter((line) => line.assumedRecovery !== null && line.assumedRecovery !== 0)
     .map((line): LandingRisk => {
@@ -427,9 +427,14 @@ function risksFor(lines: readonly OutlookLine[], yearCtx: MeasureContext): Landi
       const higherIsBetter = definition.polarity !== 'lower_is_better';
       const kind: 'risk' | 'opportunity' = exposure > 0 === higherIsBetter ? 'risk' : 'opportunity';
 
+      /* Year to DATE, not the full year. A full fiscal-year context spans twelve months and only the
+         closed ones carry actuals — so comparing it to a twelve-month budget put seven months of
+         actual against twelve months of plan and reported the arithmetic difference as an entity
+         "behind budget". That made the largest entity £23.9m behind on a page whose own governed
+         table said the group lands £6.3m AHEAD. Both sides of a stated gap must cover one window. */
       const contributors = contributorsFor({
         measureId: line.measureId,
-        ctx: yearCtx,
+        ctx: ytdCtx,
         comparator: { id: 'budget' },
         limit: 2,
       });
@@ -460,7 +465,7 @@ function risksFor(lines: readonly OutlookLine[], yearCtx: MeasureContext): Landi
                  exposure above invites a reconciliation that does not exist — these rows are
                  measurements at a pinned slice and do not sum to the group. */
               recoveryFrom:
-                `Largest single gap to budget for the year: ${top.label}, ` +
+                `Largest single gap to budget year to date: ${top.label}, ` +
                 `${formatValue(Math.abs(top.movement), contributors.movementUnit)} ` +
                 `${(top.movement < 0) === higherIsBetter ? 'behind' : 'ahead'}.`,
             }),
@@ -492,6 +497,8 @@ export function buildOutlook(
   const position = yearPosition(through, calendar);
   const projection = buildYearToGo({ ctx, calendar });
   const yearCtx = contextAtScope(ctx, position.scope);
+  /* The like-for-like window for any actual-versus-plan attribution on this surface. */
+  const ytdCtx = contextAtScope(ctx, ytdScopeFor(position, through));
 
   const lines = OUTLOOK_MEASURES.map((measureId): OutlookLine => {
     const definition = measure(measureId);
@@ -602,7 +609,7 @@ export function buildOutlook(
       : { unavailableReason: projection.unavailableReason }),
     projection,
     lines,
-    risks: risksFor(lines, yearCtx),
+    risks: risksFor(lines, ytdCtx),
     actions,
     ...(actions.length > 0
       ? {}

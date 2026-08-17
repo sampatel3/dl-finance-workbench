@@ -199,7 +199,12 @@ describe('Explore CSV is the grid with its evidence attached', () => {
     expect(body).toContain('Deeplight Finance Workbench,Explore export');
     expect(body).toContain('Dataset,Actual');
     expect(body).toContain('Grid window,2026-01 to 2026-06');
-    expect(body).toContain('Comparator,Jan 26 Forecast v6');
+    /* v4, not v6: Jan 26 is inside v6's own actuals window, so v6 recorded it rather than forecasting
+       it. The export carries the substitution and its reason, because a variance column whose basis a
+       spreadsheet cannot see is the thing this export exists to prevent. */
+    expect(body).toContain(
+      'Comparator,"Jan 26 Forecast v4 — the version in force at close, because v6 already held this period as actual"',
+    );
     expect(body).toMatch(/Vintages,v-2026/);
     expect(body).toContain('Formula,Owner,Definition state,Vintages');
     expect(body).toContain('external revenue + any intercompany revenue that did not eliminate');

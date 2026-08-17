@@ -482,10 +482,12 @@ export default async function Cash({ searchParams }: { searchParams: Promise<Par
           <p className="chart-note">
             The buckets are <strong>derived</strong> from each book&rsquo;s balance and its
             collection period, and they sum to the receivables figure exactly — so the ageing ties
-            to the balance sheet rather than sitting beside it. The shape is modelled: a book
-            collecting at 77 days carries more of itself past terms than one at 60, and the profile
-            moves with the period. The totals are governed; the distribution is not, and that is
-            said here rather than implied.
+            to the balance sheet rather than sitting beside it. The shape is modelled, and the model
+            is stated: the profile follows an invoice&rsquo;s survival curve, so it decays from
+            Current and the collection period is its <em>mean</em> age rather than its peak bucket.
+            A book collecting at 77 days therefore carries more of itself past terms than one at 60,
+            while the Current bucket stays close to a month&rsquo;s billing at either. The totals are
+            governed; the distribution is not, and that is said here rather than implied.
           </p>
         </div>
       </section>
