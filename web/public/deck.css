@@ -1612,10 +1612,11 @@ ul.plus li::before {
   font-family: var(--label-face); font-size: .8cqi; letter-spacing: var(--label-track);
   text-transform: var(--label-case); color: var(--mute); opacity: .72; pointer-events: none;
 }
-/* The title page introduces the company in type ten times this size, and the dividers are
-   deliberately bare. */
-.deck[data-brand] .slide.divider::after,
-.deck[data-brand] .slide:has(> .cover)::after { content: none; }
+/* Dividers stay bare — they are a held breath, and a mark on one is furniture in the pause.
+   The TITLE PAGE keeps its mark and wears it larger: it is the one slide whose job is to say
+   whose deck this is. */
+.deck[data-brand] .slide.divider::after { content: none; }
+.deck[data-logo] .slide:has(> .cover)::after { width: 14cqi; height: 3cqi; opacity: 1; }
 
 /* THE MARK. `data-logo="<url>"` on the deck root puts the real logo where the wordmark was —
    the same opt-in, one rung better, because a company that has a mark should use it rather
@@ -1627,3 +1628,35 @@ ul.plus li::before {
   background: var(--logo) center right / contain no-repeat;
   opacity: .9;
 }
+
+/* THE LAYERS — a stack of bands, read bottom to top, with one of them the point.
+ *
+ * The shape a slide reaches for when its argument is "all of this already exists, and the gap
+ * is HERE". Written because a deck kept making that argument in four text columns, where the
+ * reader has to hold four paragraphs in their head and infer a stack; drawn, the gap is the
+ * band that is lit and the argument is over before the prose starts.
+ *
+ * `.on` marks the layer being argued for. At most one — a diagram with three highlights has
+ * highlighted nothing.
+ */
+.layers { display: flex; flex-direction: column; gap: .7cqi; margin-top: 1.8cqi; }
+.layers .lay {
+  display: grid; grid-template-columns: 13cqi 1fr auto; gap: 2.4cqi; align-items: baseline;
+  padding: 1.5cqi 2.2cqi; border-radius: var(--radius);
+  background: var(--pane); border: .07cqi solid var(--pane-edge);
+}
+.layers .lay .lt { font-size: 1.5cqi; letter-spacing: -0.02em; font-weight: 500; }
+.layers .lay p { margin: 0; font-size: .95cqi; line-height: 1.6; color: var(--mute); }
+.layers .lay .tag {
+  font-family: var(--label-face); font-size: .74cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case); color: var(--mute); white-space: nowrap;
+}
+/* The one that is the point: the brand ground, its ink, and a rule down the edge so it reads
+   as the answer rather than as one more row. */
+.layers .lay.on {
+  background: color-mix(in srgb, var(--brand-a) 16%, var(--pane));
+  border-color: color-mix(in srgb, var(--brand-a) 45%, var(--pane-edge));
+}
+.layers .lay.on .lt { color: var(--ink); }
+.layers .lay.on .tag { color: var(--accent-ink, var(--ink)); opacity: .9; }
+.layers .lay.on p { color: var(--ink); opacity: .82; }
