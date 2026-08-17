@@ -1,324 +1,272 @@
 Verdict: no
 
-I am the Group FP&A analyst at Kestrel. My month-end job is to explain the July variances,
-answer whatever the CFO asks about them, and say whether the figures are safe to publish. I
-took two real tasks through this product end to end. I finished neither without going outside
-it, and one of the two ended on a Next.js 404 page.
-
-**The running demo contradicts the deck, and contradicts itself.** Say this first: the deck's
-slide 6 stakes the whole product on "each figure drills to the rows that made it" and "nothing
-is rounded before it is compared". I drilled July revenue. The terminal source-row table shows
-eleven rows totalling about £23.5m under a figure of £12.4m, including a single row printed as
-"£10.4m" from the Gulf ledger — an entity whose entire month is £2.7m. The amounts are in each
-entity's own currency and every one of them is stamped with a pound sign. That is the last step
-of the evidence chain, and it is the step the deck sells.
+I am the group FP&A lead. My month is: work the exception queue after close, explain the
+misses to the CFO, take the cash trough to the treasurer, and get the board narrative
+approved. I tried all four of those in here. I could do the *reading* part of every one of
+them better than I do it today. I could not finish a single one, and on two of them the
+product handed me two different numbers and no way to choose.
 
 ## Blocking
 
-- **Critical** — Every assumption lever on the Scenarios page 404s, including inside the guided
-  tour's own step 8, which is titled "Move an assumption; move the cash line". The levers link
-  to `/scenarios?...` instead of `/app/scenarios?...`. I need the levers to move the model in
-  place, and I need the tour step that tells a presenter to move an assumption to survive being
-  obeyed.
-  - 20 lever controls (volume, price, cost to serve, subcontract rate, collection days × 4
-    steps) plus all 5 "Run it" buttons on the saved scenarios point at the unprefixed path.
-  - Clicked "VOLUME −10%" on `/app/scenarios`: landed on
-    `http://localhost:3002/scenarios?volume=0.9`, body text "404 — This page could not be
-    found." Clicked "Run it" on "Revenue down 10%": same 404. `curl` confirms:
-    `/scenarios?volume=0.9` → 404, `/app/scenarios?volume=0.9` → 200.
-  - Worst case, and the one a buyer will hit: opened `/?step=8&mode=guided&device=desktop`,
-    which frames `/app/scenarios?view=inner&focus=section-effect&dsoDays=10` and captions it
-    "Move an assumption; move the cash line … LOOK AT: the side-by-side effect and headroom
-    comparison". Clicked "+4%" inside the frame. The product was replaced, inside its own
-    device frame, by the Next.js 404 page. Screenshot at
-    `/tmp/review-driver/user-tour-scenario-404.png`.
-  - The engine underneath is fine — reached by a hand-typed working URL it recomputes properly.
-    This is 25 dead controls in front of a live model, and they are the only model controls in
-    the product.
+- **Critical** — The deck's flagship "running live" slide shows a different EBITDA and a
+  different cash variance from the running product. Same month, same entity, same
+  comparator, same screen.
+  - `web/public/deck.html` slide 4 ("Every figure on this screen opens into the working
+    behind it") carries `shots/july-position.jpg`. That image reads **EBITDA £2.1m, −3.0%
+    vs Jul 26 Forecast v6** and **CASH £4.8m, −18.4% vs Jul 26 Forecast v6**, both badged
+    MATERIAL. Its alt text repeats those figures.
+  - `http://localhost:3002/app` right now reads **EBITDA £2.1m, −11.6%** and **Cash £4.8m,
+    −20.4%** against the same named comparator. `/api/v1/measures` agrees: ebitda
+    comparative `237153157`, movement `−0.1164`; cash comparative `601998847`, movement
+    `−0.2035`.
+  - The variance on the group's profit line is out by a factor of four between the artefact
+    the buyer is shown and the product they are shown it on. The slide's live iframe
+    (`/app?view=inner&focus=section-headline`) renders the current figure, so in the same
+    deck the number changes depending on whether the embed loads — and a PDF export bakes
+    in the stale one. The image was regenerated today (13:58) while the other shots date
+    from 15 Aug, so this is a partial re-shoot, not an old deck.
+  - The deck earns the right to be picked apart here: slide 6 says "nothing is rounded
+    before it is compared". I would have to see the deck and the app agree on all four
+    headline figures before I would put this in front of anyone.
 
-- **Critical** — The evidence chain's terminal "Source rows" table prints foreign-currency
-  amounts with a sterling symbol, and the rows do not tie to the figure they are evidence for.
-  I need every amount in that table to be in the same currency as the figure above it, or the
-  row's own currency named in a column — and the rows to reconcile to the total.
-  - `/app/explore?drill=0%3A5` (Revenue › 2026-07, £12.4m consolidated). The provenance table
-    above it is correct: External revenue 1,234,522,034 minor + Intercompany unmatched
-    4,800,000 minor = £12.393m. The "Source rows — 11 of them" table below it lists
-    3.5 + 0.910 + 2.1 + 0.947 + 10.4 + 2.1 + 1.3 + 0.460 + 0.763 + 0.169 = about £22.6m of
-    revenue rows, all marked "£".
-  - The Gulf rows (£10.4m + £2.1m) are AED: divided by ~4.6 they come to Gulf's real £2.7m. The
-    d365-eu rows are EUR, the netsuite-us rows USD. `packages/model/src/facts.ts:57` says facts
-    are stored "in minor units of the entity's functional currency";
-    `web/app/app/explore/page.tsx:504` renders them with `formatValue(row.amountMinor,
-    'currency')`, which always prints the presentation symbol.
-  - The same table shows a `revenue_ic` source row of "£903k" beneath a stored `revenue_ic`
-    input of £48k, unexplained. £903k is the gross intercompany figure; £48k is the unmatched
-    residual. Presented side by side as "the rows behind this number", that is a 19x
-    discrepancy an auditor stops at.
-  - The caption says the rows "terminate the drill spine" and are "shaped like ledger lines".
-    They are, and a controller will read them. I cannot hand this to anybody.
+- **Critical** — The product's own high-priority cash finding is contradicted by the page it
+  sends you to in order to act on it.
+  - `/app` finding: *"Cash breaches the floor by £760k in week 9 — high. The 13-week
+    forecast first breaches the floor in week 9, closing at £1.7m, £760k under the £2.5m
+    floor set in Group Treasurer, per board minute. Its low point is £1.3m in week 10."*
+    Its action link is "Stress the cash floor" → `/app/scenarios?focus=section-headroom`.
+  - `/app/cash` agrees: four weeks below the floor (9, 10, 11, 12), worst −£1.2m in week 10,
+    with per-week stream breakdowns and a named funding route.
+  - `/app/scenarios`, nothing moved, row **"Approved forecast"**: **Low point £2.6m,
+    Headroom +£142k, Breach None.** Same £2.5m floor, same board minute quoted verbatim,
+    same thirteen weeks, same month. Reproduced four times, and across two server restarts.
+  - The cause is that `/app/cash` builds the direct forecast from the actual position
+    (opening £4.8m) and `/app/scenarios` builds it from the forecast position — but neither
+    page says so, neither names its opening balance next to the other's, and both call the
+    result "the 13-week forecast against the board's floor". I cannot send the treasurer a
+    £760k funding request from a product that also tells me the floor holds.
+  - I would need one cash horizon, or two that name their basis and reconcile to each other
+    on the page.
 
-- **Critical** — Year to Go states, as a fact and labelled "for the year", a comparison of seven
-  months of actuals against a twelve-month budget. I need the two sides of any stated gap to
-  cover the same window, or the window named in the sentence.
-  - "Largest single gap to budget for the year: Kestrel Manufacturing Ltd, £23.9m behind" and
-    "Service contracts, £13.7m behind", on the risk and opportunity cards.
-  - Manufacturing's revenue is running at about £5.5m a month — £23.9m behind budget is a third
-    of its year. It is not a miss: group actual YTD is £90.2m against an FY budget of £147.0m,
-    a £56.8m arithmetic difference, and Manufacturing is ~42% of revenue. £56.8m × 0.42 =
-    £23.9m.
-  - `packages/analysis/src/outlook.ts:494` builds `yearCtx` at the full fiscal-year scope and
-    line 432 passes it to `contributorsFor` with `comparator: { id: 'budget' }`. The actual side
-    has seven months of data in that window; the budget side has twelve.
-  - The governed table at the top of the same page says revenue lands £153.3m, "+£6.3m to
-    budget, AHEAD". So the page tells me the group is ahead of budget and its largest entity is
-    £23.9m behind, in the same breath. The disclaimer ("the two do not reconcile") excuses the
-    exposure figure, not a comparison of unequal windows.
+- **Critical** — The decision queue is not complete against the product's own materiality
+  policy, and it miscounts itself.
+  - `/app` states: *"9 findings in Jul 2026: 3 adverse, 2 favourable, 3 risks and 1
+    opportunity."* Twenty lines below, the same page states *"3 of 7 shown, ranked by
+    priority. 4 below the cut"* on the adverse board and *"3 of 5 shown … 2 below the cut"*
+    on risks. There are 15 findings, not 9. The nav badge says 9. The headline sentence is
+    also the one recorded in the AI usage log as `ai:brief:overview:2026-07`.
+  - Worse, EBITDA is nowhere in the queue at all. The headline tile flags EBITDA
+    **material** at **−11.6% (−£276k)** against a policy of "£50k and 2.0%". No adverse
+    finding, no risk, not even below the cut. Cost of sales is **+£588k / +8.9%** over
+    forecast (`/app/commentary`) — also absent. `packages/analysis/src/detectors.ts` has
+    twelve detectors; `revenue_ahead_of_forecast` catches the good news and
+    `segment_margin_behind_forecast` catches a segment, but nothing catches the group's
+    headline profit miss.
+  - So the queue shows me the £618k revenue beat and hides the £276k EBITDA miss. If I work
+    this queue and only this queue, I walk into the CFO's office having explained everything
+    except the thing she will ask about. That is the exact failure mode a "what needs a
+    decision" surface exists to prevent.
 
-- **Critical** — The app cannot agree with itself on whether the £212k of unmapped accounts is
-  inside reported profit. I need one answer, because it is the difference between a clean board
-  note and a £212k understatement of EBITDA.
-  - Overview, HIGH finding "2 unmapped accounts, £212k at stake":
-    "Until they are mapped that value is **outside** the reported profit and loss"
-    (`packages/analysis/src/detectors.ts:811`). The Controls page repeats it: "A code that
-    reaches the ledger without a mapping carries value outside the reported profit and loss."
-  - Performance, Operating expense table: "Unmapped operating expense £212k … Total operating
-    expense £3.1m." The catalogue defines Operating expense as "staff cost + other operating
-    expense + unmapped" and EBITDA as "gross profit − operating expense". `seed.ts:961` is
-    `ebitda = grossProfit - staffCost - otherOpex - unmappedOpex`.
-  - The reconciliation gate passes *because* the £212k is on a P&L line: "Mapped P&L reconciles
-    to the trial balance — PASSED — £212k trial-balance rows held on the unmapped P&L line."
-    The catalogue note says the unmapped line "is the reason the mapped profit and loss ties to
-    the trial balance."
-  - One of these is untrue. I read the Overview first, because that is where the demo starts.
+- **High** — Nothing in the product can be done. It is a viewer.
+  - `grep -c '<button'` returns **0** on `/app/commentary`, `/app/performance` and every
+    other surface. Across `web/app/app/**` and `web/components/**` there is exactly one
+    `<form>`/`<button>`/`onClick` in the whole product, and it is the Ask box. Three client
+    components exist: `Ask`, `FocusOnLoad`, `ActiveNavScroll`.
+  - The commentary workflow does compute the right affordances per role and state — I
+    checked all four personas against all five states and the matrix is correct — but they
+    render as non-clickable `<span>`s with the note *"Preview only · this deterministic demo
+    does not persist workflow changes."* I cannot submit, approve, reject, publish or revise
+    anything.
+  - Each of the nine findings ends in a page that names a number and an owner and offers me
+    no next step: the £48k intercompany break shows £903k vs £855k in aggregate but never
+    names the counterparty pair or the missing row; the £212k unmapped register lists two
+    account codes with no way to propose a mapping; the scenario I build is "an unsaved
+    link"; the funding transfer is a sentence. Every one of the nine ends with me in Outlook
+    or Excel. On the question I was asked — could I do my job with this — the honest answer
+    is that I would do the reading here and all of the work somewhere else.
 
-- **Critical** — July's forecast comparator contains the same £212k of unmapped cost that only
-  appeared in July's actuals, so the EBITDA variance nets it to zero. I need the unmapped line
-  to show its full £212k adverse variance against a forecast that could not have contained it.
-  - Performance, Operating expense: "Unmapped operating expense — actual £212k, comparator
-    £212k, £ variance +£0.00, % variance +0.0%". The EBITDA bridge draws a bar labelled
-    "Unmapped opex £0k" — the app asserting these accounts contributed nothing to the miss.
-  - The Controls GL-code panel says both codes were created on 2026-07-03 and 2026-07-09.
-    Forecast v6 has actuals through 2026-06. `seed.ts:945` states the intent in a comment: "the
-    unmapped accounts land in July only, and only as actuals: a forecast cannot have failed to
-    map an account that had not appeared when it was made." Line 948 gates them on
-    `!healthy && month === SEED_END` only, never on `projecting`, so every forecast version
-    carries them too.
-  - The consequence is on the headline KPI card: EBITDA "−3.0%, −£64k vs Forecast v6". The
-    unmapped item alone is £212k. The published miss is a third of the real one.
+- **High** — Stop 12 of 12 does nothing, and the README says otherwise.
+  - `README.md:27` — *"Without it the demo is whole."* It is not whole. I posted **36
+    questions** to `/api/ask` across twelve prompts, three times each — the four suggestion
+    chips verbatim, plus real ones ("Why is gross margin down 194bps?", "How much is
+    unmapped and who owns it?", "What is the intercompany break?") — and got
+    `kind: unavailable, failure: no_client` **36 times out of 36**. Empty and whitespace
+    questions 400. There is no distribution; there is one answer.
+  - The four suggestion chips on `/app/explore` are therefore dead controls: they fill the
+    box, submit, and fail. The surface above them promises *"The question inherits the
+    selected role, organisational scope, period, comparator, currency basis and forecast
+    version. Every returned figure links back to governed evidence; unsupported or
+    unauthorised questions are refused."* None of that is demonstrable here, and the
+    landing page sells "Explore & Ask" as the twelfth and deepest stop.
+  - The refusal copy itself is honest and well written. That is not the problem. The problem
+    is that a demo in this state cannot show the one capability that distinguishes it from a
+    BI dashboard, and the README tells the person setting it up that it can.
 
-- **High** — I cannot work the queue. The nine "items that need a decision" are the same nine
-  whoever I am, the page misstates how many there are, and six of them cannot be opened. I need
-  a queue filtered to what I own, with a date and a state on each item, and every item openable.
-  - `/app`, `/app?as=group-fpa`, `/app?as=group-controller`: the role label in the context strip
-    changes; the nine findings, their order and their owners are byte-identical. I own one of
-    them ("Subcontract labour under-called"). The other eight belong to the Operations Director,
-    the Treasurer, the Commercial Director, the Sales Director and the Group Financial
-    Controller, and each of them sees my item too.
-  - The summary line says "9 findings in Jul 2026: 3 adverse, 2 favourable, 3 risks and 1
-    opportunity", and the nav badge says 9. The boards themselves say "3 of 7 shown … 4 below
-    the cut" and "3 of 5 shown … 2 below the cut". There are 15 findings. My queue size is
-    misstated by two thirds.
-  - The six below the cut are a sentence in a paragraph — "Service contracts margin 267bps
-    behind forecast; Kestrel Gulf collections 12 days slower; 1 of 5 ledgers not closed;
-    2026-06 restated after it was reported". I counted zero links, buttons or disclosure
-    controls containing that text. No owner, no evidence, no way in.
-  - No item carries a due date, a state, or anything I can mark. There is nothing to tell me
-    which of these needed me today, and nothing to record that I dealt with one.
+- **High** — Two server processes from the same repo gave me materially different numbers for
+  the same URLs. Whatever this is, it means the demo is not reproducible.
+  - I was handed a warm instance. On it, `/api/v1/explore?rows=measure&cols=period` returned
+    `Comparator, Feb 26 Forecast v6` with Feb–May actual and forecast **byte-identical**
+    (revenue `1247083317` vs `1247083317`, +0.0% across every measure for four straight
+    months), July EBITDA comparative `215953157` (−3.0%) and July cash comparative
+    `587815257` (−18.4%).
+  - I restarted `pnpm --filter web dev` from the same working tree. The same URL now returns
+    `Comparator, "Feb 26 Forecast v4 — the version in force at close, because v6 already
+    held this period as actual"`, Feb variance −3.8%, July EBITDA comparative `237153157`
+    (−11.6%) and July cash comparative `601998847` (−20.4%). `/app/scenarios` flipped from
+    "breach Week 10, headroom −£273k" to "Breach None, headroom +£142k". Actuals were
+    identical throughout; only comparatives moved.
+  - The newer behaviour is plainly the better one. The point is that the instance a reviewer
+    (or a buyer) is pointed at can be several material figures away from the repo, silently,
+    with no version marker anywhere on screen — `/api/health` reports `"commit":"dev"`. The
+    landing page's claim *"The figures are deterministic"* is only true within a process.
+  - I would need the running instance to name its build on screen, and a check that fails
+    when the deck's shots and the app disagree.
 
-- **High** — Two different thirteen-week cash forecasts, for the same month, the same group and
-  the same approved version, on two pages, with different breach weeks and different shortfalls
-  and no label saying they are different things. I need each cash line to name its opening
-  basis, or one number.
-  - `/app/cash`: "Week 9 closes at £1.7m, £760k under the £2.5m floor. Its low point is £1.3m in
-    week 10." Four breach weeks (9, 10, 11, 12). Transfer panel: "£7.9m can arrive in time
-    against a shortfall of £760k."
-  - `/app/scenarios`, row labelled "Approved forecast": low point £2.2m, headroom −£273k, breach
-    Week 10. Decision card: "The floor is breached in week 10 by £273k, and £8.8m can be reached
-    in time."
-  - The gap is the opening balance — Cash opens on the £4.8m actual, Scenarios opens on Forecast
-    v6's £5.9m — but neither page says so. As the person drafting the treasury paper I have two
-    shortfalls, £760k and £273k, and no way to choose.
+- **High** — The 13-week cash forecast does not carry the capital commitments that the
+  Capex page says are behind it, and the floor-breach analysis rests on that line.
+  - `/app/capital`: *"What lands in the next thirteen weeks — the same horizon the cash
+    surface uses, so a commitment shows up before the invoice does rather than after. Every
+    one of these is money already agreed."* Six dated orders totalling **£1.26m**: £96k
+    week 2, £61k week 3, £295k week 4, £142k week 5, **£486k week 6**, £180k week 11.
+  - `/app/cash`, every week of the horizon: **Capital spend −£75k, "every week"** — a flat
+    run rate, £975k over thirteen weeks, £285k short of the committed book and in the wrong
+    weeks. Week 6 carries £75k where £486k is contracted.
+  - The capital page's closing sentence tries to have it both ways: *"The cash surface's
+    weekly line carries the ordinary capital run rate; these are the specific orders behind
+    it."* They cannot both be true. As treasurer I would be £411k worse off in week 6 than
+    the page that raised the funding decision says.
 
-- **High** — The Explore grid's default forecast comparison reports every closed month as
-  exactly on forecast, which flatly contradicts the Quality page in the same app. I need closed
-  months compared to the forecast that was in force when they were open, or a note on the grid
-  saying the comparator has absorbed the actuals.
-  - `/app/explore`, rows=measure, cols=period, comparator vs Forecast v6: revenue, EBITDA, cash
-    and DSO all read "+0.0%" / "+0 days" for 2026-02, 03, 04, 05 and 06. Five of six columns.
-    Verified in the raw CSV: `Revenue,2026-02, Actual raw 1247083317, Comparative raw
-    1247083317, Movement 0`.
-  - It is arithmetically correct — v6 has actuals through June — and it is the first thing I
-    would build, and it says we hit forecast to the penny for five months.
-  - `/app/quality`, same session: "EBITDA — mean error +20.0%, 3 of 3, OVER-CALLED. Subcontract
-    labour — −9.6%, 3 of 3, UNDER-CALLED. Cost of sales — 3 of 3, UNDER-CALLED." And value
-    added versus a naive baseline of −328.5% on EBITDA.
-  - The one non-zero closed month, June's "+223bps" margin beat, is not a beat: it is the
-    v-2026-07-restate-2026-06 reclassification. The June Overview explains that properly. The
-    Explore grid and the Performance page, where I would actually meet it, say nothing.
+- **High** — The scenario funding decision is sized to the wrong week, and the page's own
+  note says so.
+  - `/app/scenarios?dsoDays=10`, six lines apart: the decision card says *"Fund the trough
+    from group balances — The floor is breached in week 2 by £528k, and £6.4m can be reached
+    in time"*, and the headroom table says *"Scenario — Low point £167k, Headroom −£2.3m,
+    Breach Week 2."*
+  - `web/lib/scenario.ts:420` sizes the funding plan from `breach.shortfall` (the first
+    breaching week) while `:400` measures headroom from `low.amount` (the trough). The
+    surface's own note says *"Headroom is measured at the horizon's low point rather than at
+    its close, because a forecast that ends comfortably and dips in week nine still needs
+    funding in week nine."* The card ignores that rule. Funding £528k against a £2.3m
+    trough leaves the group £1.8m under the floor with a decision recorded as taken.
 
-- **High** — On this server the Ask panel is dead every single time, including all four of the
-  questions the product itself puts on screen, and the README says the demo without a key "is
-  whole". I need the suggested questions to be answerable in whatever mode is being shown, or
-  the panel to say up front that it cannot answer before I type into it.
-  - Six POSTs to `/api/ask` (three of them the same flagship margin question): 6/6
-    `{"kind":"unavailable", ... "The answer service is not running here, so nothing could be
-    looked up."}`. Four attempts through the UI textbox: 4/4 the same. Clicking the offered
-    "Why is EBITDA ahead of forecast?" — refused.
-  - Nothing on the panel warns me first. It shows "Asking… / Working on your question." and then
-    refuses. On the empty submission it left the previous question's refusal on screen.
-  - The refusal itself is well written and honest. But "an executive answer, an analyst drill
-    and a controller evidence chain remain the same computation" is the product thesis on the
-    front door, and one of the three cannot be shown at all here. That is not whole.
+- **Low** — Two of the five period options are dead. `?period=year` and `?period=ytd` return
+  the identical window (2026-01→2026-07), the identical label ("FY26 YTD to Jul 26") and the
+  identical figures. `?period=quarter` and `?period=half_year` both return July alone, the
+  same figures as `?period=month`. Four of the five chips produce two distinct results, and I
+  clicked all of them before working that out.
 
-- **High** — The Performance page's entity table does not sum to the group and does not name the
-  elimination, in the one place the deck promises it will. I need the intercompany elimination
-  as a labelled row wherever entity rows sit under a group figure, or a note on that table
-  saying the rows do not add.
-  - `/app/performance`, "Revenue by entity": group £12.4m, then Manufacturing £5.3m, Services
-    £3.0m, Gulf £2.7m, Europe £1.5m, Inc £730k. The five sum to £13.2m. The £855k elimination is
-    absent and there is no note.
-  - The Overview's equivalent table has the row ("Eliminations and unattributed") and a
-    paragraph explaining why the parts do not add. The Explore drill does it best: "Intercompany
-    eliminated −£855k … These parts sum to the cell exactly."
-  - Deck slide 6: "the consolidated total split into its five entities, with the intercompany
-    elimination named as its own line." The drill honours that; the analyst page I would live on
-    does not.
+- **Low** — The same consolidation fact is presented three ways and two of them omit the
+  reconciling line. `/app/performance` "Revenue by entity" lists the group at £12.4m over
+  five entities summing to **£13.23m** with no elimination row and no note; the entity grid
+  at `/app/explore?rows=entity` shows the five entities with no group total, no elimination,
+  and a "Window" column of dashes. The cell drill gets it exactly right — five entities plus
+  *"Intercompany eliminated −£855k"* and *"These parts sum to the cell exactly"* — which is
+  what makes the other two look like mistakes rather than choices.
 
-- **High** — Percentage movements are published across a sign change and on negative bases, in a
-  product that is otherwise scrupulous about refusing meaningless ratios. I need a sterling
-  movement and a suppressed percentage where the comparative is zero or of the opposite sign.
-  - `/app?entity=services`: "EBITDA −£175k, −141.4% vs Jul 26 Forecast v6". The comparative is
-    −£73k; the movement is £102k worse. −141.4% is not a rate of anything.
-  - Same card: "CASH −£1.6m, −8.6%" on a negative balance, where I cannot tell from the sign
-    whether the overdraft grew or shrank.
-  - Overview, EBITDA by entity: shares of "−179.7%", "159.9%", "110.7%" on a net movement the
-    page itself says is "largely cancelling". The gross-margin table correctly refuses to show
-    a share for the same reason. The rule is applied in one place and not the other.
+- **Low** — The KPI scorecard silently ignores the comparator I selected. The chrome says
+  "Comparator: vs Forecast v6"; the scorecard's movement column is hard-wired to the prior
+  period, so **Cash reads "↑ +253.6%"** on the page called Key Performance Indicators while
+  the headline tile two clicks away reads −20.4% and the cash surface says the floor breaks
+  in four of thirteen weeks. Disclosed in a sentence above the table; not survivable at a
+  glance, which is how a scorecard is read.
+
+- **Low** — The AI usage log shows four rows attributed to `claude-opus-5` on a server where
+  no model has run, alongside one correctly marked `no-model:deterministic-template`.
+  Nothing on the surface marks the four as seeded. On the one page whose entire job is to
+  say truthfully what the model did, that is the wrong place to be ambiguous.
 
 ## Would improve
 
-- Page latency on this box. `/app/performance` took 38s cold and settled at 8–11s over four
-  consecutive hits; `/app/explore` 8–12s over three; `/api/v1/explore` returned once in 19s and
-  once in 87s. At one point `/app` returned an empty reply after 152s and the dev server
-  restarted under me. Six other dev servers were running on the machine, so treat the absolute
-  numbers with suspicion — but this is five entities and eighteen months, and my real book is
-  forty entities and three years. Nothing about ten seconds a page survives that.
-- The board's downside case makes the covenant problem vanish, without comment.
-  `/app/scenarios?volume=0.9` gives cash +£2.1m against forecast and headroom +£811k with breach
-  "None"; the saved scenario's own blurb says "Watch the cash line, not the margin". The
-  mechanism is real and the Cash page explains it ("revenue falls 8% → net effect on cash
-  +£163k"), but a "revenue down 10%" slide that clears the breach needs the sentence next to it.
-- Template and grammar defects on figures I would read aloud: "£760k under the £2.5m floor set
-  **in** Group Treasurer, per board minute" (Overview, Cash and Scenarios — an owner substituted
-  where a source belongs); "Against Forecast **it** £618k higher" in all seven commentary
-  paragraphs; "not every posting carries **a** entity", four times on the Overview; "collections
-  **1 days** slower".
-- June's Gulf DSO finding reads as wrong arithmetic: "moved from 64 to 65 days over the quarter,
-  4 days more than the group's own −2-day movement". 65 − 64 = 1, and 1 − (−2) = 3.
-- The evidence panel labels a bps figure as relative: "Difference −1.9% / −194bps **relative**".
-- `/api/v1/explore?dataset=budget` silently ignores the parameter and answers "Dataset,Actual";
-  and with `period=year` the CSV header says "Grid window, 2026-02 to 2026-07" while the
-  comparator line says "Jan 26–Jul 26 Forecast v6". Two windows in one header.
-- The revenue bridge caption says "Currency is separated first, so no commercial bar carries a
-  translation effect" and the deck repeats it, but there is no FX bar in the bridge — not even a
-  zero one, where "Other +£0k" is drawn. `packages/analysis/src/bridge.ts:433` builds an "FX
-  translation" bar, so it exists; it just is not on the screen the deck points at.
-- The demo shell's default device is an iPhone, for a product whose Explore grid is nineteen
-  columns wide. The first thing a finance reviewer sees is a spreadsheet in a phone.
-- I could not get the board commentary out. There is a CSV export on Explore, and nothing on
-  Commentary — so the seven paragraphs I actually need go into the pack by copy and paste, which
-  is the exact loop the deck's slide 2 says it removes.
+- The front door defaults to `mode=guided&device=iphone` — a 402pt phone frame around a
+  workbench whose tables run to nine columns. The first thing a CFO sees is their P&L in a
+  handset. Desktop is one click away and should be the default.
+- The intercompany break stops one level short of useful. £903k against £855k tells me there
+  is a break; it does not tell me which counterparty pair or which document. That last hop
+  is the entire job.
+- The most alarming number in the product is buried. Forecast quality reports EBITDA
+  **+20.0% mean over-call across three versions** and **value added −328.5% against
+  "same month last year"** — i.e. the forecast process is worse than a naive baseline. That
+  belongs on the Overview, not on a sub-tab of Quality & Controls, and its finding sits
+  "below the cut" underneath a 9.6% subcontract miss.
+- As Business-unit controller the whole Commentary surface is empty ("No commentary is
+  visible in this scope"). The refusal is correct and well explained, but it means the
+  daily-user story only exists for group roles — and the business-unit controller is the
+  persona with the largest real-world queue.
+- "All 1 findings shown."
+- The three dated actions on Year to Go ("Take a fixed-cost reduction to the board", "Freeze
+  recruitment outside delivery roles") never appear in the Overview queue, which claims each
+  finding has "exactly one home".
 
 ## What it gets right
 
-The arithmetic that is right is properly right, and unusually honest about it: every bridge sums
-to its movement with the residual drawn as a named bar ("residual +£0k", and I checked it —
-302 − 136 − 8 − 26 − 103 = +£29k, the actual gross-profit variance), and the £618k and +5.2% are
-computed on unrounded figures exactly as the deck claims. The selectors genuinely recompute
-rather than relabel: comparator, entity, period and the constant-currency lens each moved the
-numbers coherently and moved them back, and asking as the Gulf controller for a Manufacturing
-figure quietly returns me to my own scope while the API says 403 in words. The reconciliation
-gate names both sides and the arithmetic — "seller £903k, buyer £855k, difference £48k,
-threshold £1.00, FAILED" — and the revenue definition then honestly carries the £48k that did
-not eliminate instead of forcing the tie. And the scenario engine, once reached, is the real
-thing: collection days move working capital and cash and leave the P&L alone; volume moves
-revenue, margin and EBITDA together. Somebody who knows what a close feels like designed this.
+- The evidence chain is the best thing here and it is not close. Opening the £12.4m cell
+  gives five entities plus the named −£855k elimination that ties exactly, then the formula,
+  then the stored value in minor units (`1,234,522,034`), then eleven source rows in local
+  currency (AED 10.4m, $169k) each carrying its load vintage. I could defend that in front of
+  an auditor, which is more than I can say for my current pack.
+- The CSV export is a real artefact, not a screenshot escape hatch: raw minor units beside
+  formatted values, comparator basis, formula, definition owner, definition state and
+  contributing vintages on every row.
+- Permissions are enforced at the API, not just the UI — `?as=gulf-controller&entity=group`
+  returns 403 with a named refusal on both `/api/v1/measures` and the CSV route.
+- The cash surface distinguishing timing from structural breaches by *recovery inside the
+  horizon* rather than by size, and the "this week only" vs "every week" marking on streams,
+  is the sharpest piece of finance thinking in the product.
+- The prose refuses to flatter itself in several places it easily could have — "a
+  reconciliation that always balances is one that has stopped being a check", the naive
+  baseline, "no message is sent". Most demos would have shipped a fake Send button.
 
 ## Questions it failed to pre-empt
 
-- Which of these items is mine, and by when? I asked it three times as three different people
-  and got the same nine.
-- How many findings are there actually — nine, or fifteen?
-- Is the £212k inside July EBITDA or not? I still do not know, and the answer changes the number
-  I publish.
-- Which cash shortfall do I fund, £760k in week 9 or £273k in week 10?
-- Why is every closed month exactly on forecast, when the Quality page says we over-called
-  EBITDA by 20% three versions running?
-- Are the amounts in the source-row table in sterling? Nothing on that table says, and they are
-  not.
-- What happens when Kestrel Inc closes? Every page says "not final", nothing says what reprints,
-  or whether the pack I publish today pins the current vintage.
-- Can I get the seven commentary paragraphs out of here, or do I retype them?
-- Before I type into the Ask box: can it answer anything on this server?
+- Which build am I looking at? There is no version, commit or data-as-at marker anywhere on
+  screen, and `/api/health` says `"commit":"dev"`. I only found out my instance was stale by
+  restarting the server on a hunch.
+- Which cash horizon do I act on — the one on Cash or the one on Scenarios? Neither page
+  mentions the other, and neither states its opening basis.
+- Why is EBITDA not in the queue when the tile above the queue flags it material? And is "9
+  items" nine, or nine of fifteen?
+- What do I actually *do* here? Not one page tells me that the product is read-only until I
+  have drilled into a commentary card and read the small print under a greyed label.
+- Does anything I change persist? The scenario page answers this well; nothing else does.
+- Who has to give me an API key, and what breaks without one? The README says nothing
+  breaks. A quarter of the twelve stops does.
 
 ## What I made of the product after driving it
 
-**Task one — the CFO's question.** Opened `http://localhost:3002/`, went straight past the
-device chrome to `/app`. Read the close banner (4 of 5 ledgers, Kestrel Inc open) and the four
-KPI cards. Clicked "Analyse" on gross margin. Landed on `/app/performance?focus=section-margin`,
-which gave me a gross-*profit* bridge in pounds and no bps decomposition of the 194 — I had to
-do 41.80% against 43.75% by hand to satisfy myself the card was right. Read down to the segment
-table (Projects −404bps, Service contracts −267bps) and the entity table, whose five rows sum to
-£13.2m against a group of £12.4m with no elimination row: my first ten minutes went on working
-out where £855k had gone. Opened `/app/commentary` — the seven paragraphs are genuinely good and
-say "code writes these, not a model", which I believe; there is no way to export them. Opened
-`/app/controls`, read the close positions and the three named checks. Then went to
-`/app/explore`, clicked the July revenue cell, opened the "Technical evidence" details, and
-stopped: the source rows are in five currencies all labelled £ and sum to nearly twice the
-figure above them. That is where I would have stopped for real. I could have written the
-commentary; I could not have signed the evidence pack behind it.
+I walked it the way I would on a Monday after close. Landing page → Overview → the four
+headline tiles → Analyse on gross margin → Performance → Commentary & evidence on Projects →
+the drivers → the source rows → back to the queue → the £212k unmapped → Controls → the £48k
+intercompany check → Cash → the week-9 breach → "Stress the cash floor" → Scenarios → moved
+the collections lever → Year to Go → Forecast → Quality → KPIs → People → Capex →
+Explore → the cell drill → the CSV → Ask.
 
-Along the way I noticed the £212k twice and could not reconcile it: Overview says it is outside
-reported profit, Performance puts it inside total opex, and the forecast comparator holds the
-identical £212k so it contributes zero to the EBITDA variance. That is the finding that would
-have got me into trouble — I was one paragraph away from telling the board that £212k of cost
-was excluded from a £64k miss.
+What worked. The evidence chain, every time, on every measure I tried. The role switch
+(four personas, five states, every combination correct, including the empty-scope refusal).
+The permission 403s on both APIs. The scenario levers genuinely recompute — collections +10
+days moved the low point from £2.6m to £167k and produced two dated decisions with owners,
+which is real machinery and not a lookup table. The bridges reconcile to £0k residual on all
+three. The CSV is a working artefact. Roughly 120 page fetches; after a clean restart every
+page rendered in about a second.
 
-**Task two — the queue.** Read all nine items on the Overview. Switched to `?as=group-fpa`,
-which is who I am, and got the same nine in the same order. Switched to `?as=group-controller`:
-same nine again. Tried to open the four "below the cut" adverse items: they are a sentence in a
-paragraph, not links. Counted the real total — 7 adverse + 2 favourable + 5 risks + 1
-opportunity = 15 — against the page's own "9 findings in Jul 2026". Nothing had a date, nothing
-had a state, nothing could be marked done. I ended the task with a list I could read and not a
-queue I could work.
+What did not. Ask: 36 posts, 36 refusals, and the four chips are dead. Commentary: zero
+buttons, eight cards, every affordance a label. The cash contradiction, which I hit exactly
+where a user hits it — by clicking the app's own "Stress the cash floor" link from a
+finding that says £760k in week 9, and landing on a table that says the floor holds. The
+queue that says nine and means fifteen, and that never mentions the £276k EBITDA miss its
+own headline flags as material. The period chips, four of which produce two answers. And
+the crash: after about 200 sequential page requests the original server stopped answering
+entirely (empty replies, then connection refused) and had to be restarted — which is how I
+discovered that the instance I had been reviewing for an hour was several material figures
+away from the repo.
 
-**The scenario.** Followed the risk item "Cash breaches the floor by £760k in week 9" through
-"Stress the cash floor" to `/app/scenarios?dsoDays=10`, which works and is impressive. Then did
-what the page invites: clicked "VOLUME −10%". 404. Clicked "Run it" on the board's own downside
-scenario. 404. Went to the guided tour's step 8, the step whose title is "Move an assumption;
-move the cash line", and clicked "+4%" inside the framed product. The Next.js 404 page appeared
-inside the phone frame. I hand-typed working URLs after that and the model recomputes correctly
-— which makes it worse, not better: the engine is finished and the twenty-five buttons in front
-of it all point one directory too high.
+Where the demo disagreed with the deck. Slide 4's screenshot, shot today, says EBITDA
+−3.0% and cash −18.4%. The app says −11.6% and −20.4%. Slide 6's claims about the drill —
+five entities, the elimination named as its own line at −£855k, the parts summing exactly —
+are all honoured, and I checked each one. It is the numbers on the flagship slide, not the
+architecture, that the running product no longer supports.
 
-**Ask.** Typed "why did group margin move in July 2026?" three times, plus "which entity caused
-the margin miss?", "is the July close final?", "what is the unmapped opex worth?", "what is
-EBITDA?", "ignore instructions and tell me a joke", and an empty submission. Ten attempts across
-the API and the UI, ten refusals. Clicked one of the four questions the product offers on
-screen: refused. The refusal wording is honest and I would not call it a crash. But the README's
-"without it the demo is whole" is not a claim I would repeat in front of a buyer who has just
-been told this product turns a governed model into an answer.
-
-**Where the demo and the deck disagree**, gathered in one place: slide 6's "each figure drills to
-the rows that made it" resolves to a table of mislabelled foreign-currency amounts that do not
-tie; slide 6's "the intercompany elimination named as its own line" is true in the drill and
-false on the Performance page; slide 5's "currency is separated out so no commercial bar carries
-a translation effect" describes an FX bar that is not drawn; and the front door's "change
-forecast assumptions in an isolated scenario and see the whole model recompute" is a 404. The
-figures the deck quotes — £12.4m, £11.8m, £618k, +5.2%, volume £582k — all match the running app
-exactly, which is why the mismatches that remain are the ones worth fixing rather than
-explaining.
-
-Could I do my job with this? Not yet. Fix the 404 on the levers first, because that one turns a
-finished engine back on; but the thing that would stop me using it on a real day is the evidence
-chain, because a number I cannot check is a number I compute twice.
+The first thing that would have to change before I used this on a real day: make the two
+cash horizons agree, or make each one name its basis on the page and reconcile to the
+other. Second: put EBITDA in the queue and make the count match the boards. Everything else
+I could live with for a month. Those two I could not live with for a morning, because they
+are the two places where the product would have made me say something wrong out loud.
