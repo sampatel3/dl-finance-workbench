@@ -9,6 +9,22 @@
 <title>Deeplight — company deck</title>
 <link rel="stylesheet" href="deck.css">
 <link rel="stylesheet" href="theme.css">
+<style>
+  .cover .tagline { font-size: 1.02cqi; letter-spacing: .13em; }
+  .deeplight-products .sum { justify-content: center; gap: 1.25cqi; }
+  .deeplight-products .sum .line { padding: .3cqi 0; }
+  [data-style='aurora'] .timeline .tp:last-child::before { display: none; }
+  [data-style='aurora'] .team.four .member .role { margin-top: .4cqi; padding-top: 0; }
+  [data-style='aurora'] .team.four .member p {
+    color: color-mix(in srgb, var(--pane-ink) 72%, var(--pane));
+    font-size: .94cqi;
+  }
+  .adcb-proof .ruled .state { font-size: .84cqi; letter-spacing: .12em; }
+  .close-polish .leave .contact {
+    margin-left: auto; padding: .65cqi .9cqi; border-radius: calc(var(--radius) * .65);
+    background: var(--brand-a); color: var(--on-a); font-weight: 650;
+  }
+</style>
 
 <!--
   The Deeplight company deck, aligned to deeplight.ae (read 2026-08-16).
@@ -36,8 +52,8 @@
   and AI-native engineering across all of it. No gate slide: nobody buys a gate.
 
   Facts trace to docs/plan/07-deeplight-company-deck.md §1. ADCB is a stated fact, confirmed
-  by the client owner. The Muse saving is a client's own estimate and says so. The Finance
-  Workbench screen is the Kestrel demo, synthetic, and its own slide says so.
+  by the client owner. The Muse saving is a client's own estimate. The Finance Workbench
+  screen is the synthetic Kestrel demo.
 
   ONE DOCUMENTED LINT FAILURE, CORRECT: `surface` owes a frame and carries none — the
   programmes are a commercial structure, not a product interface.
@@ -49,7 +65,7 @@
   <section class="slide vivid" data-job="title">
     <div class="cover">
       <h1><span class="bracket">[</span>Deeplight<span class="bracket">]</span></h1>
-      <div class="tagline">AI pilots stall at the control environment. We get them into production.</div>
+      <div class="tagline">AI pilots stall at the control gate. We get them into governed production.</div>
     </div>
     <div class="folio">1/11</div>
   </section>
@@ -70,8 +86,8 @@
   <!-- 3 — OUR MISSION -->
   <section class="slide vivid" data-job="purpose">
     <div class="eyebrow">Our Mission</div>
-    <p class="statement">We get AI into <em>production</em> for financial institutions.
-      <span class="snote">From an eight-week Discovery Sprint to a twelve-week fixed-scope Accelerate programme to full data platform builds &mdash; strategy through to live systems.</span></p>
+    <p class="statement">We get AI into <em>production</em><br>for financial institutions.
+      <span class="snote">From focused discovery to full platform builds &mdash; strategy, controls and delivery through to live systems.</span></p>
     <div class="folio">3/11</div>
   </section>
 
@@ -91,19 +107,19 @@
       <div class="card">
         <div class="pill">01</div>
         <div class="name">Discovery</div>
-        <p><b>You stop funding the wrong thing.</b> An eight-week structured discovery producing a complete AI strategy, a use-case roadmap ranked by business value, and a governance framework &mdash; so the build budget goes to a problem worth solving.</p>
+        <p><b>Stop funding the wrong thing.</b> In eight weeks, we deliver an AI strategy, a value-ranked use-case roadmap and a governance framework &mdash; so the build budget goes to a problem worth solving.</p>
         <div class="cap2">Eight weeks &middot; when the roadmap does not exist yet</div>
       </div>
       <div class="card">
         <div class="pill">02</div>
         <div class="name">Accelerate</div>
-        <p><b>One model actually reaches production.</b> One production AI model in twelve weeks at a fixed price, integrated with your systems, validated on your data, and handed over with the documentation your risk function needs. Weeks 1&ndash;3 confirm access, approvals and interfaces.</p>
+        <p><b>Get one model into production.</b> In twelve weeks at a fixed price, it is integrated with your systems, validated on your data and handed over with risk-ready documentation. Weeks 1&ndash;3 confirm access, approvals and interfaces.</p>
         <div class="cap2">From $185K &middot; gate outcome: proceed, rescope or stop</div>
       </div>
       <div class="card">
         <div class="pill">03</div>
         <div class="name">People</div>
-        <p><b>Seniority where programmes fail.</b> Product, data, AI and engineering leadership embedded inside a programme you already run &mdash; accountable to that programme, scaling by squad rather than by bench.</p>
+        <p><b>Add seniority where programmes fail.</b> Product, data, AI and engineering leadership inside a programme you already run &mdash; accountable to outcomes and scaling by squad.</p>
         <div class="cap2">Time and materials &middot; when the programme already exists</div>
       </div>
     </div>
@@ -111,10 +127,10 @@
   </section>
 
   <!-- 6 — CASE STUDY · ADCB -->
-  <section class="slide vivid" data-job="proof">
+  <section class="slide vivid adcb-proof" data-job="proof">
     <div class="eyebrow">Traction + Proof</div>
-    <h1>ADCB: from no data platform to first in the country</h1>
-    <p class="stand"><b>Case study &middot; tier-1 UAE bank.</b> A board mandate for digital transformation, twenty-plus legacy systems, and no unified data platform. We built the foundations, the AI platform on top, and the products that run on both &mdash; without interrupting daily banking operations, under CBUAE compliance throughout.</p>
+    <h1>ADCB: building the UAE&rsquo;s first Open Finance rollout</h1>
+    <p class="stand"><b>Case study &middot; tier-1 UAE bank.</b> A board mandate, twenty-plus legacy systems and no unified data platform. We built the governed foundation, AI platform and products without disrupting daily banking &mdash; or compromising CBUAE compliance.</p>
     <div class="ruled">
       <div>
         <div class="verdict">Data platform</div>
@@ -143,12 +159,12 @@
   <!-- 7 — CASE STUDY · EWEC -->
   <section class="slide deep" data-job="traction">
     <div class="eyebrow">Traction + Proof</div>
-    <h1>EWEC: forecasting a national grid on a platform we built from nothing</h1>
-    <p class="stand"><b>Case study &middot; UAE national energy buyer.</b> Forecasting for a country&rsquo;s electricity system, where a wrong number costs real money the same evening. One Databricks data and AI platform, three production models, and the monitoring that keeps them honest as the weather and the grid move underneath them.</p>
+    <h1>EWEC: national-grid forecasting, built from zero</h1>
+    <p class="stand"><b>Case study &middot; UAE national energy buyer.</b> One Databricks data and AI platform, three production models, and live monitoring for forecasts where a wrong number costs real money the same evening.</p>
     <div class="stats">
       <div><span class="sl">Platform</span><span class="sv">0 &rarr; 1</span><span class="sl">Databricks lakehouse, governed pipelines, production monitoring</span></div>
       <div><span class="sl">Models live</span><span class="sv">3</span><span class="sl">Demand forecasting, solar forecasting, reserve management</span></div>
-      <div><span class="sl">Also delivered</span><span class="sv">$250M+</span><span class="sl">GWP with live AI systems, London and DIFC insurance markets</span></div>
+      <div><span class="sl">Production control</span><span class="sv">Live</span><span class="sl">Champion/challenger comparison and drift-triggered retraining</span></div>
     </div>
     <div class="folio">6/11</div>
   </section>
@@ -156,9 +172,9 @@
   <!-- 8 — OUR PRODUCTS -->
   <section class="slide vivid" data-job="capability">
     <div class="eyebrow">Our Product</div>
-    <h1>Two products of our own, both running inside the client&rsquo;s estate</h1>
-    <p class="stand">Muse AI answers questions across an institution&rsquo;s own information. The Finance Workbench opens every figure in a board pack to the working that produced it. Neither sends data anywhere.</p>
-    <div class="duo">
+    <h1>Two products of our own, running inside the client&rsquo;s estate</h1>
+    <p class="stand">Finance Workbench traces every board-pack figure to its formula and source rows. Muse AI answers questions across institutional knowledge and systems. Both run inside the client&rsquo;s estate; no data leaves it.</p>
+    <div class="duo deeplight-products">
       <div class="device">
         <div class="frame" data-shot="july-position" data-route="/?view=inner&amp;focus=section-headline" data-viewport="1194x834" style="aspect-ratio:1.4317">
           <iframe title="The Finance Workbench, live"></iframe>
@@ -166,9 +182,8 @@
         </div>
       </div>
       <div class="sum">
-        <div class="line"><span class="num">01</span> <b>Muse AI.</b> A bank-hosted platform that lets teams query documents, data and systems in natural language &mdash; deployed on the client&rsquo;s own in-region AWS, on open models fine-tuned for UAE banking. Nothing leaves their environment.</div>
-        <div class="line"><span class="num">02</span> <b>Finance Workbench.</b> Every figure opens into the working behind it: the movement, the formula, the source rows, and which load of the ledger they came from.</div>
-        <div class="note"><b>Evidence:</b> the Finance Workbench screen uses synthetic data. The Muse estimate is client-reported: thirteen people redirected from manual processing and a $935,000 first-year saving.</div>
+        <div class="line"><span class="num">01</span> <b>Finance Workbench.</b> Every figure opens into the working behind it: the movement, formula, source rows and ledger load.</div>
+        <div class="line"><span class="num">02</span> <b>Muse AI.</b> A bank-hosted platform for querying documents, data and systems in natural language &mdash; deployed on the client&rsquo;s own in-region AWS, on open models fine-tuned for UAE banking.</div>
       </div>
     </div>
     <div class="folio">7/11</div>
@@ -184,15 +199,15 @@
   <!-- 9 — THE FOUR FUNCTIONS -->
   <section class="slide deep" data-job="mechanism">
     <div class="eyebrow">How We Work</div>
-    <h1>Four functions on every engagement, each answering a question that sinks programmes</h1>
-    <p class="stand">The Quartet is how we are organised against a client. Each function exists because a specific thing goes wrong without it, and each is led end to end rather than handed on.</p>
+    <h1>Four functions. One production standard.</h1>
+    <p class="stand">Data, Delivery, Engineering and AI sit on every engagement. Each exists because a specific failure happens without it; each is led end to end, not handed on.</p>
     <div class="quartet">
       <div class="qf"><div class="qn">Data</div><div class="qw">Is the data good enough to build on?</div></div>
       <div class="qf"><div class="qn">Delivery</div><div class="qw">Does it land inside their governance?</div></div>
       <div class="qf"><div class="qn">Engineering</div><div class="qw">Does it survive their production estate?</div></div>
       <div class="qf"><div class="qn">AI</div><div class="qw">Can the model be defended to a regulator?</div></div>
       <div class="qspan"><b>Discovery runs all four at once</b><span>Maturity &rarr; use-case value &rarr; data and governance &rarr; roadmap</span></div>
-      <div class="qtool"><b>Discovery in detail.</b> Eight weeks, the four functions working together across a 300-point maturity assessment, a use-case portfolio ranked by business value and feasibility, a data strategy and governance plan, and an implementation roadmap with the resourcing to run it. It produces the artefacts a board signs off, and it is the one engagement you can stop at the end of.</div>
+      <div class="qtool"><b>Discovery in detail.</b> Eight weeks, four functions: a 300-point maturity assessment, a value-ranked use-case portfolio, a data strategy and governance plan, and an implementation roadmap with resourcing. You receive artefacts a board can sign off &mdash; and can stop at the end.</div>
     </div>
     <div class="folio">8/11</div>
   </section>
@@ -203,10 +218,10 @@
     <h1>A twelve-week build with a real readiness gate</h1>
     <p class="stand">The first three weeks test the dependencies a schedule cannot wish away. At the gate we proceed, rescope or stop; throughout the build, evaluation evidence, control mapping, monitoring and the operating runbook are produced as part of the work.</p>
     <div class="timeline">
-      <div class="tp"><span class="dot"></span><span class="when">Weeks 1&ndash;3</span><div class="what">Readiness gate</div><p>Confirm the workflow, value, baseline, named owner, approved data access, security route and source interfaces. Then proceed, rescope or stop.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">Weeks 4&ndash;8</span><div class="what">Build and evaluate</div><p>Built and validated on your data against measures agreed up front. Back-test evidence and an accuracy comparison, not a demonstration.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">Weeks 9&ndash;11</span><div class="what">Integrate</div><p>Production systems, permissions, controls, monitoring and the people who use it. A deployment and a runbook rather than a pilot.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">Week 12</span><div class="what">Operate</div><p>Live performance against the week-one baseline, knowledge transferred, ownership named, and the roadmap for what follows.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Weeks 1&ndash;3</span><div class="what">Readiness gate</div><p>Confirm the workflow, value, baseline, named owner, approved data access, security route and source interfaces. Proceed, rescope or stop.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Weeks 4&ndash;8</span><div class="what">Build and evaluate</div><p>Build and validate on your data against measures agreed up front. Back-test the evidence and compare accuracy &mdash; not a demonstration.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Weeks 9&ndash;11</span><div class="what">Integrate</div><p>Integrate with production systems, permissions, controls, monitoring and users. Deploy with a runbook rather than as a pilot.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Week 12</span><div class="what">Operate</div><p>Measure live performance against the week-one baseline. Transfer knowledge, name ownership and set the roadmap for what follows.</p></div>
     </div>
     <div class="folio">9/11</div>
   </section>
@@ -221,7 +236,7 @@
         <span class="ini">TB</span>
         <div class="name">Tristan Blakley</div>
         <div class="role">CEO and co-founder</div>
-        <p>Client ambition, the delivery standard, the relationship. Founded Dreamtek &mdash; technology for Google and Facebook &mdash; to its 2021 sale.</p>
+        <p>Client ambition, the delivery standard and the relationship. Founded Dreamtek and led it to its 2021 sale after delivering technology for Google and Facebook.</p>
       </div>
       <div class="member">
         <span class="ini">TK</span>
@@ -246,23 +261,35 @@
   </section>
 
   <!-- 12 — THE ASK -->
-  <section class="slide vivid" data-job="next">
+  <section class="slide vivid close-polish" data-job="next">
     <div class="eyebrow">The Ask</div>
-    <h1>Bring one problem and thirty minutes. Leave with a written verdict.</h1>
-    <p class="stand">Three questions, one call. If none of the three programmes is the right route we say so &mdash; and if the answer is that you are not ready yet, that is worth knowing in half an hour.</p>
-    <div class="mech">
-      <div>
-        <div class="mt">What we ask you</div>
-        <p><b>Value:</b> what outcome matters, who owns it, how it is measured today. <b>Readiness:</b> whether the workflow, data, systems and ownership can carry a production product. <b>Route:</b> Discovery, Accelerate, or our people inside your programme.</p>
+    <h1>One problem. 30 minutes.<br>A written verdict.</h1>
+    <p class="stand">Three questions. One call. We&rsquo;ll recommend the right route &mdash; or tell you plainly if no programme fits or you are not ready yet.</p>
+    <div class="gates">
+      <div class="gate">
+        <div class="gn">01 &middot; Value</div>
+        <div class="gq">What outcome matters, who owns it, and how is it measured today?</div>
+        <div class="gi">Business priority &middot; named owner &middot; current baseline</div>
       </div>
-      <div>
-        <div class="mt">What you leave with</div>
-        <p>A fit verdict, a recommended route, a first scope, a success measure and a next step &mdash; in writing, and yours whether or not anything follows.</p>
+      <div class="gate">
+        <div class="gn">02 &middot; Readiness</div>
+        <div class="gq">Can the workflow, data, systems and ownership carry a production product?</div>
+        <div class="gi">Data access &middot; controls &middot; interfaces &middot; decision rights</div>
       </div>
-      <div>
-        <div class="mt">Where to send it</div>
-        <p><b>accelerate@deeplight.ae</b><br>deeplight.ae &middot; DIFC, Dubai</p>
+      <div class="gate">
+        <div class="gn">03 &middot; Route</div>
+        <div class="gq">Which route gets this moving with the least waste?</div>
+        <div class="gi">Discovery &middot; Accelerate &middot; embedded senior team</div>
       </div>
+    </div>
+    <div class="leave">
+      <span class="lk">You leave with</span>
+      <b>A fit verdict</b><span class="sep">/</span>
+      <b>A recommended route</b><span class="sep">/</span>
+      <b>A first scope</b><span class="sep">/</span>
+      <b>A success measure</b><span class="sep">/</span>
+      <b>A next step</b>
+      <span class="lk contact">accelerate@deeplight.ae &rarr;</span>
     </div>
     <div class="folio">11/11</div>
   </section>
