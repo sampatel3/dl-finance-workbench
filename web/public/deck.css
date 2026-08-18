@@ -43,6 +43,20 @@
  * from them. `--pos` and `--neg` are the exception and are stated here rather
  * than in the scheme: favourable and unfavourable are meaning, not brand.
  *
+ * AND IT COMES THROUGH THE POLES, NOT THROUGH PAPER AND INK.
+ * `theme.css` also states `--brand-ground` — whichever of the two the page is made of — and
+ * `--brand-figure`, the other one, and swaps them on `data-lightness`. So every derivation
+ * below that produces a page, a pane, a well, an ink tier, an accent or chart ink names the
+ * POLES, and turning the deck over costs the stylesheet nothing. This file derived from
+ * `--brand-paper` and `--brand-ink` directly once, and the cost of that was exact: the deck
+ * carried a light/dark control that set an attribute nothing downstream was listening to.
+ *
+ * THE TWO PLACES THAT STILL SAY PAPER AND INK, AND WHY. `aurora`'s full-bleed field and every
+ * Deeplight ground are DARK BY DEFINITION rather than by pole — the same argument `theme.css`
+ * makes for the brand block — so they are written in ink, and the white panes on the field
+ * keep their ink for the same reason. Written in poles, a field would come out a pale sheet
+ * with white type on it. `test/lightness.test.mjs` measures both halves of this.
+ *
  * EVERYTHING IS SIZED IN `cqi`
  * 1cqi is 1% of the deck's own width, so slides hold their proportions at any window size and
  * print identically. At the 1600px the PDF prints at, 1cqi = 16px.
@@ -88,6 +102,11 @@
   --brand-ink: #14101f;
   --brand-grey: #221c33;
   --brand-paper: #ffffff;
+  /* The POLES, restated as the light pair so a deck with no theme.css is still a deck.
+     theme.css is linked after this file and re-derives them per `data-lightness`; that
+     derivation is the whole of the toggle. */
+  --brand-ground: var(--brand-paper);
+  --brand-figure: var(--brand-ink);
   --on-a: #000000;
   --on-b: #000000;
   --on-field: #ffffff;
@@ -145,6 +164,9 @@
   --pill-weight: 600;
   --radius: 1.1cqi;
   --body-bg: color-mix(in srgb, var(--brand-ink) 22%, #dcd8e6);
+  /* The neutral a pale construction carries the brand INTO. White on the light pole;
+     the ground itself on the dark one, where a shape lifted toward white is a hole. */
+  --wash: #ffffff;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -218,22 +240,23 @@
 /* The quiet ground: pale lavender, the brand present only as a wash. This is the one most
    slides in the reference actually use, and its panes are pure white against it. */
 [data-style='aurora'] .deep {
-  --ink: var(--brand-ink);
-  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --faint: color-mix(in srgb, var(--brand-ink) 18%, transparent);
+  --ink: var(--brand-figure);
+  --mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-figure) 18%, transparent);
   --pane: #ffffff;
   --pane-edge: transparent;
-  --pane-ink: var(--brand-ink);
-  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-ink: var(--brand-figure);
+  --pane-mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-figure) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --base: #faf9fd;
   color: var(--ink);
   background:
     radial-gradient(60% 68% at 6% 8%, color-mix(in srgb, var(--brand-b) 16%, transparent) 0%, transparent 64%),
     radial-gradient(56% 64% at 96% 20%, color-mix(in srgb, var(--brand-a) 14%, transparent) 0%, transparent 62%),
     radial-gradient(64% 70% at 82% 96%, color-mix(in srgb, var(--brand-b) 12%, transparent) 0%, transparent 66%),
-    color-mix(in srgb, var(--brand-a) 5%, #faf9fd);
+    color-mix(in srgb, var(--brand-a) 5%, var(--base));
 }
 
 /* ----------------------------------------------------------------------- drift ---- */
@@ -253,7 +276,7 @@
   --label-track: 0;
   --label-weight: 650;
   --pill-bg: transparent;
-  --pill-fg: color-mix(in srgb, var(--brand-ink) 80%, #fff);
+  --pill-fg: color-mix(in srgb, var(--brand-figure) 80%, #fff);
   --pill-weight: 500;
   --radius: 1.8cqi;
   --body-bg: color-mix(in srgb, var(--brand-a) 5%, #f2f0f8);
@@ -276,45 +299,47 @@
  * colour, which is why it has no `--on-field`.
  */
 [data-style='drift'] .vivid {
-  --ink: var(--brand-ink);
-  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --ink: var(--brand-figure);
+  --mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-figure) 20%, transparent);
   --pane: color-mix(in srgb, var(--brand-b) 5%, #fdfcff);
   --pane-edge: transparent;
-  --pane-ink: var(--brand-ink);
-  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-ink: var(--brand-figure);
+  --pane-mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-figure) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --base: #f6f4fb;
   color: var(--ink);
   background:
     /* The big shape, lower right, running off two edges. Two lobes of the pair, adjacent, so
        they hand over inside the blob the way the reference’s coral does into its blue. */
-    radial-gradient(44% 62% at 88% 78%, color-mix(in srgb, var(--brand-a) 34%, #fff) 0%, color-mix(in srgb, var(--brand-a) 30%, #fff) 58%, transparent 76%),
-    radial-gradient(40% 52% at 74% 96%, color-mix(in srgb, var(--brand-b) 32%, #fff) 0%, color-mix(in srgb, var(--brand-b) 28%, #fff) 56%, transparent 74%),
+    radial-gradient(44% 62% at 88% 78%, color-mix(in srgb, var(--brand-a) 34%, var(--wash)) 0%, color-mix(in srgb, var(--brand-a) 30%, var(--wash)) 58%, transparent 76%),
+    radial-gradient(40% 52% at 74% 96%, color-mix(in srgb, var(--brand-b) 32%, var(--wash)) 0%, color-mix(in srgb, var(--brand-b) 28%, var(--wash)) 56%, transparent 74%),
     /* The small satellite, upper middle, which is what stops it reading as one corner wash. */
-    radial-gradient(20% 30% at 44% 30%, color-mix(in srgb, var(--brand-b) 26%, #fff) 0%, color-mix(in srgb, var(--brand-a) 22%, #fff) 60%, transparent 78%),
-    #f6f4fb;
+    radial-gradient(20% 30% at 44% 30%, color-mix(in srgb, var(--brand-b) 26%, var(--wash)) 0%, color-mix(in srgb, var(--brand-a) 22%, var(--wash)) 60%, transparent 78%),
+    var(--base);
 }
 
 /* The same ground with the shapes pulled to the far edges and weakened — a quiet page for the
    slides that are mostly words. */
 [data-style='drift'] .deep {
-  --ink: var(--brand-ink);
-  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --ink: var(--brand-figure);
+  --mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-figure) 20%, transparent);
   --pane: color-mix(in srgb, var(--brand-b) 4%, #ffffff);
   --pane-edge: transparent;
-  --pane-ink: var(--brand-ink);
-  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
-  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-ink: var(--brand-figure);
+  --pane-mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-figure) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --base: #f8f7fc;
   color: var(--ink);
   background:
-    radial-gradient(34% 48% at 98% 8%, color-mix(in srgb, var(--brand-b) 20%, #fff) 0%, transparent 72%),
-    radial-gradient(30% 42% at 2% 98%, color-mix(in srgb, var(--brand-a) 16%, #fff) 0%, transparent 72%),
-    #f8f7fc;
+    radial-gradient(34% 48% at 98% 8%, color-mix(in srgb, var(--brand-b) 20%, var(--wash)) 0%, transparent 72%),
+    radial-gradient(30% 42% at 2% 98%, color-mix(in srgb, var(--brand-a) 16%, var(--wash)) 0%, transparent 72%),
+    var(--base);
 }
 
 /* ================================================================== THE PAGE ========== */
@@ -585,7 +610,7 @@ h1 {
    its HEIGHT from itself. `flex: none` is load-bearing — a flex column that runs long shrinks
    its items, which squashes the picture. Held at its own height, an over-long column overflows
    the slide instead, which `deck slides` says out loud. */
-.frame { flex: none; border-radius: .6cqi; overflow: hidden; position: relative; background: var(--brand-paper); }
+.frame { flex: none; border-radius: .6cqi; overflow: hidden; position: relative; background: var(--brand-ground); }
 .frame img { display: block; width: 100%; height: auto; }
 /* A live frame is inert. A deck is a document, not a playground: a reader who can scroll a
    frame is looking at something the author never framed. */
@@ -1209,19 +1234,58 @@ ul.plus li::before {
    pale ground with one blob — whatever ground class the markup carries. Tokens restated
    because the .vivid class on the same element would otherwise win them. */
 [data-style='drift'] .slide.divider {
-  --ink: var(--brand-ink);
-  --mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
-  --faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
-  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --ink: var(--brand-figure);
+  --mute: color-mix(in srgb, var(--brand-figure) 62%, transparent);
+  --faint: color-mix(in srgb, var(--brand-figure) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-figure));
+  --base: #f7f5fc;
   color: var(--ink);
   background:
-    radial-gradient(38% 54% at 96% 84%, color-mix(in srgb, var(--brand-a) 30%, #fff) 0%, color-mix(in srgb, var(--brand-a) 26%, #fff) 55%, transparent 74%),
-    radial-gradient(26% 36% at 80% 8%, color-mix(in srgb, var(--brand-b) 24%, #fff) 0%, transparent 70%),
-    #f7f5fc;
+    radial-gradient(38% 54% at 96% 84%, color-mix(in srgb, var(--brand-a) 30%, var(--wash)) 0%, color-mix(in srgb, var(--brand-a) 26%, var(--wash)) 55%, transparent 74%),
+    radial-gradient(26% 36% at 80% 8%, color-mix(in srgb, var(--brand-b) 24%, var(--wash)) 0%, transparent 70%),
+    var(--base);
 }
 
 /* Small print in drift is a quiet line, not a ruled band — its reference draws no rules. */
 [data-style='drift'] .foot { border-top: 0; padding-top: 0; font-size: .95cqi; max-width: 56ch; }
+
+/* ================================================== THE DARK POLE ===================== */
+/*
+ * WHAT THE POLES CANNOT REACH, AND WHY THIS BLOCK IS SHORT.
+ *
+ * Everything above is written in `--brand-ground` and `--brand-figure`, so ink tiers, pane
+ * inks, accents and chart ink invert with `data-lightness` and no rule here has to say so.
+ * What a pole cannot invert is a LITERAL, and the two pale grounds are anchored on ones the
+ * references actually use — #faf9fd, #f6f4fb, #f8f7fc, #f7f5fc — with their shapes carried
+ * toward #fff. Those numbers are a LIGHT-POLE MEASUREMENT, exactly as Keel's four grounds are
+ * in `theme.css`, so they are stated in the pole they were measured in and mirrored here.
+ *
+ * Two knobs carry the mirror. `--base` is the flat bottom of a pale ground; `--wash` is the
+ * neutral its shapes are carried into. On the dark pole both become the ground, so a blob is
+ * the brand washed INTO the dark rather than out of the white — which is the construction
+ * Deeplight's media well has used since it landed, applied to every scheme.
+ *
+ * `aurora`'s `.vivid` IS DELIBERATELY ABSENT, and it is the same ruling `theme.css` makes for
+ * the brand block: a full-bleed field is a saturated ground BY DEFINITION, and its panes are
+ * white in both poles — which is why its pane inks above are still written in `--brand-ink`
+ * rather than in a pole. Migrated, it would come out a pale sheet with white type on it.
+ *
+ * Deeplight is excluded outright rather than beaten on source order. It is black in both poles
+ * by instruction, it states every ground and every ink itself, and an exclusion that is written
+ * down cannot be undone by moving a rule.
+ */
+[data-lightness='dark']:not([data-scheme='deeplight']) {
+  --wash: var(--brand-ground);
+}
+[data-lightness='dark']:not([data-scheme='deeplight']) .deep,
+[data-lightness='dark'][data-style='drift']:not([data-scheme='deeplight']) .vivid {
+  --base: var(--brand-ground);
+  /* A card on paper is the page with an edge; on ink it has to LIFT, and `--brand-surface`
+     already carries that 8% for all six schemes. The edge comes back with it, because a pane
+     that lifts 1.2 off the page is not a boundary on its own. */
+  --pane: var(--brand-surface);
+  --pane-edge: var(--brand-line);
+}
 
 /*
  * DEEPLIGHT IS BESPOKE, BY INSTRUCTION — the one scheme allowed to reach into the ground.
@@ -1434,7 +1498,7 @@ ul.plus li::before {
 .donut .dchart {
   width: 28cqi; aspect-ratio: 1; border-radius: 50%; justify-self: end;
   background: conic-gradient(
-    var(--brand-ink) 0 calc(var(--s1) * 1%),
+    var(--brand-figure) 0 calc(var(--s1) * 1%),
     var(--brand-a) 0 calc((var(--s1) + var(--s2)) * 1%),
     var(--brand-b) 0 100%);
   -webkit-mask: radial-gradient(closest-side, transparent 73%, #000 74%);
@@ -1442,9 +1506,9 @@ ul.plus li::before {
 }
 [data-style='drift'] .donut .dchart {
   background: conic-gradient(
-    color-mix(in srgb, var(--brand-ink) 78%, #fff) 0 calc(var(--s1) * 1%),
-    color-mix(in srgb, var(--brand-a) 55%, #fff) 0 calc((var(--s1) + var(--s2)) * 1%),
-    color-mix(in srgb, var(--brand-b) 55%, #fff) 0 100%);
+    color-mix(in srgb, var(--brand-figure) 78%, var(--wash)) 0 calc(var(--s1) * 1%),
+    color-mix(in srgb, var(--brand-a) 55%, var(--wash)) 0 calc((var(--s1) + var(--s2)) * 1%),
+    color-mix(in srgb, var(--brand-b) 55%, var(--wash)) 0 100%);
 }
 
 /* THE TEAM — people (A11, B10, C6, D10). Aurora: white cards, the role pinned to the card's
@@ -1569,12 +1633,12 @@ ul.plus li::before {
 .media {
   border-radius: var(--radius); overflow: hidden; position: relative;
   background:
-    radial-gradient(60% 60% at 28% 30%, color-mix(in srgb, var(--brand-b) 26%, #fff) 0%, transparent 70%),
-    radial-gradient(70% 70% at 76% 76%, color-mix(in srgb, var(--brand-a) 30%, #fff) 0%, transparent 72%),
-    color-mix(in srgb, var(--brand-a) 10%, var(--brand-paper));
+    radial-gradient(60% 60% at 28% 30%, color-mix(in srgb, var(--brand-b) 26%, var(--wash)) 0%, transparent 70%),
+    radial-gradient(70% 70% at 76% 76%, color-mix(in srgb, var(--brand-a) 30%, var(--wash)) 0%, transparent 72%),
+    color-mix(in srgb, var(--brand-a) 10%, var(--brand-ground));
   display: flex; align-items: center; justify-content: center; text-align: center;
   font-family: var(--label-face); font-size: .78cqi; letter-spacing: var(--label-track);
-  text-transform: var(--label-case); color: color-mix(in srgb, var(--brand-ink) 55%, transparent); padding: 2cqi;
+  text-transform: var(--label-case); color: color-mix(in srgb, var(--brand-figure) 55%, transparent); padding: 2cqi;
 }
 .media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 

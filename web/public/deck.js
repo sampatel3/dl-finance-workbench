@@ -64,7 +64,15 @@
 
     iframe.tabIndex = -1;
     new ResizeObserver(fit).observe(frame);
-    iframe.src = route;
+    /* Marked as a photograph, exactly as `deck shoot` marks the still it captures — the two
+       are the same route at the same viewport and have to be the same picture, so they cannot
+       be told apart by the app. See `src/camera.mjs` for why this is not `?view=inner`: that
+       parameter also describes the demo shell's tour window, where the reader drives the
+       product and needs everything a still leaves out. This file is a plain script tag and
+       cannot import the constant, so `test/package.test.mjs` holds it to the same string. */
+    const src = new URL(route, location.href);
+    src.searchParams.set('shot', '1');
+    iframe.src = src.pathname + src.search + src.hash;
   }
 })();
 

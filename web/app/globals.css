@@ -97,17 +97,24 @@
      one ramp here instead of three borrowing `--on-brand-*` names and the fourth inventing
      its own — a ramp with one member off a different ladder is a ramp that can invert.
 
-     THE RAMP MOVED FROM 79/58/48 TO 79/68/58, AND LIGHT IS WHY. Mixed into the POLE, the same
-     percentage does not buy the same contrast on both grounds: 48% of the figure measures 4.99:1
-     on Deeplight's ink page and 3.07:1 on its paper one — under AA for the small labels this
-     token exists for, in the lightness this demo now opens in. Carrying the two lower tiers to
-     68/58 clears AA on BOTH poles with four tiers still distinguishable: 15.9 / 10.4 / 6.9 / 4.8
-     on paper and 19.4 / 12.1 / 9.1 / 6.9 on ink, worst case on a lifted card 5.6. The cost is
-     that the dark ink is a shade lighter than the literals this file began with, which is the
-     price of one ramp instead of two. */
+     THE TOP THREE TIERS ARE THE KIT'S NUMBERS, NOT THIS FILE'S. `--text` is the figure outright
+     and `--label` and `--muted` are 74% and 65% of it into the ground — the ratios the kit
+     template publishes, on both poles, stated once in `:root` and restated nowhere. This file
+     carried 79/68 for a while, chosen here because light needed more than the 79/58/48 the dark
+     era shipped; but a demo that picks its own percentages off the kit's ramp is a second ramp,
+     and the ink tiers are the one place a demo has no licence to diverge. 74/65 clears AA on
+     both poles anyway, measured on the render: 19.4 / 8.6 / 6.1 on Deeplight's paper page and
+     19.4 / 10.7 / 8.4 on its ink one. The worst ground either tier meets is the paper WELL at
+     7.6 / 5.4 and the ink CARD at 8.9 / 7.0, both clear.
+
+     `--faint` IS THIS PRODUCT'S OWN and stays at 58%, because the kit has no fourth tier to
+     take it from: it exists for the 9.5–10.5px labels the workbench is full of, and it is the
+     only member of this ramp the kit does not name. 4.8 on paper and 6.9 on ink, and 4.2 in a
+     paper well — the one place this ramp is under AA, unchanged by the move to the kit's
+     ratios and the reason `--faint` is a label tier rather than a body one. */
   --text: var(--brand-figure);
-  --label: color-mix(in srgb, var(--brand-figure) 79%, var(--brand-ground) 21%);
-  --muted: color-mix(in srgb, var(--brand-figure) 68%, var(--brand-ground) 32%);
+  --label: color-mix(in srgb, var(--brand-figure) 74%, var(--brand-ground) 26%);
+  --muted: color-mix(in srgb, var(--brand-figure) 65%, var(--brand-ground) 35%);
   --faint: color-mix(in srgb, var(--brand-figure) 58%, var(--brand-ground) 42%);
 
   /* ---- Amber: interactive only. Never a value, and never decorative. */
