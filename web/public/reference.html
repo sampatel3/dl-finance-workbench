@@ -19,10 +19,86 @@
     color: color-mix(in srgb, var(--pane-ink) 72%, var(--pane));
     font-size: .94cqi;
   }
-  .adcb-proof .ruled .state { font-size: .84cqi; letter-spacing: .12em; }
-  .close-polish .leave .contact {
-    margin-left: auto; padding: .65cqi .9cqi; border-radius: calc(var(--radius) * .65);
-    background: var(--brand-a); color: var(--on-a); font-weight: 650;
+  .deck .case-study > .case-band {
+    order: -3; display: flex; align-items: center; justify-content: space-between;
+    margin: 0 0 1.35cqi; padding: .68cqi .9cqi;
+    background: var(--brand-a); color: var(--on-a);
+  }
+  .deck .case-study .case-band :is(.eyebrow, .case-id) {
+    margin: 0; padding: 0; border-radius: 0; background: none; color: inherit;
+    font-family: var(--label-face); font-size: .78cqi; line-height: 1;
+    letter-spacing: var(--label-track); text-transform: var(--label-case);
+    font-weight: var(--label-weight);
+  }
+  .deck .case-study .case-band .case-id { font-weight: 700; }
+  .deck .case-study .case-band .eyebrow { opacity: .62; }
+  .deck .case-study > .case-proof {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+    margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
+  }
+  .deck .case-study > .case-proof > div {
+    min-width: 0; padding: 0 1.9cqi; border-left: .07cqi solid var(--faint);
+  }
+  .deck .case-study > .case-proof > div:first-child { padding-left: 0; border-left: 0; }
+  .deck .case-study > .case-proof > div:last-child { padding-right: 0; }
+  .deck .case-study .case-proof .verdict {
+    margin: 0 0 .65cqi; font-size: 1.45cqi; letter-spacing: -.02em; font-weight: 500;
+  }
+  .deck .case-study .case-proof .state {
+    font-family: var(--label-face); font-size: .8cqi; line-height: 1.35;
+    letter-spacing: .1em; text-transform: var(--label-case); color: var(--brand-a);
+  }
+  .deck .case-study .case-proof p {
+    margin: .9cqi 0 0; font-size: .9cqi; line-height: 1.58; color: var(--mute);
+  }
+  .close-poster h1 { max-width: 22ch; }
+  .close-poster .stand { max-width: 74ch; }
+  .close-poster .close.fit-box {
+    display: grid; grid-template-columns: 14cqi minmax(0, 1fr);
+    grid-template-rows: 1fr auto; margin-top: auto; min-height: 20cqi;
+    overflow: hidden; background: var(--brand-a); color: var(--on-a);
+    border: .08cqi solid var(--brand-a); border-radius: 0;
+  }
+  .close-poster .fit-time {
+    display: flex; flex-direction: column; justify-content: center; padding: 1.6cqi 2cqi;
+    border-right: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
+  }
+  .close-poster :is(.fit-kicker, .fit-unit, .fit-num, .fit-output-label) {
+    font-family: var(--label-face); text-transform: var(--label-case);
+    letter-spacing: var(--label-track);
+  }
+  .close-poster .fit-kicker { font-size: .72cqi; }
+  .close-poster .fit-time strong {
+    margin-top: .25cqi; font-size: 5.7cqi; line-height: .92;
+    letter-spacing: -.06em; font-weight: 500;
+  }
+  .close-poster .fit-unit { margin-top: .35cqi; font-size: .8cqi; }
+  .close-poster .fit-questions { padding: .8cqi 2.1cqi; }
+  .close-poster .fit-row {
+    display: grid; grid-template-columns: 2.8cqi 8cqi minmax(0, 1fr);
+    align-items: baseline; gap: .8cqi; padding: 1.15cqi 0;
+    border-bottom: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
+  }
+  .close-poster .fit-row:last-child { border-bottom: 0; }
+  .close-poster .fit-num { font-size: .72cqi; }
+  .close-poster .fit-row b {
+    font-size: .82cqi; text-transform: uppercase; letter-spacing: .12em;
+  }
+  .close-poster .fit-row > span:last-child {
+    font-size: 1.22cqi; line-height: 1.35; letter-spacing: -.012em;
+  }
+  .close-poster .fit-output {
+    grid-column: 1 / -1; display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
+    gap: 1.5cqi; padding: 1.1cqi 1.6cqi;
+    background: var(--on-a); color: var(--brand-a);
+  }
+  .close-poster .fit-output-label { font-size: .7cqi; }
+  .close-poster .fit-output b { font-size: 1cqi; font-weight: 500; }
+  .close-poster .fit-output a {
+    color: inherit; font-family: var(--label-face); font-size: .72cqi;
+    font-weight: 700; letter-spacing: .12em; text-decoration: none;
+    text-transform: uppercase; white-space: nowrap;
   }
 </style>
 
@@ -127,44 +203,67 @@
   </section>
 
   <!-- 6 — CASE STUDY · ADCB -->
-  <section class="slide vivid adcb-proof" data-job="proof">
-    <div class="eyebrow">Traction + Proof</div>
+  <section class="slide vivid case-study" data-job="proof">
+    <div class="case-band">
+      <div class="case-id">Case Study 01 &middot; Banking</div>
+      <div class="eyebrow">Traction + Proof</div>
+    </div>
     <h1>ADCB: building the UAE&rsquo;s first Open Finance rollout</h1>
-    <p class="stand"><b>Case study &middot; tier-1 UAE bank.</b> A board mandate, twenty-plus legacy systems and no unified data platform. We built the governed foundation, AI platform and products without disrupting daily banking &mdash; or compromising CBUAE compliance.</p>
-    <div class="ruled">
+    <p class="stand"><b>Tier-1 UAE bank.</b> A board mandate, twenty-plus legacy systems and no unified data platform. We built the governed foundation, AI platform and products without disrupting daily banking &mdash; or compromising CBUAE compliance.</p>
+    <div class="ruled case-proof">
       <div>
-        <div class="verdict">Data platform</div>
-        <div class="state on">Greenfield, 60 days</div>
-        <p>Cloud-native AWS estate and governed lakehouse. After implementation, analytical processing fell from 72 hours to 15 minutes and data-quality accuracy rose from 67% to 95%.</p>
+        <div class="verdict">Data foundation</div>
+        <div class="state">60 days</div>
+        <p>Cloud-native AWS estate and governed lakehouse. Processing fell from 72 hours to 15 minutes; data quality rose from 67% to 95%.</p>
       </div>
       <div>
         <div class="verdict">AI platform</div>
-        <div class="state on">2,000+ users</div>
-        <p>Azure AI platform on top of the foundations, carrying governed data streams, CDP integration for AI use cases and bi-directional CRM integration.</p>
+        <div class="state">2,000+ users</div>
+        <p>Governed data streams, CDP integration for AI use cases and bi-directional CRM integration.</p>
       </div>
       <div>
         <div class="verdict">Open Finance</div>
-        <div class="state on">First in the UAE</div>
-        <p>We built and instrumented ADCB&rsquo;s bank-side serving estate for the country&rsquo;s first certified Open Finance rollout: 100&ndash;150ms against a 500ms ceiling.</p>
+        <div class="state">First in the UAE</div>
+        <p>The country&rsquo;s first certified rollout: 100&ndash;150ms response time against a 500ms ceiling.</p>
       </div>
       <div>
         <div class="verdict">Resilience</div>
-        <div class="state on">30% lower operating cost</div>
-        <p>Twenty-plus legacy systems migrated in parallel with no interruption to daily banking, under CBUAE compliance at every stage, with no regulatory finding.</p>
+        <div class="state">30% lower cost</div>
+        <p>Twenty-plus systems migrated in parallel with no interruption to daily banking and no regulatory finding.</p>
       </div>
     </div>
     <div class="folio">5/11</div>
   </section>
 
   <!-- 7 — CASE STUDY · EWEC -->
-  <section class="slide deep" data-job="traction">
-    <div class="eyebrow">Traction + Proof</div>
+  <section class="slide vivid case-study" data-job="traction">
+    <div class="case-band">
+      <div class="case-id">Case Study 02 &middot; Energy</div>
+      <div class="eyebrow">Traction + Proof</div>
+    </div>
     <h1>EWEC: national-grid forecasting, built from zero</h1>
-    <p class="stand"><b>Case study &middot; UAE national energy buyer.</b> One Databricks data and AI platform, three production models, and live monitoring for forecasts where a wrong number costs real money the same evening.</p>
-    <div class="stats">
-      <div><span class="sl">Platform</span><span class="sv">0 &rarr; 1</span><span class="sl">Databricks lakehouse, governed pipelines, production monitoring</span></div>
-      <div><span class="sl">Models live</span><span class="sv">3</span><span class="sl">Demand forecasting, solar forecasting, reserve management</span></div>
-      <div><span class="sl">Production control</span><span class="sv">Live</span><span class="sl">Champion/challenger comparison and drift-triggered retraining</span></div>
+    <p class="stand"><b>UAE national energy buyer.</b> One Databricks data and AI platform, three production models, and live monitoring for forecasts where a wrong number costs real money the same evening.</p>
+    <div class="stats case-proof">
+      <div>
+        <div class="verdict">Data platform</div>
+        <div class="state">0 &rarr; 1</div>
+        <p>A Databricks lakehouse and governed pipelines built as one data and AI platform.</p>
+      </div>
+      <div>
+        <div class="verdict">Forecasting</div>
+        <div class="state">3 models live</div>
+        <p>Demand forecasting, solar forecasting and reserve management running in production.</p>
+      </div>
+      <div>
+        <div class="verdict">Monitoring</div>
+        <div class="state">Live</div>
+        <p>Production monitoring as the weather and the grid move underneath the models.</p>
+      </div>
+      <div>
+        <div class="verdict">Model control</div>
+        <div class="state">Drift-triggered</div>
+        <p>Champion/challenger comparison with retraining triggered when a model drifts.</p>
+      </div>
     </div>
     <div class="folio">6/11</div>
   </section>
@@ -261,35 +360,38 @@
   </section>
 
   <!-- 12 — THE ASK -->
-  <section class="slide vivid close-polish" data-job="next">
+  <section class="slide vivid close-poster" data-job="next">
     <div class="eyebrow">The Ask</div>
-    <h1>One problem. 30 minutes.<br>A written verdict.</h1>
-    <p class="stand">Three questions. One call. We&rsquo;ll recommend the right route &mdash; or tell you plainly if no programme fits or you are not ready yet.</p>
-    <div class="gates">
-      <div class="gate">
-        <div class="gn">01 &middot; Value</div>
-        <div class="gq">What outcome matters, who owns it, and how is it measured today?</div>
-        <div class="gi">Business priority &middot; named owner &middot; current baseline</div>
+    <h1>Bring one problem.<br>Leave with a written verdict.</h1>
+    <p class="stand">We test value, production readiness and delivery route &mdash; then tell you whether to proceed, rescope or stop.</p>
+    <div class="close fit-box">
+      <div class="fit-time">
+        <span class="fit-kicker">The fit call</span>
+        <strong>30</strong>
+        <span class="fit-unit">minutes</span>
       </div>
-      <div class="gate">
-        <div class="gn">02 &middot; Readiness</div>
-        <div class="gq">Can the workflow, data, systems and ownership carry a production product?</div>
-        <div class="gi">Data access &middot; controls &middot; interfaces &middot; decision rights</div>
+      <div class="fit-questions">
+        <div class="fit-row">
+          <span class="fit-num">01</span>
+          <b>Value</b>
+          <span>What outcome matters, who owns it, and what proves success?</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-num">02</span>
+          <b>Readiness</b>
+          <span>Can the workflow, data and controls carry a production product?</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-num">03</span>
+          <b>Route</b>
+          <span>Which delivery route gets it moving with the least waste?</span>
+        </div>
       </div>
-      <div class="gate">
-        <div class="gn">03 &middot; Route</div>
-        <div class="gq">Which route gets this moving with the least waste?</div>
-        <div class="gi">Discovery &middot; Accelerate &middot; embedded senior team</div>
+      <div class="fit-output">
+        <span class="fit-output-label">You leave with</span>
+        <b>Fit verdict &middot; recommended route &middot; first scope &middot; success measure &middot; next step</b>
+        <a href="mailto:accelerate@deeplight.ae">accelerate@deeplight.ae &rarr;</a>
       </div>
-    </div>
-    <div class="leave">
-      <span class="lk">You leave with</span>
-      <b>A fit verdict</b><span class="sep">/</span>
-      <b>A recommended route</b><span class="sep">/</span>
-      <b>A first scope</b><span class="sep">/</span>
-      <b>A success measure</b><span class="sep">/</span>
-      <b>A next step</b>
-      <span class="lk contact">accelerate@deeplight.ae &rarr;</span>
     </div>
     <div class="folio">11/11</div>
   </section>
