@@ -143,3 +143,24 @@ _0 of 5 returned yes — 14 critical · 32 high · 7 low. Fix what blocked, then
 | deck | — no reply yet |
 
 _Open: 0 of 5 replies recorded. A round with a missing verdict is not a round._
+
+## Round 4 — 2026-08-18 — 9ece9fd
+
+| Reviewer | Verdict |
+| --- | --- |
+| sponsor | yes |
+| operator | yes |
+| blocker | no |
+
+Blocking gaps:
+
+- `HIGH` **sponsor** — The opening spends the only two guaranteed slides on Deeplight and an agenda, so I nearly stopped before seeing a problem I recognised. Put the control-environment failure on slide one—the AI pilot that cannot survive audit, integration, or a normal Tuesday—so I see my own stalled programme before deciding whether to keep reading.
+- `HIGH` **operator** — The twelve-week Accelerate story quietly makes client-side readiness look schedulable: access to production-like data, data-owner and security approval, source-system interfaces and remediation appear to fit inside the opening evidence phase, but in my shop those cross-team dependencies can absorb months before engineers can build. In the meeting I would need to hear the entry conditions for the clock, what happens when a client dependency misses them, and one example where the team reached production through material access or data-quality delay rather than around it.
+- `HIGH` **blocker** — The pitch turns senior access into unbounded key-person risk. I would need a credible view of who actually staffs and supports an engagement beyond the four named principals, including continuity when one is unavailable and capacity to run concurrent client programmes.
+
+Kept from this section, unchanged:
+
+_Scope: the synced Deeplight reference deck at `/reference.html` only. The Finance Workbench
+product and its product-specific deck are outside this round._
+
+_Round 4: 2 of 3 returned yes — 0 critical · 3 high · 0 low._
