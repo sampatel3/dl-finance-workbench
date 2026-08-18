@@ -2,19 +2,119 @@
 <title>Deeplight Finance Workbench — deck</title>
 <link rel="stylesheet" href="deck.css">
 <link rel="stylesheet" href="theme.css">
+<style>
+  .cover .tagline { font-size: 1.02cqi; letter-spacing: .13em; }
+  [data-style='aurora'] .timeline .tp:last-child::before { display: none; }
+  [data-style='aurora'] .team.four .member .role { margin-top: .4cqi; padding-top: 0; }
+  [data-style='aurora'] .team.four .member p {
+    color: color-mix(in srgb, var(--pane-ink) 72%, var(--pane));
+    font-size: .94cqi;
+  }
+  .deck .case-study > .case-band {
+    order: -3; display: flex; align-items: center; justify-content: space-between;
+    margin: 0 0 1.35cqi; padding: .68cqi .9cqi;
+    background: var(--brand-a); color: var(--on-a);
+  }
+  .deck .case-study .case-band :is(.eyebrow, .case-id) {
+    margin: 0; padding: 0; border-radius: 0; background: none; color: inherit;
+    font-family: var(--label-face); font-size: .78cqi; line-height: 1;
+    letter-spacing: var(--label-track); text-transform: var(--label-case);
+    font-weight: var(--label-weight);
+  }
+  .deck .case-study .case-band .case-id { font-weight: 700; }
+  .deck .case-study .case-band .eyebrow { opacity: .62; }
+  .deck .case-study > .case-proof {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+    margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
+  }
+  .deck .case-study > .case-proof > div {
+    min-width: 0; padding: 0 1.9cqi; border-left: .07cqi solid var(--faint);
+  }
+  .deck .case-study > .case-proof > div:first-child { padding-left: 0; border-left: 0; }
+  .deck .case-study > .case-proof > div:last-child { padding-right: 0; }
+  .deck .case-study .case-proof .verdict {
+    margin: 0 0 .65cqi; font-size: 1.45cqi; letter-spacing: -.02em; font-weight: 500;
+  }
+  .deck .case-study .case-proof .state {
+    font-family: var(--label-face); font-size: .8cqi; line-height: 1.35;
+    letter-spacing: .1em; text-transform: var(--label-case); color: var(--brand-a);
+  }
+  .deck .case-study .case-proof p {
+    margin: .9cqi 0 0; font-size: .9cqi; line-height: 1.58; color: var(--mute);
+  }
+  .flat-layers { gap: 0; border-top: .07cqi solid var(--faint); }
+  .flat-layers .lay {
+    padding: 1.2cqi 0; border: 0; border-bottom: .07cqi solid var(--faint);
+    border-radius: 0; background: none;
+  }
+  .flat-layers .lay.on {
+    padding: 1.2cqi 1.3cqi; background: var(--brand-a); border-color: var(--brand-a);
+    color: var(--on-a);
+  }
+  .flat-layers .lay.on :is(.lt, p, .tag) { color: var(--on-a); opacity: 1; }
+  .close-poster h1 { max-width: 22ch; }
+  .close-poster .stand { max-width: 74ch; }
+  .close-poster .close.fit-box {
+    display: grid; grid-template-columns: 14cqi minmax(0, 1fr);
+    grid-template-rows: 1fr auto; margin-top: auto; min-height: 20cqi;
+    overflow: hidden; background: var(--brand-a); color: var(--on-a);
+    border: .08cqi solid var(--brand-a); border-radius: 0;
+  }
+  .close-poster .fit-time {
+    display: flex; flex-direction: column; justify-content: center; padding: 1.6cqi 2cqi;
+    border-right: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
+  }
+  .close-poster :is(.fit-kicker, .fit-unit, .fit-num, .fit-output-label) {
+    font-family: var(--label-face); text-transform: var(--label-case);
+    letter-spacing: var(--label-track);
+  }
+  .close-poster .fit-kicker { font-size: .72cqi; }
+  .close-poster .fit-time strong {
+    margin-top: .25cqi; font-size: 5.7cqi; line-height: .92;
+    letter-spacing: -.06em; font-weight: 500;
+  }
+  .close-poster .fit-unit { margin-top: .35cqi; font-size: .8cqi; }
+  .close-poster .fit-questions { padding: .8cqi 2.1cqi; }
+  .close-poster .fit-row {
+    display: grid; grid-template-columns: 2.8cqi 8cqi minmax(0, 1fr);
+    align-items: baseline; gap: .8cqi; padding: 1.15cqi 0;
+    border-bottom: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
+  }
+  .close-poster .fit-row:last-child { border-bottom: 0; }
+  .close-poster .fit-num { font-size: .72cqi; }
+  .close-poster .fit-row b {
+    font-size: .82cqi; text-transform: uppercase; letter-spacing: .12em;
+  }
+  .close-poster .fit-row > span:last-child {
+    font-size: 1.22cqi; line-height: 1.35; letter-spacing: -.012em;
+  }
+  .close-poster .fit-output {
+    grid-column: 1 / -1; display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
+    gap: 1.5cqi; padding: 1.1cqi 1.6cqi;
+    background: var(--on-a); color: var(--brand-a);
+  }
+  .close-poster .fit-output-label { font-size: .7cqi; }
+  .close-poster .fit-output b { font-size: 1cqi; font-weight: 500; }
+  .close-poster .fit-output a {
+    color: inherit; font-family: var(--label-face); font-size: .72cqi;
+    font-weight: 700; letter-spacing: .12em; text-decoration: none;
+    text-transform: uppercase; white-space: nowrap;
+  }
+</style>
 
 <!--
-  The `court` arc: the reader is a group CFO who has not met us, and the ask is an hour rather
-  than a purchase order. Eleven numbered slides; a contents page and two dividers off the arc.
+  The `court` arc: the reader is a group CFO who has not met us, and the ask is a 30-minute fit
+  call rather than a purchase order. Twelve numbered slides; two dividers off the arc.
 
     title · claim · incident · change · surface · capability · capability · method · credentials ·
-    mechanism · next
+    team · mechanism · next
 
   The grammar on every slide: eyebrow (act and number) · NAME headline, one to five words ·
-  standfirst carrying THE claim · one block. Provenance is said once, on the title slide,
-  rather than restated under every page.
+  standfirst carrying THE claim · one block. Company provenance is concentrated in the
+  Deeplight case-study and team slides rather than restated under every page.
 
-  `data-purpose="court"` is what `deck lint` checks the arc against; folios read `n/11`.
+  `data-purpose="court"` is what `deck lint` checks the arc against; folios read `n/12`.
   `data-style` is the design system and `data-scheme` the brand — this deck wears `deeplight`,
   the one bespoke scheme: black throughout, the yellow and the blue arriving only as text and
   graphics. The product carries the same scheme, so the screenshots sit on the ground the
@@ -30,7 +130,7 @@
   like [[ THIS ]] and nothing ships while one survives.
 -->
 
-<div class="deck" data-brand="Deeplight" data-logo="1" style="--logo: url(deeplight-logo.png)" data-purpose="court" data-style="aurora" data-scheme="deeplight" data-live-root="#product">
+<div class="deck" data-purpose="court" data-style="aurora" data-scheme="deeplight" data-live-root="#product">
 
   <!-- 1 — THE TITLE -------------------------------------------------------------- .cover -- -->
   <section class="slide vivid" data-job="title">
@@ -38,24 +138,7 @@
       <h1><span class="bracket">[</span>Finance Workbench<span class="bracket">]</span></h1>
       <div class="tagline">Every figure in your close, opened to the rows that made it</div>
     </div>
-    <div class="foot"><b>Finance Workbench is a governed reporting layer over the finance systems you already run</b> &mdash; one model of P&amp;L, cash and KPIs, where every figure opens to the drivers, the formula and the ledger rows behind it instead of being rebuilt in Excel.<br><br>Built by <b>Deeplight</b>, who have taken two regulated institutions from no data platform to products in production. <b>In this deck:</b> the problem, three of the twelve surfaces running live, and the twelve weeks to put this on your own ledgers.</div>
-    <div class="folio">1/11</div>
-  </section>
-
-  <!-- CONTENTS — off the arc ------------------------------------------------- .contents -- -->
-  <section class="slide deep" data-job="contents">
-    <div class="eyebrow">Contents</div>
-    <div class="contents">
-      <div class="item"><span class="no">01</span><span class="nm">The Problem</span></div>
-      <div class="item sub"><span class="no">—</span><span class="nm">Why Now</span></div>
-      <div class="item"><span class="no">02</span><span class="nm">The Solution</span></div>
-      <div class="item sub"><span class="no">—</span><span class="nm">Our Product</span></div>
-      <div class="item sub"><span class="no">—</span><span class="nm">Roadmap</span></div>
-      <div class="item"><span class="no">03</span><span class="nm">The Company</span></div>
-      <div class="item sub"><span class="no">—</span><span class="nm">How We Work</span></div>
-      <div class="item"><span class="no">04</span><span class="nm">The Ask</span></div>
-    </div>
-    <div class="folio">Contents</div>
+    <div class="folio">1/12</div>
   </section>
 
   <!-- 2 — THE CLAIM ---------------------------------------------------------------- .trio -- -->
@@ -63,21 +146,18 @@
     <div class="eyebrow">The Problem</div>
     <h1>AI takes the repetition. Finance keeps the judgement.</h1>
     <p class="stand">Finance keeps the judgement, the approvals and the accountability. What a model can take is everything between the ledger and the pack &mdash; the part that produces the same answer a different way every month.</p>
-    <div class="trio">
-      <div class="card">
-        <div class="tq">The problem today</div>
-        <p>Finance data sits across the ERP, the planning tools, the spreadsheets and the operational systems, so a management pack is extracted and reconciled before anyone can read it. What comes out names the result and not what drove it; which forecast version an assumption belongs to is hard to retrace; and cash, risk, opportunity and control issues surface after the month they belong to.</p>
+    <div class="ladder">
+      <div class="rung">
+        <div class="q">The ledger closes. The insight still starts in Excel.</div>
       </div>
-      <div class="card">
-        <div class="tq">Where AI helps</div>
-        <p>Read governed finance data in place instead of rebuilding the analysis: name the material movements and their drivers by entity, department and account; surface the strengths, weaknesses, risks and opportunities that need management attention; track what changed in the forecast, where Year to Go lands and which assumptions move it; and draft the executive commentary with the evidence behind every figure.</p>
+      <div class="rung">
+        <div class="q">AI reads governed numbers in place &mdash; and names the movement, driver and evidence.</div>
       </div>
-      <div class="card">
-        <div class="tq">What management gets</div>
-        <p>The close reaches insight sooner, and cash and performance risks appear while there is still a month to act on them. Finance spends the hours it gets back on challenge and business partnering. And the Board holds one discussion: what happened, why, what next, and what decision is required.</p>
+      <div class="rung">
+        <div class="q">Management gets one discussion: what happened, why, what next and who owns it.</div>
       </div>
     </div>
-    <div class="folio">2/11</div>
+    <div class="folio">2/12</div>
   </section>
 
   <!-- 3 — THE FAULT HAPPENING ------------------------------------------------- .journey -- -->
@@ -93,28 +173,28 @@
       <div class="leg"><div class="on">The questions</div><p class="was">The board asks what drove the result, what would improve it and what management should act on &mdash; and the whole cycle starts over to answer it.</p></div>
     </div>
     <div class="foot"><b>Twelve times a year, the same work.</b> None of this is a failure of the ledger &mdash; it is everything after the ledger, which no accounting system was built to do: naming what drove the result, and flagging the strengths, weaknesses, risks and opportunities a board should act on.</div>
-    <div class="folio">3/11</div>
+    <div class="folio">3/12</div>
   </section>
 
   <section class="slide vivid" data-job="change">
     <div class="eyebrow">Why Now</div>
     <h1>Keep the ERP. The gap is the layer above it.</h1>
     <p class="stand">What makes this a 2026 conversation rather than a 2022 one: a model can now draft the board commentary against a governed set of numbers and cite every figure in it back to a ledger row.</p>
-    <div class="layers">
+    <div class="layers flat-layers">
       <div class="lay"><div class="lt">Judgement</div><p>Whether the numbers are right, what to do about them, and the sign-off. A person, every month.</p><div class="tag">Yours, by design</div></div>
       <div class="lay on"><div class="lt">The finance layer</div><p>A governed model of P&amp;L, balance sheet, cash and KPIs &mdash; and the variance, bridge, scenario and board commentary built on it, every figure resolving to the rows that made it.</p><div class="tag">Missing &middot; this is the workbench</div></div>
       <div class="lay"><div class="lt">Automation</div><p>OCR and workflow handle AP and AR. BI draws the dashboards. Planning tools hold the budget.</p><div class="tag">Already solved</div></div>
       <div class="lay"><div class="lt">Systems of record</div><p>ERP, CRM, payroll and operations record the transactions. They stay the source of truth.</p><div class="tag">Already yours</div></div>
     </div>
     <div class="foot"><b>What comes off a person: rebuilding the model, reconciling the pack, and writing the first draft.</b> The next three slides run this layer on a synthetic group.</div>
-    <div class="folio">4/11</div>
+    <div class="folio">4/12</div>
   </section>
 
   <!-- DIVIDER — the product act ---------------------------------------------------------- -->
   <section class="slide vivid divider" data-job="divider">
     <div class="eyebrow">02</div>
     <h2 class="dtitle">The Solution</h2>
-    <p class="dnote">Three of the twelve surfaces, in the order somebody meets them: the position, the movement behind a figure, and the rows a figure resolves to. The twelve, in full: Overview &middot; Performance &middot; KPIs &middot; Forecast &middot; Year to Go &middot; Scenarios &middot; Cash &amp; WC &middot; Capex &amp; Procurement &middot; People &middot; Commentary &middot; Quality &amp; Controls &middot; Explore &amp; Ask. All twelve run in the demo; three are shown because three is what an hour holds.</p>
+    <p class="dnote">Three live surfaces: the position, the movement behind a figure, and the ledger rows it resolves to. Twelve weeks then move them from the synthetic group onto your ledgers.</p>
   </section>
 
   <!-- 3 — WHAT A USER SEES ------------------------------------------------------- .screen -- -->
@@ -130,7 +210,7 @@
         </div>
       </div>
     </div>
-    <div class="folio">5/11</div>
+    <div class="folio">5/12</div>
   </section>
 
   <!-- 4 — THE CAPABILITY ------------------------------------------------------------ .duo -- -->
@@ -146,12 +226,12 @@
         </div>
       </div>
       <div class="sum">
-        <div class="line"><span class="num">&pound;0k</span> <b>unattributed</b> &mdash; every bar named, the residual among them, and the parts sum to the movement. An entity table is different: contributions are measured at each entity, so they do not sum to the group and the gap is its own row.</div>
-        <div class="line"><span class="num">5</span> ledgers, every row attributed to a named owner</div>
-        <div class="note"><b>The evidence chain is the same object as the answer.</b> Movement, drivers, formula, rows and source vintage hang off the figure itself, so a controller asking where a number came from reads what produced it rather than a reconstruction. It stops at the ledger boundary: what the workbench cannot see, it says so.</div>
+        <div class="line"><span class="num">&pound;0k</span> <b>unattributed</b> &mdash; the named driver bars sum to the movement.</div>
+        <div class="line"><span class="num">5</span> ledgers &mdash; every row has a named owner</div>
+        <div class="note"><b>The answer and the evidence are one object.</b> Movement, drivers, formula, rows and source vintage hang off the figure itself. If the workbench cannot see past the ledger boundary, it says so.</div>
       </div>
     </div>
-    <div class="folio">6/11</div>
+    <div class="folio">6/12</div>
   </section>
 
   <!-- 5 — THE PROOF --------------------------------------------------------------- .duoflip -->
@@ -168,7 +248,7 @@
           <span class="num">+5.2%</span>
           <div class="against">against the <b>Final Forecast Version</b> as approved before the period opened</div>
         </div>
-        <div class="note">The drill reaches the rows, their measure, their period and their vintage &mdash; which load of the ledger a row was read from, since a correction arrives as a new load naming the one it restates rather than overwriting what was there. The comparator is named on the figure, and nothing is rounded before it is compared: the &pound;12.4m and the &pound;11.8m are rounded for the page, while the &pound;618k and the +5.2% are computed on the figures behind them. <b>For this to hold on your own data, the comparator has to be a versioned artefact rather than a spreadsheet somebody keeps</b> — the first thing the hour finds out.</div>
+        <div class="note">The drill carries the row, measure, period and immutable load vintage. The comparator is versioned and named on the figure; calculations use unrounded values even when the page abbreviates them. <b>The first readiness test is whether that comparator exists as a governed version, not a spreadsheet somebody keeps.</b></div>
       </div>
       <div class="device">
         <div class="frame" data-shot="source-drill" data-route="/app/explore?view=inner&amp;focus=section-drill&amp;rows=measure&amp;cols=period&amp;drill=0%3A5" data-viewport="1194x834" style="aspect-ratio:1.4317">
@@ -177,7 +257,7 @@
         </div>
       </div>
     </div>
-    <div class="folio">7/11</div>
+    <div class="folio">7/12</div>
   </section>
 
   <!-- DIVIDER — the work act ------------------------------------------------------------- -->
@@ -185,120 +265,151 @@
   <!-- 6 — THE METHOD ------------------------------------------------------------ .timeline -->
   <section class="slide deep" data-job="method">
     <div class="eyebrow">Roadmap</div>
-    <h1>Twelve weeks from your ledgers to a close run on it.</h1>
-    <p class="stand">The twelve surfaces are built, on a synthetic group; these twelve weeks build the part that is not. <b>There is no journal-posting path and there will not be one</b>: the workbench reads your ledgers and never writes to them. Stoppable at the end of every stage, and each stage says what you keep.</p>
+    <h1>A twelve-week build from your ledgers to a real close.</h1>
+    <p class="stand">The first three weeks test the dependencies a schedule cannot wish away. At the gate we proceed, rescope or stop; each stage leaves behind a usable artefact, and the workbench reads your ledgers but never writes to them.</p>
     <div class="timeline">
-      <div class="tp"><span class="dot"></span><span class="when">Weeks 1&ndash;3</span><div class="what">Connect one close</div><p>The ledgers behind it, the comparator, the mappings and the owners. Settled with your IT and audit: <b>your tenant or ours</b>, which jurisdiction, and who at Deeplight sees unpublished numbers. <b>You keep the data-quality assessment and the baseline, whatever follows.</b></p></div>
-      <div class="tp"><span class="dot"></span><span class="when">Weeks 4&ndash;8</span><div class="what">Reproduce a close you signed</div><p>The position, the drivers and the evidence chain computed on your data and back-tested against closes your controllers already stood behind &mdash; naming where it reproduces them and where it does not.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">Weeks 9&ndash;11</span><div class="what">Wire it into the close</div><p>ERP and consolidation connections, permissions matching who owns which entity, monitoring on the pipelines, controllers trained. <b>Your audit function is a first-class output</b>: the controls they ask for, model documentation, evaluation evidence and the runbook.</p></div>
-      <div class="tp"><span class="dot"></span><span class="when">Week 12</span><div class="what">Run a real close on it</div><p>One month-end produced through the workbench, with ownership named and the surfaces that follow scoped.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Weeks 1&ndash;3</span><div class="what">Readiness gate</div><p>Confirm one close, its comparator, mappings, owners, approved data access, security route, tenant or jurisdiction and source interfaces. You keep the data-quality assessment and week-one baseline.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Weeks 4&ndash;8</span><div class="what">Build and evaluate</div><p>Reproduce a close your controllers already signed. Back-test the position, drivers and evidence on your data; name where it matches and where it does not.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Weeks 9&ndash;11</span><div class="what">Integrate</div><p>Connect ERP and consolidation, align permissions to entity ownership, monitor pipelines, train controllers, and deliver controls, model documentation, evaluation evidence and the runbook.</p></div>
+      <div class="tp"><span class="dot"></span><span class="when">Week 12</span><div class="what">Operate</div><p>Run one real month-end through the workbench. Measure it against the baseline, name production ownership and scope the surfaces that follow.</p></div>
     </div>
-    <div class="foot"><b>Three measures, set in week one and re-measured in week twelve:</b> working days to a signed close &middot; restatements after sign-off &middot; hours rebuilding the model, pack and commentary. We quote no threshold first &mdash; this would be our first finance close, and we have no comparable one &mdash; so it is set with you in week one and written into the scope.</div>
-    <div class="folio">8/11</div>
+    <div class="foot"><b>Measured in week one and week twelve:</b> working days to a signed close &middot; restatements after sign-off &middot; hours rebuilding the model, pack and commentary. The threshold is agreed with you in week one because this is Deeplight&rsquo;s first Finance Workbench close on a client&rsquo;s ledgers.</div>
+    <div class="folio">8/12</div>
   </section>
 
   <!-- 7 — THE CREDENTIALS ------------------------------------------------------------ .team -->
   <section class="slide vivid divider" data-job="divider">
     <div class="eyebrow">03</div>
     <h2 class="dtitle">The Company</h2>
-    <p class="dnote">Who builds it, what they have already put into production, and the three ways an engagement starts.</p>
+    <p class="dnote">Two UAE transformation case studies, the senior team accountable for the work, and the three ways an engagement starts.</p>
   </section>
-  <section class="slide deep wide" data-job="credentials">
-    <div class="eyebrow">The Company</div>
-    <h1>The people who scope your work are the ones who build it.</h1>
-    <div class="split">
+  <!-- Deeplight company material below follows the canonical reference deck in
+       vendor/demo-kit/packages/deck/standard/deeplight/company.html. -->
+  <section class="slide vivid case-study" data-job="credentials">
+    <div class="case-band">
+      <div class="case-id">Deeplight &middot; Case Studies</div>
+      <div class="eyebrow">The Company</div>
+    </div>
+    <h1>Two UAE transformations. Both running in production.</h1>
+    <p class="stand">One tier-1 bank and one national energy buyer, each moved from fragmented or nonexistent foundations to governed products in live operation.</p>
+    <div class="ruled case-proof">
       <div>
-        <div class="label">The record</div>
-        <div class="ruled">
-          <div>
-            <div class="verdict">ADCB &middot; tier-1 UAE bank</div>
-            <div class="state on">2 platforms &rarr; 4 products</div>
-            <p>A greenfield data estate stood up in 60 days and the AI platform above it, ingesting twenty-plus legacy source systems with no interruption to daily banking. Four products shipped on it: analytical processing cut from <b>72 hours to 15 minutes</b>, data quality lifted <b>67% to 95%</b>, and <b>2,000+ staff</b> moved onto self-service against governed numbers.</p>
-          </div>
-          <div>
-            <div class="verdict">EWEC &middot; national energy buyer</div>
-            <div class="state on">1 platform &rarr; 3 products</div>
-            <p>One data and AI platform built from nothing. Three products on it: <b>load forecasting</b>, <b>solar forecasting</b> and <b>reserve management</b>, with production monitoring on every pipeline feeding them.</p>
-          </div>
-          <div>
-            <div class="verdict">The record behind them</div>
-            <div class="state on">1,300+ models</div>
-            <p>Deployed inside client programmes over ten years, under the UAE central bank (CBUAE) and inside ADGM under its own regulator.</p>
-          </div>
-        </div>
+        <div class="verdict">Case Study 01 &middot; Banking</div>
+        <div class="state">60 days</div>
+        <p>At ADCB, a cloud-native AWS estate and governed lakehouse cut processing from 72 hours to 15 minutes and lifted data quality from 67% to 95%.</p>
       </div>
       <div>
-        <div class="label">The four on your engagement</div>
-        <div class="team">
-          <div class="member"><span class="ini">TB</span><div class="name">Tristan Blakley</div><div class="role">CEO and co-founder</div></div>
-          <div class="member"><span class="ini">TK</span><div class="name">Terrence Kunstek</div><div class="role">CTO and co-founder</div></div>
-          <div class="member"><span class="ini">SP</span><div class="name">Sam Patel</div><div class="role">Chief product officer</div></div>
-          <div class="member"><span class="ini">SI</span><div class="name">Saniul Islam</div><div class="role">Chief commercial officer</div></div>
-        </div>
+        <div class="verdict">ADCB &middot; Production</div>
+        <div class="state">2,000+ users</div>
+        <p>Governed data streams and CRM integration supported the UAE&rsquo;s first certified Open Finance rollout across twenty-plus systems without interrupting daily banking.</p>
+      </div>
+      <div>
+        <div class="verdict">Case Study 02 &middot; Energy</div>
+        <div class="state">0 &rarr; 1 platform</div>
+        <p>At EWEC, a Databricks lakehouse and governed pipelines were built from zero as one data and AI platform.</p>
+      </div>
+      <div>
+        <div class="verdict">EWEC &middot; Production</div>
+        <div class="state">3 models live</div>
+        <p>Demand forecasting, solar forecasting and reserve management run with live monitoring, champion/challenger comparison and drift-triggered retraining.</p>
       </div>
     </div>
-    <div class="folio">9/11</div>
+    <div class="folio">9/12</div>
+  </section>
+  <section class="slide deep" data-job="team">
+    <div class="eyebrow">Our Team</div>
+    <h1>Senior accountability. Squad delivery.</h1>
+    <p class="stand">The four leaders below own the engagement from the first conversation through live validation. Delivery scales by squad across Data, Delivery, Engineering and AI; each function is led end to end, with production ownership, runbooks and handover built into the work.</p>
+    <div class="team four">
+      <div class="member">
+        <span class="ini">TB</span>
+        <div class="name">Tristan Blakley</div>
+        <div class="role">CEO and co-founder</div>
+        <p>Client ambition, the delivery standard and the relationship. Founded Dreamtek and led it to its 2021 sale after delivering technology for Google and Facebook.</p>
+      </div>
+      <div class="member">
+        <span class="ini">TK</span>
+        <div class="name">Terrence Kunstek</div>
+        <div class="role">CTO and co-founder</div>
+        <p>Architecture, engineering quality, governance, production reliability. Two decades in engineering leadership: ChaCha, Eleven Fifty, SecondSight.</p>
+      </div>
+      <div class="member">
+        <span class="ini">SP</span>
+        <div class="name">Sam Patel</div>
+        <div class="role">Chief product officer</div>
+        <p>The product thesis, scope, delivery and value realisation. Over twenty years across financial services and technology.</p>
+      </div>
+      <div class="member">
+        <span class="ini">SI</span>
+        <div class="name">Saniul Islam</div>
+        <div class="role">Chief commercial officer</div>
+        <p>Client fit, executive alignment, commercial structure, mobilisation. Formerly programme delivery at LSEG.</p>
+      </div>
+    </div>
+    <div class="folio">10/12</div>
   </section>
 
   <!-- 8 — THE NEXT STEP ---------------------------------------------------------------- .mech -->
   <section class="slide vivid" data-job="mechanism">
     <div class="eyebrow">How We Work</div>
-    <h1>Three ways in, chosen by what you already know.</h1>
-    <p class="stand">The workbench is one product on one route. Which route depends on whether you know the problem, know the answer, or need the people &mdash; and we say which one fits, including when none does.</p>
+    <h1>Three programmes, chosen by what you already know</h1>
+    <p class="stand">Each removes a different blocker: not knowing which problem to solve, not getting one solved, or not having the seniority to run the programme you have already committed to.</p>
     <div class="opts">
       <div class="card">
         <div class="pill">01</div>
         <div class="name">Discovery</div>
-        <p>Eight weeks when the question is <b>which problem</b> rather than how. Four functions across a maturity assessment, a use-case portfolio ranked by value and feasibility, a data and governance plan, and a roadmap with the resourcing to run it.</p>
-        <div class="cap2">Ends in a decision, not a build</div>
+        <p><b>Stop funding the wrong thing.</b> In eight weeks, we deliver an AI strategy, a value-ranked use-case roadmap and a governance framework &mdash; so the build budget goes to a problem worth solving.</p>
+        <div class="cap2">Eight weeks &middot; when the roadmap does not exist yet</div>
       </div>
-      <div class="card pick">
-        <div class="tagpick">This deck</div>
+      <div class="card">
         <div class="pill">02</div>
         <div class="name">Accelerate</div>
-        <p>Fixed scope, fixed price. One high-value production product taken from evidence to live operation in twelve weeks &mdash; which is what the roadmap on slide 8 is.</p>
-        <div class="cap2">From US$185K &middot; one workflow, live</div>
+        <p><b>Get one model into production.</b> In twelve weeks at a fixed price, it is integrated with your systems, validated on your data and handed over with risk-ready documentation. Finance Workbench follows this route.</p>
+        <div class="cap2">From $185K &middot; gate outcome: proceed, rescope or stop</div>
       </div>
       <div class="card">
         <div class="pill">03</div>
         <div class="name">People</div>
-        <p>Embedded senior product, data, AI and engineering capacity on your own programme, for evolving scope and multiple workstreams rather than one bounded build.</p>
-        <div class="cap2">Time and materials &middot; your programme, our seniors</div>
+        <p><b>Add seniority where programmes fail.</b> Product, data, AI and engineering leadership inside a programme you already run &mdash; accountable to outcomes and scaling by squad.</p>
+        <div class="cap2">Time and materials &middot; when the programme already exists</div>
       </div>
     </div>
-    <div class="folio">10/11</div>
+    <div class="folio">11/12</div>
   </section>
-  <section class="slide vivid" data-job="next">
+  <section class="slide vivid close-poster" data-job="next">
     <div class="eyebrow">The Ask</div>
-    <h1>Bring us one problem. We tell you whether we can solve it.</h1>
-    <p class="stand"><b>The ask on this deck is one hour. It is not a purchase order.</b> Bring one month-end that went badly, with whoever owns it, and you get a written verdict &mdash; including when the answer is that this is not worth doing. Nothing on slides 8 and 10 is being approved today: Accelerate is twelve weeks from US$185K and would be scoped and priced after that hour, and it stops at the end of any stage.</p>
-    <div class="gates">
-      <div class="gate">
-        <div class="gn">01 &middot; Value</div>
-        <div class="gq">Which figures got argued about, who owns them, and what the argument cost?</div>
-        <div class="gi">Business priority &middot; the owner &middot; how it is measured today</div>
+    <h1>Bring one problem.<br>Leave with a written verdict.</h1>
+    <p class="stand">We test value, production readiness and delivery route &mdash; then tell you whether to proceed, rescope or stop.</p>
+    <div class="close fit-box">
+      <div class="fit-time">
+        <span class="fit-kicker">The fit call</span>
+        <strong>30</strong>
+        <span class="fit-unit">minutes</span>
       </div>
-      <div class="gate">
-        <div class="gn">02 &middot; Readiness</div>
-        <div class="gq">Can the workflow, the data and the ownership carry a production product?</div>
-        <div class="gi">The comparator and who versions it &middot; who holds each ledger &middot; the technical owner</div>
+      <div class="fit-questions">
+        <div class="fit-row">
+          <span class="fit-num">01</span>
+          <b>Value</b>
+          <span>What outcome matters, who owns it, and what proves success?</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-num">02</span>
+          <b>Readiness</b>
+          <span>Can the workflow, data and controls carry a production product?</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-num">03</span>
+          <b>Route</b>
+          <span>Which delivery route gets it moving with the least waste?</span>
+        </div>
       </div>
-      <div class="gate">
-        <div class="gn">03 &middot; Route</div>
-        <div class="gq">Is the next step Accelerate, a discovery, or our people inside your programme?</div>
-        <div class="gi">Discovery &middot; Accelerate &middot; embedded senior team</div>
+      <div class="fit-output">
+        <span class="fit-output-label">You leave with</span>
+        <b>Fit verdict &middot; recommended route &middot; first scope &middot; success measure &middot; next step</b>
+        <a href="mailto:accelerate@deeplight.ae">accelerate@deeplight.ae &rarr;</a>
       </div>
     </div>
-    <div class="leave">
-      <span class="lk">You leave with</span>
-      <b>A fit view</b><span class="sep">/</span>
-      <b>A recommended route</b><span class="sep">/</span>
-      <b>A first scope</b><span class="sep">/</span>
-      <b>A success measure</b><span class="sep">/</span>
-      <b>A next step</b>
-      <span class="lk">accelerate@deeplight.ae &middot; DIFC, Dubai</span>
-    </div>
-    <div class="folio">11/11</div>
+    <div class="folio">12/12</div>
   </section>
 
   <!-- 9 — THE CLOSE --------------------------------------------------------------------- .close -->
