@@ -25,87 +25,6 @@
     font-size: 2.25cqi; line-height: 1.08;
   }
   [data-style='drift'] .deeplight-products { --device-w: 38cqi; }
-  .deck .case-study > .case-band {
-    order: -3; display: flex; align-items: center; justify-content: space-between;
-    margin: 0 0 1.35cqi; padding: .68cqi .9cqi;
-    background: var(--brand-a); color: var(--on-a);
-  }
-  .deck .case-study .case-band :is(.eyebrow, .case-id) {
-    margin: 0; padding: 0; border-radius: 0; background: none; color: inherit;
-    font-family: var(--label-face); font-size: .78cqi; line-height: 1;
-    letter-spacing: var(--label-track); text-transform: var(--label-case);
-    font-weight: var(--label-weight);
-  }
-  .deck .case-study .case-band .case-id { font-weight: 700; }
-  .deck .case-study .case-band .eyebrow { opacity: .62; }
-  .deck .case-study > .case-proof {
-    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
-    margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
-  }
-  .deck .case-study > .case-proof > div {
-    min-width: 0; padding: 0 1.9cqi; border-left: .07cqi solid var(--faint);
-  }
-  .deck .case-study > .case-proof > div:first-child { padding-left: 0; border-left: 0; }
-  .deck .case-study > .case-proof > div:last-child { padding-right: 0; }
-  .deck .case-study .case-proof .verdict {
-    margin: 0 0 .65cqi; font-size: 1.45cqi; letter-spacing: -.02em; font-weight: 500;
-  }
-  .deck .case-study .case-proof .state {
-    font-family: var(--label-face); font-size: .8cqi; line-height: 1.35;
-    letter-spacing: .1em; text-transform: var(--label-case); color: var(--brand-a);
-  }
-  .deck .case-study .case-proof p {
-    margin: .9cqi 0 0; font-size: .9cqi; line-height: 1.58; color: var(--mute);
-  }
-  .close-poster h1 { max-width: 22ch; }
-  .close-poster .stand { max-width: 74ch; }
-  .close-poster .close.fit-box {
-    display: grid; grid-template-columns: 14cqi minmax(0, 1fr);
-    grid-template-rows: 1fr auto; margin-top: auto; min-height: 20cqi;
-    overflow: hidden; background: var(--brand-a); color: var(--on-a);
-    border: .08cqi solid var(--brand-a); border-radius: 0;
-  }
-  .close-poster .fit-time {
-    display: flex; flex-direction: column; justify-content: center; padding: 1.6cqi 2cqi;
-    border-right: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
-  }
-  .close-poster :is(.fit-kicker, .fit-unit, .fit-num, .fit-output-label) {
-    font-family: var(--label-face); text-transform: var(--label-case);
-    letter-spacing: var(--label-track);
-  }
-  .close-poster .fit-kicker { font-size: .72cqi; }
-  .close-poster .fit-time strong {
-    margin-top: .25cqi; font-size: 5.7cqi; line-height: .92;
-    letter-spacing: -.06em; font-weight: 500;
-  }
-  .close-poster .fit-unit { margin-top: .35cqi; font-size: .8cqi; }
-  .close-poster .fit-questions { padding: .8cqi 2.1cqi; }
-  .close-poster .fit-row {
-    display: grid; grid-template-columns: 2.8cqi 8cqi minmax(0, 1fr);
-    align-items: baseline; gap: .8cqi; padding: 1.15cqi 0;
-    border-bottom: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
-  }
-  .close-poster .fit-row:last-child { border-bottom: 0; }
-  .close-poster .fit-num { font-size: .72cqi; }
-  .close-poster .fit-row b {
-    font-size: .82cqi; text-transform: uppercase; letter-spacing: .12em;
-  }
-  .close-poster .fit-row > span:last-child {
-    font-size: 1.22cqi; line-height: 1.35; letter-spacing: -.012em;
-  }
-  .close-poster .fit-output {
-    grid-column: 1 / -1; display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
-    gap: 1.5cqi; padding: 1.1cqi 1.6cqi;
-    background: var(--on-a); color: var(--brand-a);
-  }
-  .close-poster .fit-output-label { font-size: .7cqi; }
-  .close-poster .fit-output b { font-size: 1cqi; font-weight: 500; }
-  .close-poster .fit-output a {
-    color: inherit; font-family: var(--label-face); font-size: .72cqi;
-    font-weight: 700; letter-spacing: .12em; text-decoration: none;
-    text-transform: uppercase; white-space: nowrap;
-  }
 </style>
 
 <!--
@@ -141,7 +60,7 @@
   programmes are a commercial structure, not a product interface.
 -->
 
-<div class="deck" data-purpose="sell" data-style="aurora" data-scheme="deeplight" data-live-root="#product">
+<div class="deck" data-purpose="sell" data-style="aurora" data-scheme="deeplight" data-lightness="dark" data-live-root="#product">
 
   <!-- 1 — THE TITLE -->
   <section class="slide vivid" data-job="title">
@@ -370,7 +289,7 @@
     <div class="eyebrow">The Ask</div>
     <h1>Bring one problem.<br>Leave with a written verdict.</h1>
     <p class="stand">We test value, production readiness and delivery route &mdash; then tell you whether to proceed, rescope or stop.</p>
-    <div class="close fit-box">
+    <div class="fitcall">
       <div class="fit-time">
         <span class="fit-kicker">The fit call</span>
         <strong>30</strong>

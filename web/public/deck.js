@@ -124,6 +124,10 @@
     deck.setAttribute('data-scheme', scheme);
     deck.setAttribute('data-style', style);
     deck.setAttribute('data-lightness', lightness);
+    /* `theme.css` also uses the document root to set the browser's own colour scheme. Keep
+       the slide and the canvas in the same pole: otherwise the buttons and slide repaint
+       while scrollbars, native controls and the page around it remain light. */
+    document.documentElement.setAttribute('data-lightness', lightness);
     for (const b of bar.querySelectorAll('[data-lightness-pick]')) {
       b.setAttribute('aria-pressed', String(b.dataset.lightnessPick === lightness));
     }

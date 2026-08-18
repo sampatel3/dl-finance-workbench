@@ -1265,20 +1265,16 @@ ul.plus li::before {
  * the brand washed INTO the dark rather than out of the white — which is the construction
  * Deeplight's media well has used since it landed, applied to every scheme.
  *
- * `aurora`'s `.vivid` IS DELIBERATELY ABSENT, and it is the same ruling `theme.css` makes for
- * the brand block: a full-bleed field is a saturated ground BY DEFINITION, and its panes are
- * white in both poles — which is why its pane inks above are still written in `--brand-ink`
- * rather than in a pole. Migrated, it would come out a pale sheet with white type on it.
- *
- * Deeplight is excluded outright rather than beaten on source order. It is black in both poles
- * by instruction, it states every ground and every ink itself, and an exclusion that is written
- * down cannot be undone by moving a rule.
+ * Aurora's loud field still stays saturated on the light pole. On the dark pole it becomes a
+ * deep brand field rather than the SAME field: a control labelled Light / Dark must move every
+ * slide the reader can be looking at, including a closing page. Deeplight follows the same
+ * contract now. Its committed decks open dark, while the light pole is a real paper treatment.
  */
-[data-lightness='dark']:not([data-scheme='deeplight']) {
+[data-lightness='dark'] {
   --wash: var(--brand-ground);
 }
-[data-lightness='dark']:not([data-scheme='deeplight']) .deep,
-[data-lightness='dark'][data-style='drift']:not([data-scheme='deeplight']) .vivid {
+[data-lightness='dark'] .deep,
+[data-lightness='dark'][data-style='drift'] .vivid {
   --base: var(--brand-ground);
   /* A card on paper is the page with an edge; on ink it has to LIFT, and `--brand-surface`
      already carries that 8% for all six schemes. The edge comes back with it, because a pane
@@ -1287,19 +1283,40 @@ ul.plus li::before {
   --pane-edge: var(--brand-line);
 }
 
+/* Aurora's loud ground has a visibly different dark pole. The light pole keeps the reference
+   field; the dark pole keeps its colour as restrained glows on the scheme's own ink. */
+[data-lightness='dark'][data-style='aurora']:not([data-scheme='deeplight']) .vivid {
+  --ink: var(--brand-figure);
+  --mute: color-mix(in srgb, var(--brand-figure) 76%, transparent);
+  --faint: color-mix(in srgb, var(--brand-figure) 34%, transparent);
+  --pane: var(--brand-surface);
+  --pane-edge: var(--brand-line);
+  --pane-ink: var(--brand-figure);
+  --pane-mute: color-mix(in srgb, var(--brand-figure) 66%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-figure) 28%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 42%, var(--brand-figure));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 42%, var(--brand-figure));
+  color: var(--ink);
+  background:
+    radial-gradient(58% 54% at 4% 6%, color-mix(in srgb, var(--brand-b) 28%, transparent) 0%, transparent 62%),
+    radial-gradient(58% 54% at 96% 94%, color-mix(in srgb, var(--brand-a) 30%, transparent) 0%, transparent 62%),
+    var(--brand-ground);
+}
+
 /*
- * DEEPLIGHT IS BESPOKE, BY INSTRUCTION — the one scheme allowed to reach into the ground.
+ * DEEPLIGHT IS BESPOKE — the one scheme allowed to reach into the ground.
  *
  * Its page is BLACK. No field, no glow, no gradient: the brand arrives only as text and
- * graphics in the yellow and the blue. Every other scheme takes the reference field exactly
- * as the template draws it, and no other scheme gets an exception like this one.
+ * graphics in yellow. That is its DARK pole, and the canonical Deeplight decks declare it.
+ * Its light pole is paper with a quiet amber wash, so the public treatment control tells the
+ * truth instead of changing only its pressed state.
  *
  * NOT QUALIFIED BY STYLE, and that is the point. These rules were written
  * `[data-style='aurora'][data-scheme='deeplight']`, so a Deeplight deck in `drift` fell back
  * to pale pastel blobs — the brand rendering as two different things depending on a setting
  * that has nothing to do with the brand. A scheme is the brand; a style is the layout
- * grammar. Deeplight is black in both, and the drift blob ground is overridden here for the
- * same reason its field is.
+ * grammar. Deeplight is black in both styles on the dark pole; lightness is the axis that turns
+ * it over.
  */
 /*
  * A GROUND OVERRIDE THAT SETS A BACKGROUND MUST SET ITS INK IN THE SAME BREATH.
@@ -1312,7 +1329,28 @@ ul.plus li::before {
  *
  * So every ground here restates the full set. A background and an ink are one decision.
  */
-[data-scheme='deeplight'] .vivid {
+/* Aurora's light Deeplight field cannot use the generic 4% field mix: that mix is deliberately
+   almost black. Draw a paper field instead and keep every ink tier explicit. Drift already has
+   its own pale construction, so it needs no exception. */
+[data-style='aurora'][data-scheme='deeplight']:not([data-lightness='dark']) .vivid {
+  --ink: var(--brand-ink);
+  --mute: color-mix(in srgb, var(--brand-ink) 68%, transparent);
+  --faint: color-mix(in srgb, var(--brand-ink) 22%, transparent);
+  --pane: var(--brand-paper);
+  --pane-edge: var(--brand-line);
+  --pane-ink: var(--brand-ink);
+  --pane-mute: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  --pane-faint: color-mix(in srgb, var(--brand-ink) 20%, transparent);
+  --accent-ink: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  --pane-accent: color-mix(in srgb, var(--brand-a) 46%, var(--brand-ink));
+  color: var(--ink);
+  background:
+    radial-gradient(58% 54% at 4% 6%, color-mix(in srgb, var(--brand-b) 22%, transparent) 0%, transparent 62%),
+    radial-gradient(58% 54% at 96% 94%, color-mix(in srgb, var(--brand-a) 20%, transparent) 0%, transparent 62%),
+    var(--brand-paper);
+}
+
+[data-scheme='deeplight'][data-lightness='dark'] .vivid {
   --ink: #ffffff;
   --mute: rgba(255, 255, 255, .72);
   --faint: rgba(255, 255, 255, .32);
@@ -1329,11 +1367,11 @@ ul.plus li::before {
 /* Black throughout, like the brand's own deck: the quiet ground is the grey step above the
    black rather than a pale page, panes step up within the dark and take light ink, and the
    numerals drop their fill — bare yellow monospace, which is how the brand writes them. */
-[data-scheme='deeplight'] {
+[data-scheme='deeplight'][data-lightness='dark'] {
   --pill-bg: transparent;
   --pill-fg: var(--brand-a);
 }
-[data-scheme='deeplight'] .deep {
+[data-scheme='deeplight'][data-lightness='dark'] .deep {
   --ink: #ffffff;
   --mute: rgba(255, 255, 255, .72);
   --faint: rgba(255, 255, 255, .32);
@@ -1349,13 +1387,13 @@ ul.plus li::before {
 }
 /* Graphics on the black page: the donut's first segment is paper (ink would vanish), and the
    media well mixes toward the dark instead of toward paper. */
-[data-scheme='deeplight'] .donut .dchart {
+[data-scheme='deeplight'][data-lightness='dark'] .donut .dchart {
   background: conic-gradient(
     #ffffff 0 calc(var(--s1) * 1%),
     var(--brand-a) 0 calc((var(--s1) + var(--s2)) * 1%),
     var(--brand-b) 0 100%);
 }
-[data-scheme='deeplight'] .media {
+[data-scheme='deeplight'][data-lightness='dark'] .media {
   background:
     radial-gradient(60% 60% at 28% 30%, color-mix(in srgb, var(--brand-b) 20%, var(--brand-ink)) 0%, transparent 70%),
     radial-gradient(70% 70% at 76% 76%, color-mix(in srgb, var(--brand-a) 22%, var(--brand-ink)) 0%, transparent 72%),
@@ -1367,7 +1405,7 @@ ul.plus li::before {
    later — so nothing is restated for them here. The divider is the exception: drift styles it
    with `.slide.divider`, which outranks a bare `.vivid`, so it is the one rule that has to
    name itself. It states its ink alongside its ground, like every other ground rule. */
-[data-style='drift'][data-scheme='deeplight'] .slide.divider {
+[data-style='drift'][data-scheme='deeplight'][data-lightness='dark'] .slide.divider {
   background: var(--brand-ink);
   --ink: #ffffff;
   --mute: rgba(255, 255, 255, .72);
@@ -1661,6 +1699,107 @@ ul.plus li::before {
 .close .cgroup { min-width: 16cqi; }
 .close .cgroup .label { display: block; margin-bottom: .6cqi; }
 .close .cv { font-size: 1.2cqi; line-height: 1.65; }
+
+/* THE CASE STUDY — one explicit case label and one flat proof register.
+ *
+ * A case study is not a dashboard and not four cards. The coloured band says immediately what
+ * the reader is looking at; the evidence below shares a baseline and is separated by rules.
+ * `.caseproof` is the standalone library block. `.case-proof` lets an established `.ruled` or
+ * `.stats` block take the same aligned treatment without inventing a second copy of the CSS. */
+.deck .case-study > .case-band {
+  order: -3; display: flex; align-items: center; justify-content: space-between;
+  margin: 0 0 1.35cqi; padding: .68cqi .9cqi;
+  background: var(--brand-a); color: var(--on-a);
+}
+.deck .case-study .case-band :is(.eyebrow, .case-id) {
+  margin: 0; padding: 0; border-radius: 0; background: none; color: inherit;
+  font-family: var(--label-face); font-size: .78cqi; line-height: 1;
+  letter-spacing: var(--label-track); text-transform: var(--label-case);
+  font-weight: var(--label-weight);
+}
+.deck .case-study .case-band .case-id { font-weight: 700; }
+.deck .case-study .case-band .eyebrow { opacity: .62; }
+.caseproof {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+  margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
+}
+.deck .case-study > .case-proof {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+  margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
+}
+.caseproof > div,
+.deck .case-study > .case-proof > div {
+  min-width: 0; padding: 0 1.9cqi; border-left: .07cqi solid var(--faint);
+}
+.caseproof > div:first-child,
+.deck .case-study > .case-proof > div:first-child { padding-left: 0; border-left: 0; }
+.caseproof > div:last-child,
+.deck .case-study > .case-proof > div:last-child { padding-right: 0; }
+.caseproof .verdict,
+.deck .case-study .case-proof .verdict {
+  margin: 0 0 .65cqi; font-size: 1.45cqi; letter-spacing: -.02em; font-weight: 500;
+}
+.caseproof .state,
+.deck .case-study .case-proof .state {
+  font-family: var(--label-face); font-size: .8cqi; line-height: 1.35;
+  letter-spacing: .1em; text-transform: var(--label-case); color: var(--accent-ink);
+}
+.caseproof p,
+.deck .case-study .case-proof p {
+  margin: .9cqi 0 0; font-size: .9cqi; line-height: 1.58; color: var(--mute);
+}
+
+/* THE FIT CALL — one square brand field, three ruled questions and one inverted output rail.
+ *
+ * This is a composition, not a row of interface cards. It is the decisive next step for court
+ * and sales decks; `.close` above remains available for a quiet contact-only page. */
+.close-poster h1 { max-width: 22ch; }
+.close-poster .stand { max-width: 74ch; }
+.fitcall {
+  display: grid; grid-template-columns: 14cqi minmax(0, 1fr);
+  grid-template-rows: 1fr auto; margin-top: auto; min-height: 20cqi;
+  overflow: hidden; background: var(--brand-a); color: var(--on-a);
+  border: .08cqi solid var(--brand-a); border-radius: 0;
+}
+.fitcall .fit-time {
+  display: flex; flex-direction: column; justify-content: center; padding: 1.6cqi 2cqi;
+  border-right: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
+}
+.fitcall :is(.fit-kicker, .fit-unit, .fit-num, .fit-output-label) {
+  font-family: var(--label-face); text-transform: var(--label-case);
+  letter-spacing: var(--label-track);
+}
+.fitcall .fit-kicker { font-size: .72cqi; }
+.fitcall .fit-time strong {
+  margin-top: .25cqi; font-size: 5.7cqi; line-height: .92;
+  letter-spacing: -.06em; font-weight: 500;
+}
+.fitcall .fit-unit { margin-top: .35cqi; font-size: .8cqi; }
+.fitcall .fit-questions { padding: .8cqi 2.1cqi; }
+.fitcall .fit-row {
+  display: grid; grid-template-columns: 2.8cqi 8cqi minmax(0, 1fr);
+  align-items: baseline; gap: .8cqi; padding: 1.15cqi 0;
+  border-bottom: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
+}
+.fitcall .fit-row:last-child { border-bottom: 0; }
+.fitcall .fit-num { font-size: .72cqi; }
+.fitcall .fit-row b { font-size: .82cqi; text-transform: uppercase; letter-spacing: .12em; }
+.fitcall .fit-row > span:last-child {
+  font-size: 1.22cqi; line-height: 1.35; letter-spacing: -.012em;
+}
+.fitcall .fit-output {
+  grid-column: 1 / -1; display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
+  gap: 1.5cqi; padding: 1.1cqi 1.6cqi;
+  background: var(--on-a); color: var(--brand-a);
+}
+.fitcall .fit-output-label { font-size: .7cqi; }
+.fitcall .fit-output b { font-size: 1cqi; font-weight: 500; }
+.fitcall .fit-output a {
+  color: inherit; font-family: var(--label-face); font-size: .72cqi;
+  font-weight: 700; letter-spacing: .12em; text-decoration: none;
+  text-transform: uppercase; white-space: nowrap;
+}
 
 /* A contents page with SECTIONS and the slides under them. A deck whose acts have parts needs
    to show the parts, or the reader counts six sections and meets fourteen slides. */
