@@ -1593,33 +1593,75 @@ ul.plus li::before {
 .timeline .what { font-size: 1.7cqi; letter-spacing: -0.02em; font-weight: 500; margin-top: .5cqi; }
 .timeline .tp p { margin: .6cqi 0 0; font-size: .92cqi; line-height: 1.6; color: var(--mute); }
 /*
- * THE QUARTET — the engagement model drawn rather than described.
+ * THE QUARTET — one operating model, not four UI cards.
  *
- * Four functions across the top, one bar beneath them showing the span they are accountable
- * for, and the tooling note alongside. The point the picture makes and a paragraph cannot: the
- * four boxes sit ON the bar, so the eye reads "these people, that whole span" without being
- * told. Grid rather than absolute positioning, so it reflows with the slide.
+ * The four leads share one ruled register. Discovery then lands as a single yellow field:
+ * four fortnightly waves, eight decision-ready outputs. The shared edges are the point — the
+ * functions remain accountable together while the work advances in a deliberate sequence.
  */
-.quartet { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6cqi; width: 100%; }
+.quartet {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+  width: 100%; margin-top: auto; border-block: .07cqi solid var(--faint);
+}
 .quartet .qf {
-  border: .07cqi solid var(--faint); border-radius: var(--radius);
-  padding: 1.4cqi 1.5cqi 1.6cqi; display: flex; flex-direction: column; gap: .5cqi;
+  min-width: 0; min-height: 8.8cqi; padding: 1.2cqi 1.65cqi 1.35cqi;
+  border: 0; border-left: .07cqi solid var(--faint); border-radius: 0;
+  display: flex; flex-direction: column;
 }
-.quartet .qn { font-size: 1.9cqi; letter-spacing: -0.022em; font-weight: 500; }
+.quartet .qf:first-child { padding-left: 0; border-left: 0; }
+.quartet > .qf:nth-child(4) { padding-right: 0; }
+.quartet .qhead { display: flex; align-items: baseline; gap: .75cqi; }
+.quartet .qno {
+  font-family: var(--label-face); font-size: .7cqi; letter-spacing: var(--label-track);
+  color: var(--accent-ink);
+}
+.quartet .qn { font-size: 1.8cqi; letter-spacing: -0.022em; font-weight: 500; }
+.quartet .qrole {
+  margin-top: .55cqi; max-width: 28ch; font-size: .78cqi; line-height: 1.4; color: var(--mute);
+}
 .quartet .qw {
-  font-family: var(--label-face); font-size: .74cqi; letter-spacing: var(--label-track);
-  text-transform: var(--label-case); color: var(--mute);
+  margin-top: auto; padding-top: .8cqi;
+  font-size: 1cqi; line-height: 1.36; letter-spacing: -0.01em; color: var(--ink);
 }
-.quartet .qspan {
-  grid-column: 1 / -1; margin-top: .4cqi; padding: .9cqi 1.5cqi;
-  border-radius: var(--radius); background: color-mix(in srgb, var(--accent-ink) 12%, transparent);
-  font-size: 1.05cqi; letter-spacing: -0.01em; display: flex; justify-content: space-between; gap: 2cqi;
+
+.discovery-playbook {
+  grid-column: 1 / -1; display: grid;
+  grid-template-columns: 15.5cqi minmax(0, 1fr); min-height: 10.9cqi;
+  margin-top: 1.15cqi; overflow: hidden;
+  border: .08cqi solid var(--brand-a); border-radius: 0;
+  background: var(--brand-a); color: var(--on-a);
 }
-.quartet .qspan b { font-weight: 550; }
-.quartet .qtool {
-  grid-column: 1 / -1; margin-top: .3cqi; font-size: .95cqi; line-height: 1.6; color: var(--mute);
+.playbook-intro {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 1.25cqi 1.65cqi;
+  border-right: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent);
 }
-.quartet .qtool b { color: var(--ink); font-weight: 550; }
+.playbook-kicker,
+.playbook-waves .qwave > span {
+  font-family: var(--label-face); font-size: .68cqi; letter-spacing: var(--label-track);
+  text-transform: var(--label-case);
+}
+.playbook-intro strong {
+  margin: .25cqi 0 .45cqi; font-size: 3.1cqi; line-height: .95;
+  font-weight: 500; letter-spacing: -.05em;
+}
+.playbook-intro > span:last-child { max-width: 24ch; font-size: .78cqi; line-height: 1.42; }
+.playbook-waves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.playbook-waves .qwave {
+  min-width: 0; padding: 1.25cqi 1.15cqi;
+  border-left: .08cqi solid color-mix(in srgb, var(--on-a) 22%, transparent);
+  display: flex; flex-direction: column; justify-content: center; gap: .72cqi;
+}
+.playbook-waves .qwave:first-child { border-left: 0; }
+.playbook-waves .qwave > span { opacity: .66; }
+.playbook-waves .qwave b {
+  display: grid; grid-template-columns: 1.35cqi minmax(0, 1fr); gap: .4cqi;
+  font-size: .82cqi; line-height: 1.32; font-weight: 550;
+}
+.playbook-waves .qwave i {
+  font-family: var(--label-face); font-size: .66cqi; font-style: normal;
+  letter-spacing: .08em; opacity: .58;
+}
 
 /*
  * THE JOURNEY — a dated sequence where the DATES are the argument.
