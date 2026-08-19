@@ -11,7 +11,11 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   .cover .tagline { font-size: 1.02cqi; letter-spacing: .13em; }
-  .deeplight-products .sum { justify-content: center; gap: 1.25cqi; }
+  .deeplight-products {
+    grid-template-columns: var(--device-w) minmax(0, 38cqi);
+    justify-content: end;
+  }
+  .deeplight-products .sum { min-width: 0; justify-content: center; gap: 1.05cqi; }
   .deeplight-products .sum .line { padding: .3cqi 0; }
   [data-style='aurora'] .timeline .tp:last-child::before { display: none; }
   [data-style='aurora'] .team.four .member .role { margin-top: .4cqi; padding-top: 0; }
@@ -127,68 +131,85 @@
     <div class="folio">4/11</div>
   </section>
 
-  <!-- 6 — CASE STUDY · ADCB -->
+  <!-- 6 — CASE STUDY · ADCB
+       Sources: DeepLight x ADIB.pptx slides 3–6; 01-deeplight-accelerate-deck.pdf p2;
+       02-open-finance-credentials.pdf pp1,5; IT_Recovery_Resiliency_Business_Case-3.html;
+       ADCB resilience programme screenshots supplied by the owner on 2026-08-19. Resilience is
+       the bank-wide technology and business-continuity programme, not a systems-migration label
+       or the separate delivery-staff continuity framework. Proposed target-state elements are
+       described as programme scope rather than completed outcomes. -->
   <section class="slide vivid case-study" data-job="proof">
     <div class="case-band">
       <div class="case-id">Case Study 01 &middot; Banking</div>
       <div class="eyebrow">Traction + Proof</div>
     </div>
-    <h1>ADCB: building the UAE&rsquo;s first Open Finance rollout</h1>
-    <p class="stand"><b>Tier-1 UAE bank.</b> A board mandate, twenty-plus legacy systems and no unified data platform. We built the governed foundation, AI platform and products without disrupting daily banking &mdash; or compromising CBUAE compliance.</p>
+    <h1>ADCB: data, AI and bank-wide resilience</h1>
+    <p class="stand"><b>Tier-1 UAE bank.</b> Starting with no unified data platform and twenty-plus legacy integrations, Deeplight built an AWS data foundation and Azure AI platform, delivered four production products, and supported a four-phase bank-wide resilience programme designed to keep priority banking services operating through disruption.</p>
     <div class="ruled case-proof">
       <div>
         <div class="verdict">Data foundation</div>
         <div class="state">60 days</div>
-        <p>Cloud-native AWS estate and governed lakehouse. Processing fell from 72 hours to 15 minutes; data quality rose from 67% to 95%.</p>
+        <p>Cloud-native AWS lakehouse with governed batch and real-time streaming, API management and self-service analytics. Processing fell from 72 hours to 15 minutes; data quality rose from 67% to 95%.</p>
       </div>
       <div>
         <div class="verdict">AI platform</div>
-        <div class="state">2,000+ users</div>
-        <p>Governed data streams, CDP integration for AI use cases and bi-directional CRM integration.</p>
+        <div class="state">Azure AI</div>
+        <p>Azure AI platform with governed streams, CDP and bi-directional CRM integration, data products and multiple AI/ML use cases &mdash; including enterprise-knowledge and mobile-banking chatbots.</p>
       </div>
       <div>
         <div class="verdict">Open Finance</div>
-        <div class="state">First in the UAE</div>
-        <p>The country&rsquo;s first certified rollout: 100&ndash;150ms response time against a 500ms ceiling.</p>
+        <div class="state">First certified in UAE</div>
+        <p>From no cloud platform in September 2024 to platform and first APIs live in January 2025. First bank certified by CBUAE; 100&ndash;150ms typical response against a 500ms ceiling.</p>
       </div>
       <div>
-        <div class="verdict">Resilience</div>
-        <div class="state">30% lower cost</div>
-        <p>Twenty-plus systems migrated in parallel with no interruption to daily banking and no regulatory finding.</p>
+        <div class="verdict">Bank-wide service continuity</div>
+        <div class="state">4 phases &middot; 5 RTO tiers</div>
+        <p>The Minimum Viable Bank identifies priority services and sequences recovery from always-on to &lt;4 hours and longer tiers. Phase 3 is defining the target architecture; Phase 4 targets portable onshore/offshore recovery with regular live failover testing.</p>
       </div>
+    </div>
+    <div class="case-context">
+      <div class="label">Platform outcomes</div>
+      <p><b>Two greenfield platforms &rarr; 4 products live.</b> More than 2,000 Power BI users, 30% cost reduction and zero regulatory violations after implementation.</p>
     </div>
     <div class="folio">5/11</div>
   </section>
 
-  <!-- 7 — CASE STUDY · EWEC -->
+  <!-- 7 — CASE STUDY · EWEC
+       Sources: 01-deeplight-accelerate-deck.pdf p2; 05-ewec-model-methodology.md pp1–3;
+       08-ewec-reference-architecture.drawio. The measured unit is three products live, not
+       three models: load forecasting, solar forecasting and reserve management. -->
   <section class="slide vivid case-study" data-job="traction">
     <div class="case-band">
       <div class="case-id">Case Study 02 &middot; Energy</div>
       <div class="eyebrow">Traction + Proof</div>
     </div>
-    <h1>EWEC: national-grid forecasting, built from zero</h1>
-    <p class="stand"><b>UAE national energy buyer.</b> One Databricks data and AI platform, three production models, and live monitoring for forecasts where a wrong number costs real money the same evening.</p>
+    <h1>EWEC: data + AI platform.<br>Three products live.</h1>
+    <p class="stand"><b>UAE national energy buyer.</b> Deeplight built the Databricks foundation and the MLOps lifecycle together. Governed pipelines, reusable features, controlled deployment and live monitoring support load forecasting, solar forecasting and reserve management as one production estate.</p>
     <div class="stats case-proof">
       <div>
-        <div class="verdict">Data platform</div>
-        <div class="state">0 &rarr; 1</div>
-        <p>A Databricks lakehouse and governed pipelines built as one data and AI platform.</p>
+        <div class="verdict">Data + AI platform</div>
+        <div class="state">1 governed foundation</div>
+        <p>Operational, weather, historical and reference data land in a Databricks lakehouse with quality gates, lineage and reusable feature tables.</p>
       </div>
       <div>
-        <div class="verdict">Forecasting</div>
-        <div class="state">3 models live</div>
-        <p>Demand forecasting, solar forecasting and reserve management running in production.</p>
+        <div class="verdict">Products in operation</div>
+        <div class="state">3 products live</div>
+        <p>Load forecasting, solar forecasting and reserve management run on the same governed platform rather than as separate one-off pipelines.</p>
       </div>
       <div>
-        <div class="verdict">Monitoring</div>
-        <div class="state">Live</div>
-        <p>Production monitoring as the weather and the grid move underneath the models.</p>
+        <div class="verdict">MLOps lifecycle</div>
+        <div class="state">Versioned + controlled</div>
+        <p>MLflow tracks experiments and model versions; scheduled workflows run training and inference; controlled promotion and rollback move changes into production.</p>
       </div>
       <div>
-        <div class="verdict">Model control</div>
+        <div class="verdict">Monitor + improve</div>
         <div class="state">Drift-triggered</div>
-        <p>Champion/challenger comparison with retraining triggered when a model drifts.</p>
+        <p>Accuracy, data quality and drift are monitored by bucket. Champion/challenger comparison and threshold-triggered retraining keep models current while operators retain the decision.</p>
       </div>
+    </div>
+    <div class="case-context">
+      <div class="label">Production estate</div>
+      <p><b>One governed lifecycle from ingestion to intervention.</b> Data engineering, AI engineering, product and operational adoption remained connected through go-live.</p>
     </div>
     <div class="folio">6/11</div>
   </section>
@@ -206,8 +227,8 @@
         </div>
       </div>
       <div class="sum">
-        <div class="line"><span class="num">01</span> <b>Finance Workbench.</b> Every figure opens into the working behind it: the movement, formula, source rows and ledger load.</div>
-        <div class="line"><span class="num">02</span> <b>Muse AI.</b> A bank-hosted platform for querying documents, data and systems in natural language &mdash; deployed on the client&rsquo;s own in-region AWS, on open models fine-tuned for UAE banking.</div>
+        <div class="line"><span class="num">01</span> <b>Finance Workbench.</b> Every board-pack figure opens to its movement, formula, source rows and ledger load.</div>
+        <div class="line"><span class="num">02</span> <b>Muse AI.</b> Queries documents, data and systems inside the bank&rsquo;s in-region AWS, using open models fine-tuned for UAE banking.</div>
       </div>
     </div>
     <div class="folio">7/11</div>
