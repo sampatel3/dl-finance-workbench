@@ -1953,7 +1953,7 @@ ul.plus li::before {
 .deck[data-logo] .slide::after {
   content: '';
   position: absolute; pointer-events: none;
-  top: auto; right: auto; bottom: 1.25cqi; left: 4.2cqi;
+  top: auto; right: auto; bottom: 1.45cqi; left: 4.2cqi;
   width: 6.3cqi; height: 1.18cqi;
   background: var(--logo) left center / contain no-repeat;
   opacity: .82; filter: none;
