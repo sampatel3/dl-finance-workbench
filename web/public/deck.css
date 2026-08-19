@@ -482,7 +482,7 @@ h1 {
  */
 .slide > :is(.grid, .opts, .tiles, .roster, .ruled, .rail, .mech, .box, .contents,
              .trio, .plans, .pillars, .stats, .figures, .ladder, .panel, .bars, .donut,
-             .rings, .team, .timeline, .close,
+             .rings, .team, .timeline, .close, .financearc,
              /* The product pages belong here too, and their absence was the loudest fault in
                 the composition: on every slide carrying a device the band was INVERTED —
                 about a centimetre of air above the picture and up to 8.7cqi of dead space
@@ -504,7 +504,7 @@ h1 {
 .slide > :is(.grid, .opts, .tiles, .roster, .ruled, .rail, .mech, .box, .contents,
              .trio, .plans, .pillars, .stats, .figures, .ladder, .panel, .bars, .donut,
              .rings, .team, .timeline, .close, .screen, .duo, .duoflip, .works, .sum,
-             .nest, .quad, .visual, .split) + .foot { margin-top: 1.6cqi; }
+             .nest, .quad, .visual, .split, .financearc) + .foot { margin-top: 1.6cqi; }
 
 .stand { margin: 1.2cqi 0 0; max-width: 72ch; font-size: 1.18cqi; line-height: 1.58; color: var(--mute); }
 
@@ -1623,6 +1623,44 @@ ul.plus li::before {
 .quartet .qw {
   margin-top: .7cqi;
   font-size: 1cqi; line-height: 1.36; letter-spacing: -0.01em; color: var(--ink);
+}
+
+/* THE FINANCE ARC — one operating model, not five cards.
+ *
+ * `Record → Report → Plan → Control → Partner` is a continuous Finance workflow. The ruled
+ * register keeps it as one idea; the brand rail names the business outcome and the product
+ * wedge without turning either into another slide of prose. */
+.financearc {
+  width: 100%; overflow: hidden;
+  border-block: .07cqi solid var(--faint);
+}
+.financearc .financeflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.financearc .financejob {
+  min-width: 0; min-height: 10.2cqi; padding: 1.2cqi 1.35cqi 1.35cqi;
+  border-left: .07cqi solid var(--faint);
+}
+.financearc .financejob:first-child { padding-left: 0; border-left: 0; }
+.financearc .financejob:last-child { padding-right: 0; }
+.financearc .fjhead { display: flex; align-items: baseline; gap: .7cqi; }
+.financearc .fjno {
+  flex: 0 0 auto; font-family: var(--label-face); font-size: .68cqi;
+  letter-spacing: var(--label-track); color: var(--accent-ink);
+}
+.financearc .fjname { font-size: 1.72cqi; letter-spacing: -.025em; font-weight: 520; }
+.financearc .fjq {
+  min-height: 2.25cqi; margin-top: .55cqi;
+  font-size: .78cqi; line-height: 1.42; color: var(--mute);
+}
+.financearc .fjdo { margin: .7cqi 0 0; font-size: 1cqi; line-height: 1.42; color: var(--ink); }
+.financearc .financebridge {
+  display: flex; align-items: center; justify-content: space-between; gap: 2cqi;
+  padding: 1.05cqi 1.35cqi;
+  background: var(--brand-a); color: var(--on-a);
+}
+.financearc .financebridge span { font-size: 1.02cqi; line-height: 1.35; font-weight: 500; }
+.financearc .financebridge b {
+  font-family: var(--label-face); font-size: .72cqi; line-height: 1.35;
+  letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
 }
 
 .discovery-playbook {
