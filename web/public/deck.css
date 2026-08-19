@@ -1856,7 +1856,7 @@ ul.plus li::before {
 .deck .case-study:has(> .case-context) > .case-proof { margin-bottom: 0; }
 .case-context {
   display: grid; grid-template-columns: 10.5cqi minmax(0, 1fr); gap: 2cqi;
-  align-items: baseline; margin-top: 1.35cqi; margin-bottom: .65cqi; padding: 1.05cqi 0;
+  align-items: baseline; margin-top: 1.35cqi; margin-bottom: 1.75cqi; padding: 1.05cqi 0;
   border-block: .07cqi solid var(--faint);
 }
 .case-context .label { color: var(--accent-ink); }
