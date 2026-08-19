@@ -2,7 +2,7 @@
 
 **Deeplight Finance Workbench** — a working demo of a governed measure layer over the systems Finance
 already runs. Built with [demo-kit](https://github.com/sampatel3/demo-kit), vendored as a pinned
-submodule at `vendor/demo-kit`. The current pin, `cdb750a`, is on Demo Kit's default branch and
+submodule at `vendor/demo-kit`. The current pin, `5710377`, is on Demo Kit's default branch and
 includes the canonical Deeplight reference deck, shared product-deck grammar and Free-mode shell.
 
 The company is **Kestrel Industrial Group**: five entities, four currencies, forty-three closed months
@@ -65,7 +65,7 @@ contract those values must satisfy.
 ## Updating the kit
 
 The shared machinery — the shell, the gate, the model seam and the deck — is vendored as a pinned
-submodule. The current parent pointer is `cdb750a3248181f309ad3428d7fbe08641ee03a9`, published on
+submodule. The current parent pointer is `57103774d04e1824ec8b0c10b96c4694cb32cf7a`, published on
 [`sampatel3/demo-kit`](https://github.com/sampatel3/demo-kit) `main`. That central commit owns the
 canonical Deeplight company deck, the shared slide components and the product-deck authoring rules;
 `web/public/reference.html` is only a generated mirror.

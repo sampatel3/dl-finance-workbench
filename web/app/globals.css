@@ -48,7 +48,7 @@
  * dark grey is mud, and mud is not a brand. Then they carried 1.5-4%, which was a value nobody
  * could see doing a job nobody had asked for. A pane is now the SCHEME'S ground — the same card
  * on every scheme in that scheme's own neutral — and the brand lives where it can be read: the
- * accent, the chart ink and the wash behind the page.
+ * accent and the chart ink.
  *
  * THE STYLE AXIS IS THE KIT'S NOW, THROUGH `--gr-*`. This file used to hold `[data-style]` blocks
  * for two systems called `mesh` and `soft` that the kit has not had for two rebuilds, so the
@@ -298,8 +298,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  /* `background-color`, not the shorthand, for the reason `.skin` below is written out at
-     length: a ground stated as a shorthand deletes whatever image a style lays on the element. */
+  /* The scheme and lightness axes own the flat page ground. */
   background-color: var(--bg);
   color: var(--label);
   font-family: var(--ff-body);
@@ -313,23 +312,11 @@ html, body {
 a { color: inherit; transition: opacity 120ms cubic-bezier(0.2, 0.7, 0.2, 1); }
 a:hover { opacity: 0.72; }
 
-/* The treatment wrapper has to fill the viewport, or the canvas ends where the content does and
-   the page has a foot in the other colour.
-
-   TWO PROPERTIES, NOT ONE SHORTHAND, and this is the only rule in the app that paints `.skin`.
-   The style's wash arrives as `--ground` — a TOKEN handed over by `[data-style]` in the shell —
-   and `background: var(--bg)` here is a shorthand that resets `background-image`, so for as long
-   as this rule said that, the aurora and drift washes were painted and then deleted by whichever
-   stylesheet `layout.tsx` imported last. The colour is the demo's; the treatment is the
-   grammar's; they are different properties and neither can silently win. */
+/* The treatment wrapper fills the viewport. The canvas stays flat; schemes and lightness choose
+   its colour, while Aurora and Drift change composition rather than paint behind the product. */
 .skin {
   min-height: 100dvh;
   background-color: var(--bg);
-  background-image: var(--ground, none);
-  /* Fixed, so the wash belongs to the window rather than to the scroll — a gradient sliding
-     under a long table reads as a rendering fault. Harmless with no image. */
-  background-attachment: fixed;
-  background-repeat: no-repeat;
 }
 
 
@@ -1786,4 +1773,3 @@ a:hover { opacity: 0.72; }
   margin: 0; padding: 0 0 0 16px; border-left: 2px solid var(--accent);
   font-size: 14px; line-height: 1.65; color: var(--text);
 }
-
