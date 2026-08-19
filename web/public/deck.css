@@ -1637,7 +1637,7 @@ ul.plus li::before {
 .financearc .financeflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .financearc .financejob {
   display: flex; flex-direction: column;
-  min-width: 0; min-height: 10.2cqi; padding: 1.2cqi 1.35cqi 1.35cqi;
+  min-width: 0; min-height: 17cqi; padding: 1.15cqi 1.25cqi 1.25cqi;
   border-left: .07cqi solid var(--faint);
 }
 .financearc .financejob:first-child { padding-left: 0; border-left: 0; }
@@ -1649,22 +1649,27 @@ ul.plus li::before {
 }
 .financearc .fjname { font-size: 1.72cqi; letter-spacing: -.025em; font-weight: 520; }
 .financearc .fjq {
-  min-height: 2.25cqi; margin-top: .55cqi;
+  min-height: 1.75cqi; margin-top: .42cqi;
   font-size: .78cqi; line-height: 1.42; color: var(--mute);
 }
-.financearc .fjdo { margin: .7cqi 0 0; font-size: 1cqi; line-height: 1.42; color: var(--ink); }
-.financearc .fjai {
-  margin-top: auto; padding-top: .75cqi;
-  border-top: .07cqi solid var(--faint);
-}
+.financearc .fjrole { min-height: 5.25cqi; margin-top: .35cqi; }
+.financearc .fjrole span,
 .financearc .fjai span {
   display: block; color: var(--accent-ink);
   font-family: var(--label-face); font-size: .58cqi;
   letter-spacing: .12em; text-transform: uppercase;
 }
+.financearc .fjrole p {
+  margin: .32cqi 0 0;
+  font-size: .82cqi; line-height: 1.38; color: var(--ink);
+}
+.financearc .fjai {
+  min-height: 5.55cqi; margin-top: auto; padding-top: .72cqi;
+  border-top: .07cqi solid var(--faint);
+}
 .financearc .fjai b {
-  display: block; margin-top: .3cqi;
-  font-size: .84cqi; line-height: 1.35; font-weight: 500;
+  display: block; margin-top: .32cqi;
+  font-size: .82cqi; line-height: 1.38; font-weight: 500;
 }
 .financearc .financebridge {
   display: flex; align-items: center; justify-content: space-between; gap: 2cqi;
@@ -1938,18 +1943,28 @@ ul.plus li::before {
 /* Dividers stay bare — they are a held breath, and a mark on one is furniture in the pause.
    The TITLE PAGE keeps its mark and wears it larger: it is the one slide whose job is to say
    whose deck this is. */
-.deck[data-brand] .slide.divider::after { content: none; }
-.deck[data-logo] .slide:has(> .cover)::after { width: 14cqi; height: 3cqi; opacity: 1; }
+.deck[data-brand]:not([data-logo]) .slide.divider::after { content: none; }
 
-/* THE MARK. `data-logo="<url>"` on the deck root puts the real logo where the wordmark was —
-   the same opt-in, one rung better, because a company that has a mark should use it rather
-   than its name set in the label face. The wordmark stays the fallback for a deck that has
-   no image to point at. */
+/* THE MARK. `data-logo` plus a `--logo: url(...)` on the deck root carries the real mark on
+   every page. Content pages place it in the bottom gutter, clear of the argument; the title
+   keeps the larger top-right signature. The wordmark stays the fallback for a deck without
+   an image to point at. Deeplight's supplied asset is white-only, so its light pole safely
+   inverts that monochrome file rather than maintaining a second logo. */
 .deck[data-logo] .slide::after {
   content: '';
-  width: 9cqi; height: 1.9cqi;
-  background: var(--logo) center right / contain no-repeat;
-  opacity: .9;
+  position: absolute; pointer-events: none;
+  top: auto; right: auto; bottom: .5cqi; left: 4.2cqi;
+  width: 8.5cqi; height: 1.6cqi;
+  background: var(--logo) left center / contain no-repeat;
+  opacity: .82; filter: none;
+}
+.deck[data-logo] .slide:has(> .cover)::after {
+  top: 3.4cqi; right: 4.2cqi; bottom: auto; left: auto;
+  width: 14cqi; height: 3cqi;
+  background-position: right center; opacity: 1;
+}
+.deck[data-scheme='deeplight'][data-logo]:not([data-lightness='dark']) .slide::after {
+  filter: invert(1);
 }
 
 /* THE LAYERS — a stack of bands, read bottom to top, with one of them the point.
