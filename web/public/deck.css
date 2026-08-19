@@ -1636,6 +1636,7 @@ ul.plus li::before {
 }
 .financearc .financeflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .financearc .financejob {
+  display: flex; flex-direction: column;
   min-width: 0; min-height: 10.2cqi; padding: 1.2cqi 1.35cqi 1.35cqi;
   border-left: .07cqi solid var(--faint);
 }
@@ -1652,6 +1653,19 @@ ul.plus li::before {
   font-size: .78cqi; line-height: 1.42; color: var(--mute);
 }
 .financearc .fjdo { margin: .7cqi 0 0; font-size: 1cqi; line-height: 1.42; color: var(--ink); }
+.financearc .fjai {
+  margin-top: auto; padding-top: .75cqi;
+  border-top: .07cqi solid var(--faint);
+}
+.financearc .fjai span {
+  display: block; color: var(--accent-ink);
+  font-family: var(--label-face); font-size: .58cqi;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.financearc .fjai b {
+  display: block; margin-top: .3cqi;
+  font-size: .84cqi; line-height: 1.35; font-weight: 500;
+}
 .financearc .financebridge {
   display: flex; align-items: center; justify-content: space-between; gap: 2cqi;
   padding: 1.05cqi 1.35cqi;
