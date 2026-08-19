@@ -17,9 +17,13 @@ const sharedDeeplightCopy = [
   '60 days',
   '72 hours to 15 minutes',
   '67% to 95%',
-  '0 &rarr; 1',
-  '2,000+ users',
-  '3 models live',
+  'bank-wide resilience programme',
+  'Minimum Viable Bank',
+  '5 RTO tiers',
+  '2,000 Power BI users',
+  '4 products live',
+  'MLOps lifecycle',
+  '3 products live',
   'Tristan Blakley',
   'Terrence Kunstek',
   'Sam Patel',
@@ -56,5 +60,9 @@ describe('Finance Workbench deck alignment', () => {
         `data-company-source="${source}"`,
       );
     }
+
+    expect(product).not.toContain('3 models live');
+    expect(company).not.toContain('3 models live');
+    expect(company).not.toContain('systems migrated');
   });
 });

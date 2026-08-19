@@ -1821,15 +1821,18 @@ ul.plus li::before {
 .deck .case-study .case-band .eyebrow { opacity: .62; }
 .caseproof {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
-  margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
+  margin-top: auto; margin-bottom: 2.2cqi; min-height: 13.2cqi;
+  padding-top: 1.25cqi; border-top: .07cqi solid var(--faint);
 }
 .deck .case-study > .case-proof {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
-  margin-top: 2.1cqi; padding-top: 1.35cqi; border-top: .07cqi solid var(--faint);
+  margin-top: auto; margin-bottom: 2.2cqi; min-height: 13.2cqi;
+  padding-top: 1.25cqi; border-top: .07cqi solid var(--faint);
 }
 .caseproof > div,
 .deck .case-study > .case-proof > div {
   min-width: 0; padding: 0 1.9cqi; border-left: .07cqi solid var(--faint);
+  display: flex; flex-direction: column;
 }
 .caseproof > div:first-child,
 .deck .case-study > .case-proof > div:first-child { padding-left: 0; border-left: 0; }
@@ -1837,17 +1840,30 @@ ul.plus li::before {
 .deck .case-study > .case-proof > div:last-child { padding-right: 0; }
 .caseproof .verdict,
 .deck .case-study .case-proof .verdict {
-  margin: 0 0 .65cqi; font-size: 1.45cqi; letter-spacing: -.02em; font-weight: 500;
+  margin: 0; font-family: var(--label-face); font-size: .76cqi;
+  letter-spacing: var(--label-track); text-transform: var(--label-case);
+  color: var(--mute); font-weight: var(--label-weight);
 }
 .caseproof .state,
 .deck .case-study .case-proof .state {
-  font-family: var(--label-face); font-size: .8cqi; line-height: 1.35;
-  letter-spacing: .1em; text-transform: var(--label-case); color: var(--accent-ink);
+  margin-top: .5cqi; font-family: var(--display); font-size: 1.85cqi; line-height: 1.04;
+  letter-spacing: -.03em; text-transform: none; color: var(--accent-ink); font-weight: 500;
 }
 .caseproof p,
 .deck .case-study .case-proof p {
-  margin: .9cqi 0 0; font-size: .9cqi; line-height: 1.58; color: var(--mute);
+  margin: auto 0 0; padding-top: 1cqi; font-size: .9cqi; line-height: 1.52; color: var(--mute);
 }
+.deck .case-study:has(> .case-context) > .case-proof { margin-bottom: 0; }
+.case-context {
+  display: grid; grid-template-columns: 10.5cqi minmax(0, 1fr); gap: 2cqi;
+  align-items: baseline; margin-top: 1.35cqi; margin-bottom: .65cqi; padding: 1.05cqi 0;
+  border-block: .07cqi solid var(--faint);
+}
+.case-context .label { color: var(--accent-ink); }
+.case-context p {
+  margin: 0; font-size: .92cqi; line-height: 1.5; color: var(--mute);
+}
+.case-context p b { color: var(--ink); font-weight: 650; }
 
 /* THE FIT CALL — one square brand field, three ruled questions and one inverted output rail.
  *
