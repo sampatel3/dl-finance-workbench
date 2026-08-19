@@ -14,16 +14,30 @@ const companyDeck = resolve(
 const sharedDeeplightCopy = [
   'Case Study 01 &middot; Banking',
   'Case Study 02 &middot; Energy',
+  '60 days',
+  '72 hours to 15 minutes',
+  '67% to 95%',
+  '0 &rarr; 1',
   '2,000+ users',
   '3 models live',
+  'Tristan Blakley',
+  'Terrence Kunstek',
+  'Sam Patel',
+  'Saniul Islam',
   'Senior accountability. Squad delivery.',
   'Three programmes, chosen by what you already know',
   'Eight weeks &middot; when the roadmap does not exist yet',
   'From $185K &middot; gate outcome: proceed, rescope or stop',
   'Time and materials &middot; when the programme already exists',
   'Bring one problem.<br>Leave with a written verdict.',
+  'What outcome matters, who owns it, and what proves success?',
+  'Can the workflow, data and controls carry a production product?',
+  'Which delivery route gets it moving with the least waste?',
   'Fit verdict &middot; recommended route &middot; first scope &middot; success measure &middot; next step',
+  'accelerate@deeplight.ae',
 ];
+
+const companySources = ['accelerate', 'case-studies', 'team', 'programmes', 'fitcall'];
 
 describe('Finance Workbench deck alignment', () => {
   it('keeps copied Deeplight company language aligned to the reference deck', async () => {
@@ -35,6 +49,12 @@ describe('Finance Workbench deck alignment', () => {
     for (const copy of sharedDeeplightCopy) {
       expect(product, `product deck is missing: ${copy}`).toContain(copy);
       expect(company, `company deck is missing: ${copy}`).toContain(copy);
+    }
+
+    for (const source of companySources) {
+      expect(product, `product deck does not declare company source: ${source}`).toContain(
+        `data-company-source="${source}"`,
+      );
     }
   });
 });

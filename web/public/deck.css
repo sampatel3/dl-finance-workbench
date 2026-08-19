@@ -482,7 +482,7 @@ h1 {
  */
 .slide > :is(.grid, .opts, .tiles, .roster, .ruled, .rail, .mech, .box, .contents,
              .trio, .plans, .pillars, .stats, .figures, .ladder, .panel, .bars, .donut,
-             .rings, .team, .timeline, .close, .financearc,
+             .rings, .team, .timeline, .close, .domainarc,
              /* The product pages belong here too, and their absence was the loudest fault in
                 the composition: on every slide carrying a device the band was INVERTED —
                 about a centimetre of air above the picture and up to 8.7cqi of dead space
@@ -504,7 +504,7 @@ h1 {
 .slide > :is(.grid, .opts, .tiles, .roster, .ruled, .rail, .mech, .box, .contents,
              .trio, .plans, .pillars, .stats, .figures, .ladder, .panel, .bars, .donut,
              .rings, .team, .timeline, .close, .screen, .duo, .duoflip, .works, .sum,
-             .nest, .quad, .visual, .split, .financearc) + .foot { margin-top: 1.6cqi; }
+             .nest, .quad, .visual, .split, .domainarc) + .foot { margin-top: 1.6cqi; }
 
 .stand { margin: 1.2cqi 0 0; max-width: 72ch; font-size: 1.18cqi; line-height: 1.58; color: var(--mute); }
 
@@ -1625,59 +1625,59 @@ ul.plus li::before {
   font-size: 1cqi; line-height: 1.36; letter-spacing: -0.01em; color: var(--ink);
 }
 
-/* THE FINANCE ARC — one operating model, not five cards.
+/* THE DOMAIN ARC — one operating model, not five cards.
  *
- * `Record → Report → Plan → Control → Partner` is a continuous Finance workflow. The ruled
- * register keeps it as one idea; the brand rail names the business outcome and the product
- * wedge without turning either into another slide of prose. */
-.financearc {
+ * Use this before the product-specific problem when a product is one wedge of a broader
+ * transformation. Each column names an end-to-end domain job, its operating role and how AI
+ * helps; the brand rail ends on the explicit boundary where this product starts. */
+.domainarc {
   width: 100%; overflow: hidden;
   border-block: .07cqi solid var(--faint);
 }
-.financearc .financeflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.financearc .financejob {
+.domainarc .domainflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.domainarc .domainjob {
   display: flex; flex-direction: column;
   min-width: 0; min-height: 17cqi; padding: 1.15cqi 1.25cqi 1.25cqi;
   border-left: .07cqi solid var(--faint);
 }
-.financearc .financejob:first-child { padding-left: 0; border-left: 0; }
-.financearc .financejob:last-child { padding-right: 0; }
-.financearc .fjhead { display: flex; align-items: baseline; gap: .7cqi; }
-.financearc .fjno {
+.domainarc .domainjob:first-child { padding-left: 0; border-left: 0; }
+.domainarc .domainjob:last-child { padding-right: 0; }
+.domainarc .domainhead { display: flex; align-items: baseline; gap: .7cqi; }
+.domainarc .domainno {
   flex: 0 0 auto; font-family: var(--label-face); font-size: .68cqi;
   letter-spacing: var(--label-track); color: var(--accent-ink);
 }
-.financearc .fjname { font-size: 1.72cqi; letter-spacing: -.025em; font-weight: 520; }
-.financearc .fjq {
+.domainarc .domainname { font-size: 1.72cqi; letter-spacing: -.025em; font-weight: 520; }
+.domainarc .domainq {
   min-height: 1.75cqi; margin-top: .42cqi;
   font-size: .78cqi; line-height: 1.42; color: var(--mute);
 }
-.financearc .fjrole { min-height: 5.25cqi; margin-top: .35cqi; }
-.financearc .fjrole span,
-.financearc .fjai span {
+.domainarc .domainrole { min-height: 5.25cqi; margin-top: .35cqi; }
+.domainarc .domainrole span,
+.domainarc .domainai span {
   display: block; color: var(--accent-ink);
   font-family: var(--label-face); font-size: .58cqi;
   letter-spacing: .12em; text-transform: uppercase;
 }
-.financearc .fjrole p {
+.domainarc .domainrole p {
   margin: .32cqi 0 0;
   font-size: .82cqi; line-height: 1.38; color: var(--ink);
 }
-.financearc .fjai {
+.domainarc .domainai {
   min-height: 5.55cqi; margin-top: auto; padding-top: .72cqi;
   border-top: .07cqi solid var(--faint);
 }
-.financearc .fjai b {
+.domainarc .domainai b {
   display: block; margin-top: .32cqi;
   font-size: .82cqi; line-height: 1.38; font-weight: 500;
 }
-.financearc .financebridge {
+.domainarc .domainbridge {
   display: flex; align-items: center; justify-content: space-between; gap: 2cqi;
   padding: 1.05cqi 1.35cqi;
   background: var(--brand-a); color: var(--on-a);
 }
-.financearc .financebridge span { font-size: 1.02cqi; line-height: 1.35; font-weight: 500; }
-.financearc .financebridge b {
+.domainarc .domainbridge span { font-size: 1.02cqi; line-height: 1.35; font-weight: 500; }
+.domainarc .domainbridge b {
   font-family: var(--label-face); font-size: .72cqi; line-height: 1.35;
   letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
 }
@@ -1857,7 +1857,7 @@ ul.plus li::before {
 .close-poster .stand { max-width: 74ch; }
 .fitcall {
   display: grid; grid-template-columns: 14cqi minmax(0, 1fr);
-  grid-template-rows: 1fr auto; margin-top: auto; min-height: 20cqi;
+  grid-template-rows: 1fr auto; margin-top: auto; margin-bottom: .65cqi; min-height: 20cqi;
   overflow: hidden; background: var(--brand-a); color: var(--on-a);
   border: .08cqi solid var(--brand-a); border-radius: 0;
 }

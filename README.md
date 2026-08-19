@@ -2,8 +2,8 @@
 
 **Deeplight Finance Workbench** — a working demo of a governed measure layer over the systems Finance
 already runs. Built with [demo-kit](https://github.com/sampatel3/demo-kit), vendored as a pinned
-submodule at `vendor/demo-kit`. The current pin, `cc844bf`, combines demo-kit's latest main-line deck
-and LLM guidance with its official auto-fullscreen Free mode.
+submodule at `vendor/demo-kit`. The current pin, `cdb750a`, is on Demo Kit's default branch and
+includes the canonical Deeplight reference deck, shared product-deck grammar and Free-mode shell.
 
 The company is **Kestrel Industrial Group**: five entities, four currencies, forty-three closed months
 to July 2026. It does not exist. Every figure is computed from one seed string — which is why the
@@ -65,9 +65,10 @@ contract those values must satisfy.
 ## Updating the kit
 
 The shared machinery — the shell, the gate, the model seam and the deck — is vendored as a pinned
-submodule. The current parent pointer is `cc844bf6e94f2c35479fd914d6aec6dc4339044b`, published on
-`sampatel3/demo-kit` as `codex/latest-free-fullscreen`. It merges upstream `main` at `4757c73` into
-the auto-fullscreen Free-mode line at `660c16c`.
+submodule. The current parent pointer is `cdb750a3248181f309ad3428d7fbe08641ee03a9`, published on
+[`sampatel3/demo-kit`](https://github.com/sampatel3/demo-kit) `main`. That central commit owns the
+canonical Deeplight company deck, the shared slide components and the product-deck authoring rules;
+`web/public/reference.html` is only a generated mirror.
 
 Verify the pin with:
 
@@ -77,11 +78,9 @@ pnpm -C vendor/demo-kit -r typecheck
 pnpm -C vendor/demo-kit -r test
 ```
 
-Future updates must deliberately preserve both sides of that pin: merge the then-current upstream
-`main` into the published fullscreen branch, run the kit and workbench gates, push that branch, and
-only then move the parent repository's submodule pointer. Do not advance this demo to demo-kit's
-default branch without checking Free mode, because the default branch alone does not contain the
-combined history pinned here.
+Future updates should land on Demo Kit `main` first. Run the kit and workbench gates, update this
+submodule pointer to the verified central commit, run `pnpm --filter web deck:sync`, and commit the
+generated deck assets with the pointer. Never edit the generated reference deck in this repository.
 
 ## Layout
 
