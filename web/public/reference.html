@@ -29,12 +29,112 @@
     font-size: 2.25cqi; line-height: 1.08;
   }
   [data-style='drift'] .deeplight-products { --device-w: 38cqi; }
+
+  /* Dense reference pages: appendix material, not a second sales arc. */
+  .reference-detail h1 { max-width: 25ch; }
+  .reference-detail .stand { max-width: 96ch; }
+  .reference-detail :is(.detail-num, .detail-label, .detail-state, .phase-status, .rail-label) {
+    font-family: var(--label-face); letter-spacing: var(--label-track);
+    text-transform: var(--label-case); font-weight: var(--label-weight);
+  }
+  .reference-detail .detail-num { color: var(--accent-ink); font-size: .7cqi; }
+  .reference-detail .detail-label { color: var(--mute); font-size: .72cqi; }
+  .reference-detail .detail-state { color: var(--accent-ink); font-size: .78cqi; }
+
+  .openfinance-reference {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 1.7cqi; min-height: 16.7cqi;
+    border-block: .07cqi solid var(--faint);
+  }
+  .of-stage {
+    min-width: 0; padding: 1.2cqi 1.55cqi; border-left: .07cqi solid var(--faint);
+    display: flex; flex-direction: column;
+  }
+  .of-stage:first-child { padding-left: 0; border-left: 0; }
+  .of-stage:last-child { padding-right: 0; }
+  .of-stage h3 {
+    margin: .45cqi 0 .35cqi; font-family: var(--display); font-size: 1.55cqi;
+    line-height: 1.05; letter-spacing: -.025em; font-weight: 520;
+  }
+  .of-stage .detail-state { min-height: 2.1cqi; line-height: 1.35; }
+  .of-stage p { margin: auto 0 0; padding-top: .8cqi; font-size: .82cqi; line-height: 1.48; color: var(--mute); }
+  .of-stage p b { color: var(--ink); font-weight: 650; }
+
+  .reference-rail {
+    display: grid; align-items: center; margin-top: 1.15cqi; margin-bottom: 2.05cqi;
+    min-height: 4.1cqi; background: var(--brand-a); color: var(--on-a);
+  }
+  .openfinance-rail { grid-template-columns: 13cqi 1fr 1fr 1fr; }
+  .openfinance-rail > div { padding: .85cqi 1.2cqi; border-left: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent); }
+  .openfinance-rail > div:first-child { border-left: 0; }
+  .openfinance-rail .rail-label { display: block; font-size: .68cqi; opacity: .7; }
+  .openfinance-rail b { display: block; margin-top: .25cqi; font-size: .9cqi; line-height: 1.25; }
+
+  .resilience-reference { margin-top: 1.35cqi; }
+  .res-phases {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-block: .07cqi solid var(--faint);
+  }
+  .res-phase { min-width: 0; min-height: 7.1cqi; padding: 1cqi 1.25cqi; border-left: .07cqi solid var(--faint); }
+  .res-phase:first-child { padding-left: 0; border-left: 0; }
+  .res-phase:last-child { padding-right: 0; }
+  .res-phase.active { background: color-mix(in srgb, var(--brand-a) 11%, transparent); }
+  .res-phase h3 { margin: .25cqi 0 .4cqi; font-size: 1.14cqi; line-height: 1.12; }
+  .res-phase p { margin: 0; font-size: .73cqi; line-height: 1.42; color: var(--mute); }
+  .res-phase .phase-status { float: right; color: var(--accent-ink); font-size: .62cqi; }
+  .rto-reference {
+    display: grid; grid-template-columns: 8.7cqi repeat(5, minmax(0, 1fr));
+    margin-top: 1cqi; border-block: .07cqi solid var(--faint);
+  }
+  .rto-intro, .rto-tier { min-width: 0; min-height: 7.6cqi; padding: .9cqi 1cqi; }
+  .rto-intro { padding-left: 0; }
+  .rto-tier { border-left: .07cqi solid var(--faint); }
+  .rto-intro strong { display: block; margin-top: .45cqi; font-size: 1.35cqi; line-height: 1.08; }
+  .rto-tier b { display: block; margin: .25cqi 0 .35cqi; font-size: 1.05cqi; color: var(--accent-ink); }
+  .rto-tier p { margin: 0; font-size: .68cqi; line-height: 1.4; color: var(--mute); }
+  .resilience-status {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 1cqi 0 2.05cqi; min-height: 3.6cqi; background: var(--brand-a); color: var(--on-a);
+  }
+  .resilience-status > div { padding: .72cqi 1.1cqi; border-left: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent); }
+  .resilience-status > div:first-child { border-left: 0; }
+  .resilience-status .rail-label { display: block; font-size: .65cqi; opacity: .7; }
+  .resilience-status b { display: block; margin-top: .18cqi; font-size: .78cqi; line-height: 1.3; }
+
+  .forecast-reference { margin-top: 1.35cqi; }
+  .forecast-products {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-block: .07cqi solid var(--faint);
+  }
+  .forecast-product { min-width: 0; min-height: 10.4cqi; padding: 1cqi 1.6cqi; border-left: .07cqi solid var(--faint); }
+  .forecast-product:first-child { padding-left: 0; border-left: 0; }
+  .forecast-product:last-child { padding-right: 0; }
+  .forecast-product h3 { margin: .3cqi 0 .38cqi; font-size: 1.35cqi; line-height: 1.08; }
+  .forecast-product .detail-state { display: block; margin-bottom: .65cqi; }
+  .forecast-product p { margin: 0; font-size: .76cqi; line-height: 1.45; color: var(--mute); }
+  .mlops-reference {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin-top: 1cqi; background: var(--brand-a); color: var(--on-a);
+  }
+  .mlops-step { min-width: 0; min-height: 5.5cqi; padding: .8cqi .9cqi; border-left: .08cqi solid color-mix(in srgb, var(--on-a) 28%, transparent); }
+  .mlops-step:first-child { border-left: 0; }
+  .mlops-step .detail-num { color: inherit; opacity: .6; }
+  .mlops-step b { display: block; margin: .25cqi 0 .3cqi; font-size: .82cqi; }
+  .mlops-step p { margin: 0; font-size: .64cqi; line-height: 1.38; }
+  .forecast-guard {
+    display: grid; grid-template-columns: 9cqi minmax(0, 1fr); gap: 1.6cqi;
+    align-items: baseline; margin: 1cqi 0 2.05cqi; padding: .8cqi 0;
+    border-block: .07cqi solid var(--faint);
+  }
+  .forecast-guard p { margin: 0; font-size: .76cqi; line-height: 1.4; color: var(--mute); }
+  .forecast-guard p b { color: var(--ink); }
 </style>
 
 <!--
   The Deeplight company deck, aligned to deeplight.ae (read 2026-08-16).
 
-  Eleven numbered slides; two dividers off the arc. Folios read n/11.
+  Eleven numbered slides; two dividers and three reference appendices off the arc.
+  Numbered folios read n/11; the detailed one-sliders read Appendix.
 
     title · claim · surface · proof · capability · mechanism · next
     + purpose, traction, roadmap, team as extras
@@ -369,6 +469,144 @@
       </div>
     </div>
     <div class="folio">11/11</div>
+  </section>
+
+  <!-- APPENDIX — OPEN FINANCE
+       Sources: Deeplight Open Finance Credentials pp1,3–6; How we built the UAE's first
+       Open Finance data-sharing estate; CBUAE Open Finance Regulation 2024 and Nebras
+       operating policies as cited in those sources. Dates and performance are one measured
+       ADCB programme, not a general delivery rate. -->
+  <section class="slide deep reference-detail" data-job="appendix">
+    <div class="eyebrow">Appendix &middot; Open Finance</div>
+    <h1>From no cloud platform to live Open Finance in four months.</h1>
+    <p class="stand"><b>ADCB, September 2024 &rarr; January 2025.</b> Deeplight built the greenfield platform and first live APIs while the bank continued to serve customers. Certification depended on the operating estate around the endpoints: governed data, traceable consent, resilient token flows and per-participant performance.</p>
+    <div class="openfinance-reference">
+      <div class="of-stage">
+        <span class="detail-num">01</span>
+        <h3>Foundation</h3>
+        <span class="detail-state">Greenfield AWS estate</span>
+        <p><b>Real-time and batch data on one governed backbone.</b> Core-system change data feeds the API layer through controlled streaming, with lineage, quality checks and API management built into the platform.</p>
+      </div>
+      <div class="of-stage">
+        <span class="detail-num">02</span>
+        <h3>Consent + trust</h3>
+        <span class="detail-state">Traceable end to end</span>
+        <p><b>Consent is a transaction, not a checkbox.</b> Sender-constrained tokens, revocation and scope are traceable through the customer journey; payment and data-sharing flows are designed to recover without losing control state.</p>
+      </div>
+      <div class="of-stage">
+        <span class="detail-num">03</span>
+        <h3>Ecosystem</h3>
+        <span class="detail-state">LFI + TPP operating modes</span>
+        <p><b>The bank publishes and consumes.</b> The platform connects the licensed institution to Nebras, the central consent journey and third-party providers, with mobile-app integration and reporting by endpoint, participant and consent state.</p>
+      </div>
+      <div class="of-stage">
+        <span class="detail-num">04</span>
+        <h3>Certification</h3>
+        <span class="detail-state">First bank certified by CBUAE</span>
+        <p><b>100&ndash;150ms typical response against a 500ms ceiling.</b> Security, functional and customer-experience evidence travelled with the release; the production estate remained observable after go-live.</p>
+      </div>
+    </div>
+    <div class="reference-rail openfinance-rail">
+      <div><span class="rail-label">Measured programme</span><b>Sep 2024 &rarr; Jan 2025</b></div>
+      <div><span class="rail-label">February 2025</span><b>First live transaction</b></div>
+      <div><span class="rail-label">May 2025</span><b>First CBUAE certification</b></div>
+      <div><span class="rail-label">June 2025</span><b>First TPP transaction</b></div>
+    </div>
+    <div class="folio">Appendix</div>
+  </section>
+
+  <!-- APPENDIX — ADCB RESILIENCE
+       Sources: ADCB resilience programme slides supplied 2026-08-19 (executive summary;
+       four-phase context; MVB tiers; target-state setup) and
+       IT_Recovery_Resiliency_Business_Case-3.html. Phase 3 is in flight; Phase 4 architecture,
+       portability and testing are targets, not completed outcomes. -->
+  <section class="slide vivid reference-detail" data-job="appendix">
+    <div class="eyebrow">Appendix &middot; Bank-wide Resilience</div>
+    <h1>Define what must survive &mdash; then design recovery around it.</h1>
+    <p class="stand"><b>ADCB&rsquo;s four-phase programme.</b> The Minimum Viable Bank identifies the services that preserve the bank and sequences recovery by criticality. Phase 3 is defining the target architecture; the portable, multi-site recovery estate and regular live failover testing remain Phase 4 targets.</p>
+    <div class="resilience-reference">
+      <div class="res-phases">
+        <div class="res-phase">
+          <span class="detail-num">Phase 01</span><span class="phase-status">Recovery</span>
+          <h3>Restore critical services</h3>
+          <p>Interim cloud-based recovery capability for priority banking services and the data needed to bring them back safely.</p>
+        </div>
+        <div class="res-phase">
+          <span class="detail-num">Phase 02</span><span class="phase-status">Immediate gaps</span>
+          <h3>Reduce exposure now</h3>
+          <p>Alternative network paths, offshore backup, crisis communications and accelerated response to infrastructure and cyber threats.</p>
+        </div>
+        <div class="res-phase active">
+          <span class="detail-num">Phase 03</span><span class="phase-status">In flight</span>
+          <h3>Define the bank to recover</h3>
+          <p>Minimum Viable Bank service catalogue, five RTO tiers, target-state enterprise architecture and the resilience-led modernisation roadmap.</p>
+        </div>
+        <div class="res-phase">
+          <span class="detail-num">Phase 04</span><span class="phase-status">Target state</span>
+          <h3>Prove recovery repeatedly</h3>
+          <p>Committed RTOs, regular live failover, portable applications across new recovery sites and a cyber operating model tested through red-teaming.</p>
+        </div>
+      </div>
+      <div class="rto-reference">
+        <div class="rto-intro"><span class="detail-label">Minimum Viable Bank</span><strong>5 recovery tiers</strong></div>
+        <div class="rto-tier"><span class="detail-num">Tier 0</span><b>Always-on</b><p>Bootstrap infrastructure, incident tooling, identity, communications and clean recovery.</p></div>
+        <div class="rto-tier"><span class="detail-num">Tier 1</span><b>&lt;4 hours</b><p>Bank survivability: payments, settlements, liquidity, treasury and AML controls.</p></div>
+        <div class="rto-tier"><span class="detail-num">Tier 2</span><b>&lt;24 hours</b><p>Minimum customer service: cards, ATM, digital access, contact centre and priority payments.</p></div>
+        <div class="rto-tier"><span class="detail-num">Tier 3</span><b>&lt;5 days</b><p>Priority branches, staff communications, credit access and return to routine channels.</p></div>
+        <div class="rto-tier"><span class="detail-num">Tier 4</span><b>&gt;5 days</b><p>Remaining non-critical business processes outside the focused MVB scope.</p></div>
+      </div>
+      <div class="resilience-status">
+        <div><span class="rail-label">Defined</span><b>MVB framework, priority services and five RTO tiers</b></div>
+        <div><span class="rail-label">In flight</span><b>Business-unit syndication, Phase 3 architecture and resilience roadmap</b></div>
+        <div><span class="rail-label">Target</span><b>Portable onshore/offshore recovery with continuous replication and live failover</b></div>
+      </div>
+    </div>
+    <div class="folio">Appendix</div>
+  </section>
+
+  <!-- APPENDIX — EWEC FORECASTING
+       Sources: 01-deeplight-accelerate-deck.pdf p2; EWEC model methodology;
+       EWEC reference architecture; the packaged Databricks load and solar workflows.
+       The measured unit is three products live, not three models. -->
+  <section class="slide deep reference-detail" data-job="appendix">
+    <div class="eyebrow">Appendix &middot; EWEC Forecasting</div>
+    <h1>Three forecasting products. One governed MLOps lifecycle.</h1>
+    <p class="stand"><b>EWEC, the UAE&rsquo;s national energy buyer.</b> Load forecasting, solar forecasting and reserve management operate on one Databricks data-and-AI platform. The shared estate controls what models can see, how changes reach production, and what happens when accuracy or data quality moves.</p>
+    <div class="forecast-reference">
+      <div class="forecast-products">
+        <div class="forecast-product">
+          <span class="detail-num">Product 01</span>
+          <h3>Load forecasting</h3>
+          <span class="detail-state">Demand outlook</span>
+          <p>Direct multi-horizon estimators use only information observable at forecast origin. Separate 5-, 15- and 60-minute inference and back-test workflows avoid feeding one prediction into the next horizon.</p>
+        </div>
+        <div class="forecast-product">
+          <span class="detail-num">Product 02</span>
+          <h3>Solar forecasting</h3>
+          <span class="detail-state">Generation outlook</span>
+          <p>Shared feature tables combine time encodings, PV lags, rolling statistics, irradiance persistence, cloud and clear-sky signals. Dropout repair happens before 15- and 60-minute aggregation.</p>
+        </div>
+        <div class="forecast-product">
+          <span class="detail-num">Product 03</span>
+          <h3>Reserve management</h3>
+          <span class="detail-state">Operational planning support</span>
+          <p>Runs on the same governed inputs, product controls and monitoring estate as the forecasts. Operators keep the decision while the platform preserves the evidence behind each run.</p>
+        </div>
+      </div>
+      <div class="mlops-reference">
+        <div class="mlops-step"><span class="detail-num">01</span><b>Ingest + test</b><p>Operational, weather, historical and reference data; quarantine at quality gates.</p></div>
+        <div class="mlops-step"><span class="detail-num">02</span><b>Build features</b><p>Reusable, lineage-tracked tables with leak-proof origin and target-time separation.</p></div>
+        <div class="mlops-step"><span class="detail-num">03</span><b>Train + back-test</b><p>Scheduled workflows compare performance by product, horizon and bucket.</p></div>
+        <div class="mlops-step"><span class="detail-num">04</span><b>Register</b><p>MLflow records experiments, parameters, artefacts and model versions.</p></div>
+        <div class="mlops-step"><span class="detail-num">05</span><b>Promote + roll back</b><p>Controlled Dev &rarr; Test &rarr; Prod release with registry and rollback.</p></div>
+        <div class="mlops-step"><span class="detail-num">06</span><b>Monitor + improve</b><p>Accuracy, data quality, SLA and drift; champion/challenger and retraining triggers.</p></div>
+      </div>
+      <div class="forecast-guard">
+        <span class="detail-label">Known limits</span>
+        <p><b>Weather beyond the operational forecast horizon uses a historical seasonal profile, and the current estate uses one weather proxy across zones.</b> Both limits are explicit, monitored and scoped for improvement; invalid outputs are logged rather than hidden.</p>
+      </div>
+    </div>
+    <div class="folio">Appendix</div>
   </section>
 
 </div>
